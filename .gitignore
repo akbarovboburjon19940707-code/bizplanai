@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite*
+storage/
+node_modules/
+.next/
+out/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+*.zip

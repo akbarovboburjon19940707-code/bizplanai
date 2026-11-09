@@ -46,6 +46,7 @@ async def test_uploaded_image_on_cover_only_for_owner(client):
     image_id = (await upload(client, owner, png())).json()["image_id"]
     doc = await plan_docx(client, owner, rasm_id=image_id, rasm_avto=False)
     assert len(doc.inline_shapes) == 1
+    assert not any(p.text.startswith("Foto:") for p in doc.paragraphs)  # o'z rasmi: muallif yozuvi yo'q
 
     other = await register(client, phone="+998907778899")
     doc = await plan_docx(client, other, rasm_id=image_id, rasm_avto=False)  # boshqa foydalanuvchi rasmi ishlamaydi
@@ -57,11 +58,14 @@ async def test_auto_image_used_when_no_upload(client, monkeypatch):
     calls = []
 
     async def fake_fetch(ctx):
+        from app.ai.images import CoverImage
         calls.append(ctx["faoliyat_turi"])
-        return png()
+        return CoverImage(png(), "Foto: Ali Valiyev / Pexels")
     monkeypatch.setattr(svc, "fetch_cover_image", fake_fetch)
     token = await register(client)
-    assert len((await plan_docx(client, token)).inline_shapes) == 1
+    doc = await plan_docx(client, token)
+    assert len(doc.inline_shapes) == 1
+    assert "Foto: Ali Valiyev / Pexels" in [p.text for p in doc.paragraphs]  # Pexels qoidasi: muallif ko'rsatiladi
     assert calls == ["ishlab_chiqarish"]
     assert len((await plan_docx(client, token, rasm_avto=False)).inline_shapes) == 0
     assert calls == ["ishlab_chiqarish"]
@@ -77,7 +81,7 @@ async def test_fetch_cover_image_pexels(monkeypatch):
             seen["query"], seen["auth"] = request.url.params["query"], request.headers["authorization"]
             return httpx.Response(200, json={"photos": [
                 {"src": {"large": "https://evil.example.com/x.jpg"}},       # ruxsat etilmagan host
-                {"src": {"large": "https://images.pexels.com/photos/1/a.png"}},
+                {"src": {"large": "https://images.pexels.com/photos/1/a.png"}, "photographer": "Ali  Valiyev"},
             ]})
         assert request.url.host == "images.pexels.com"
         return httpx.Response(200, content=png())
@@ -88,8 +92,9 @@ async def test_fetch_cover_image_pexels(monkeypatch):
 
     monkeypatch.setattr(get_settings(), "pexels_api_key", "test-key")
     monkeypatch.setattr(get_settings(), "ai_enabled", False)
-    data = await images.fetch_cover_image({"faoliyat_turi": "savdo"})
-    assert data and data.startswith(b"\x89PNG")
+    cover = await images.fetch_cover_image({"faoliyat_turi": "savdo"})
+    assert cover and cover.data.startswith(b"\x89PNG")
+    assert cover.credit == "Foto: Ali Valiyev / Pexels"
     assert seen == {"query": "grocery store shop shelves", "auth": "test-key"}
 
 

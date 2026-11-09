@@ -2,11 +2,13 @@
 
 Avtomatik rasm: AI loyiha nomi va mahsulotdan 2-4 ta inglizcha qidiruv so'zi tuzadi (AI bo'lmasa faoliyat turi
 bo'yicha tayyor so'zlar), Pexels API dan landscape rasm olinadi. PEXELS_API_KEY bo'lmasa o'chiq.
-Pexels litsenziyasi tijoriy foydalanishga ruxsat beradi, muallifni ko'rsatish shart emas.
+Pexels litsenziyasi rasmlarni bepul va tijoriy maqsadda ishlatishga ruxsat beradi; Pexels API qoidalari esa
+Pexels va fotografni ko'rsatishni so'raydi, shuning uchun rasm ostiga "Foto: <fotograf> / Pexels" yoziladi.
 Tashqi xizmatga faqat qidiruv so'zlari ketadi (shaxsiy ma'lumot emas).
 """
 import logging
 import re
+from dataclasses import dataclass
 from urllib.parse import urlparse
 
 import httpx
@@ -23,6 +25,14 @@ FALLBACK_QUERY = {
     "savdo": "grocery store shop shelves",
     "xizmat": "small business service workplace",
 }
+
+
+@dataclass
+class CoverImage:
+    data: bytes
+    credit: str | None = None  # avtomatik rasm uchun muallif yozuvi
+
+
 _MAGIC = {b"\xff\xd8\xff": ("jpg", "image/jpeg"), b"\x89PNG\r\n\x1a\n": ("png", "image/png")}
 
 
@@ -77,7 +87,12 @@ async def _download(client: httpx.AsyncClient, url: str, max_bytes: int) -> byte
     return data if sniff_image(data) else None
 
 
-async def fetch_cover_image(ctx: dict) -> bytes | None:
+def _credit(photo: dict) -> str:
+    name = re.sub(r"\s+", " ", str(photo.get("photographer") or "")).strip()[:80]
+    return f"Foto: {name} / Pexels" if name else "Foto: Pexels"
+
+
+async def fetch_cover_image(ctx: dict) -> CoverImage | None:
     """Faoliyat turiga mos muqova rasmi yoki None (kalit yo'q, topilmadi, tarmoq xatosi)."""
     s = get_settings()
     if not s.pexels_api_key:
@@ -95,7 +110,7 @@ async def fetch_cover_image(ctx: dict) -> bytes | None:
                 if url:
                     data = await _download(client, url, s.max_plan_image_bytes)
                     if data:
-                        return data
+                        return CoverImage(data, _credit(photo))
     except (httpx.HTTPError, ValueError) as exc:
         log.warning("Muqova rasmini olib bo'lmadi: %s", exc)
     return None

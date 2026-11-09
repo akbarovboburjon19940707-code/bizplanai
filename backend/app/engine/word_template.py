@@ -338,8 +338,8 @@ def _scalars(ctx: dict) -> dict[str, str]:
 
 
 # ── Asosiy funksiya ──
-def _insert_picture(doc, p_el, image: bytes) -> None:
-    """Muqova rasmi: 12x7.5 sm ichiga sig'diriladi, markazda."""
+def _insert_picture(doc, p_el, image: bytes, credit: str | None = None) -> None:
+    """Muqova rasmi: 12x7.5 sm ichiga sig'diriladi, markazda; avtomatik rasmda ostida muallif yozuvi."""
     import io
 
     from docx.image.image import Image
@@ -361,10 +361,16 @@ def _insert_picture(doc, p_el, image: bytes) -> None:
             for v in part._element.xpath("//wp:docPr/@id") if str(v).isdigit()]
     for doc_pr in run._r.xpath(".//wp:docPr"):
         doc_pr.set("id", str(max(used, default=0) + 1))
+    para.paragraph_format.space_after = Pt(2)
+    if credit:
+        cap = _new_paragraph(doc, credit, size=8, center=True)
+        cap.runs[0].italic = True
+        cap.paragraph_format.space_before = Pt(0)
+        p_el.addnext(cap._p)
 
 
 def render_plan_docx(model_data: dict, output_path: str, ai_sections: dict | None = None,
-                     image: bytes | None = None) -> str:
+                     image: bytes | None = None, image_credit: str | None = None) -> str:
     ctx = model_data.get("context", {})
     ind = model_data.get("indicators", {})
     tables = model_data.get("tables", [])
@@ -388,7 +394,7 @@ def render_plan_docx(model_data: dict, output_path: str, ai_sections: dict | Non
             text = "".join(t.text or "" for t in _texts(p_el)).strip()
             m = re.fullmatch(r"\{\{\s*(matn|jadval):([\w\-]+)\s*\}\}", text)
             if m and m.group(1) == "matn" and m.group(2) == "rasm" and image:
-                _insert_picture(doc, p_el, image)
+                _insert_picture(doc, p_el, image, image_credit)
             elif m and m.group(1) == "matn":
                 _expand_block(p_el, blocks.get(m.group(2), []))
             elif m:

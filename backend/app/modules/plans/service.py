@@ -5,7 +5,7 @@ import tempfile
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ai.images import fetch_cover_image, sniff_image
+from app.ai.images import CoverImage, fetch_cover_image, sniff_image
 from app.ai.service import generate_sections
 from app.core.config import get_settings
 from app.core.security import utcnow
@@ -53,22 +53,23 @@ def image_key(user_id: str, image_id: str) -> str:
     return f"plan-images/{user_id}/{image_id}"
 
 
-async def _cover_image(user_id: str, payload: dict, ctx: dict) -> bytes | None:
+async def _cover_image(user_id: str, payload: dict, ctx: dict) -> CoverImage | None:
     """Foydalanuvchi rasmi (faqat o'ziniki) yoki avtomatik rasm; bo'lmasa None (hujjat rasmsiz)."""
     if payload.get("rasm_id"):
         data = await get_storage().get_bytes(image_key(user_id, payload["rasm_id"]), get_settings().max_plan_image_bytes)
         if data and sniff_image(data):
-            return data
+            return CoverImage(data)  # foydalanuvchining o'z rasmi: muallif yozuvi yo'q
     if payload.get("rasm_avto", True):
         return await fetch_cover_image(ctx)
     return None
 
 
 def _render_files(model: dict, workdir: str, ai_sections: dict | None = None,
-                  image: bytes | None = None) -> tuple[str, str]:
+                  image: CoverImage | None = None) -> tuple[str, str]:
     word = os.path.join(workdir, "biznes_reja.docx")
     excel = os.path.join(workdir, "jadvallar.xlsx")
-    generate_word_report(model, word, ai_sections, image)  # AI matnlari shablondagi o'z bo'limlariga joylanadi
+    # AI matnlari shablondagi o'z bo'limlariga joylanadi
+    generate_word_report(model, word, ai_sections, image.data if image else None, image.credit if image else None)
     generate_excel_report(model, excel)
     return word, excel
 

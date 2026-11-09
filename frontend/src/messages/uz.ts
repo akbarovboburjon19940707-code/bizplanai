@@ -1,3 +1,5 @@
+import { planMessages } from "./plan";
+
 export const uz = {
   appName: "BizplanAI",
   tagline: "Biznes rejangizni ishonch bilan tuzing",
@@ -21,4 +23,5 @@ export const uz = {
     phaseLabel: "Yangi platforma bosqichi 1",
   },
   footer: "Biznes rejalash uchun yagona ish maydoni.",
+  plans: planMessages,
 } as const;

@@ -817,18 +817,26 @@ export interface components {
             imtiyoz?: number | null;
             /**
              * Kredit Turi
-             * @default annuitet
+             * @default differensial
              * @enum {string}
              */
             kredit_turi: "annuitet" | "differensial";
+            /** Aylanma Kapital */
+            aylanma_kapital?: number | null;
+            /** Sugurta */
+            sugurta?: number | null;
             /** Hajm */
-            hajm: number;
+            hajm?: number | null;
             /** Narx */
-            narx: number;
+            narx?: number | null;
+            /** Mahsulotlar */
+            mahsulotlar?: components["schemas"]["app__modules__plans__schemas__ProductIn"][] | null;
             /** Xomashyo Narx */
             xomashyo_narx?: number | null;
             /** Tovar Xaridi */
             tovar_xaridi?: number | null;
+            /** Tannarx Ulushi */
+            tannarx_ulushi?: number | null;
             /** Urug Yem Narx */
             urug_yem_narx?: number | null;
             /** Texnika Xarajat */
@@ -849,6 +857,12 @@ export interface components {
             suv?: number | null;
             /** Oqava */
             oqava?: number | null;
+            /** Boshqa Kommunal */
+            boshqa_kommunal?: number | null;
+            /** Quvvat */
+            quvvat?: number[] | null;
+            /** Diskont */
+            diskont?: number | null;
             /** Direktor */
             direktor?: number | null;
             /** Rahbar Oylik */
@@ -904,36 +918,6 @@ export interface components {
             context: {
                 [key: string]: unknown;
             };
-        };
-        /** ProductIn */
-        ProductIn: {
-            /** Id */
-            id: string;
-            /** Slug */
-            slug: string;
-            /** Category Key */
-            category_key: string;
-            /** Title */
-            title: string;
-            /**
-             * Description
-             * @default
-             */
-            description: string;
-            /** Price Som */
-            price_som: number;
-            /** File Key */
-            file_key: string;
-            /**
-             * Preview Image
-             * @default
-             */
-            preview_image: string;
-            /**
-             * File Size
-             * @default
-             */
-            file_size: string;
         };
         /** ProductOut */
         ProductOut: {
@@ -1114,6 +1098,52 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** ProductIn */
+        app__modules__admin__router__ProductIn: {
+            /** Id */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Category Key */
+            category_key: string;
+            /** Title */
+            title: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Price Som */
+            price_som: number;
+            /** File Key */
+            file_key: string;
+            /**
+             * Preview Image
+             * @default
+             */
+            preview_image: string;
+            /**
+             * File Size
+             * @default
+             */
+            file_size: string;
+        };
+        /**
+         * ProductIn
+         * @description Bitta mahsulot/xizmat qatori (Excel shablonidagi ProdPlan qatori).
+         */
+        app__modules__plans__schemas__ProductIn: {
+            /** Nomi */
+            nomi: string;
+            /** Hajm */
+            hajm: number;
+            /** Narx */
+            narx: number;
+            /** Olchov */
+            olchov?: string | null;
+            /** Xomashyo Narx */
+            xomashyo_narx?: number | null;
         };
     };
     responses: never;
@@ -2212,7 +2242,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ProductIn"];
+                "application/json": components["schemas"]["app__modules__admin__router__ProductIn"];
             };
         };
         responses: {

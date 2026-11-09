@@ -15,7 +15,7 @@ Foydalanuvchi bilan o'zbek tilida (lotin) gaplash. Kod, o'zgaruvchi va commit xa
 | Qism | Holat |
 | --- | --- |
 | Backend | **Tayyor**: FastAPI, 36 endpoint, 14 jadval, Alembic (0002: `refresh_tokens.replaced_by`). 27 test (SQLite 25), `ruff` toza. 2026-11-10: Click ikkinchi tranzaksiya xatosi to'langan obunani bekor qilardi (tuzatildi); refresh 30 s grace oynasi (bir vaqtdagi tablar). Bu ikkisi Postgres'da hali sinalmagan |
-| Frontend | **1-bosqich tayyor** (Codex): Next 15 skelet, Tailwind, ESLint, OpenAPI tiplar, API klient, auth context, layout. `lint`/`typecheck`/`build` yashil. Refresh oqimi haqiqiy backend bilan hali sinalmagan. Keyingisi: 2-bosqich |
+| Frontend | **1-bosqich** (Codex) va **3-bosqichning `/dashboard` + `/reja` qismi** (Claude, 2026-11-10): 5 bosqichli forma (RHF + Zod), 6 tagacha mahsulot, tovar narxi/ulushi, aylanma kapital, quvvat va diskont, jonli preview (500 ms debounce), sessionStorage qoralama, reja yaratish va holat. Haqiqiy backend bilan brauzerda sinalgan. Hali yo'q: 2-bosqich (`/kirish`, `/royxat`, `/kabinet`), unit/e2e testlar |
 | Deploy | `backend/render.yaml` yozilgan, **Render'da hali yaratilmagan**. Frontend bloki `frontend/AGENTS.md` 6-bo'limda |
 | Yuklama testi | `backend/loadtest/k6.js` yozilgan, **hali ishga tushirilmagan** (staging kerak) |
 

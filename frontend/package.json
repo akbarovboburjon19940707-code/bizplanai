@@ -2,7 +2,9 @@
   "name": "bizplanai-frontend",
   "version": "0.1.0",
   "private": true,
-  "engines": { "node": ">=20 <27" },
+  "engines": {
+    "node": ">=20 <27"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,6 +14,7 @@
     "gen:api": "openapi-typescript docs/openapi.json -o src/shared/api/schema.d.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-slot": "^1.2.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -19,7 +22,9 @@
     "openapi-fetch": "^0.14.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tailwind-merge": "^3.3.1"
+    "react-hook-form": "^7.91.0",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^20.19.0",

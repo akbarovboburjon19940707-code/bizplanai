@@ -191,10 +191,10 @@ def generate_excel_report(model_data: dict, output_path: str) -> str:
         "3-ILOVA": "3-Tashabbuskor hissasi",
         "4-ILOVA": "4-Amortizatsiya (10y)",
         "5-ILOVA": "5-Ish haqi fondi",
-        "KOMMUNAL": "6-Kommunal xarajatlar",
-        "6-ILOVA": "7-Sotish rejasi (10y)",
-        "8-9-ILOVA": "8-Kredit yillik",
-        "7-ILOVA": "9-Soliqlar (10y)",
+        "KOMMUNAL": "5-Foydalanish xarajatlari",
+        "6-ILOVA": "6-Sotish rejasi (10y)",
+        "7-ILOVA": "7-Soliqlar (10y)",
+        "8-9-ILOVA": "8-9-Kredit grafigi",
         "10-ILOVA": "10-Zararsiz nuqta",
         "11-ILOVA": "11-Tannarx va xarajatlar",
         "12-ILOVA": "12-Foyda va zararlar",
@@ -202,46 +202,42 @@ def generate_excel_report(model_data: dict, output_path: str) -> str:
         "14-ILOVA": "14-NPV va Samaradorlik",
     }
 
-    used_names = set()
+    sheets = {}  # bir xil ilova jadvallari bitta varaqqa ketma-ket yoziladi
 
     for tbl in tables:
         ilova = tbl.get("ilova", "Jadval")
-        base_name = SHEET_NAMES.get(ilova, ilova[:25])
-        sheet_name = base_name
-        counter = 1
-        while sheet_name in used_names:
-            sheet_name = f"{base_name[:24]}_{counter}"
-            counter += 1
-        used_names.add(sheet_name)
-
-        ws = wb.create_sheet(title=sheet_name)
-
-        # Title
-        ws.append([f"{tbl.get('ilova', '')}: {tbl.get('title', '')}"])
-        ws.cell(row=1, column=1).font = TITLE_FONT
-        ws.append([f"Loyiha: {ctx.get('loyiha_nomi', 'Biznes Reja')} | Tashabbuskor: {ctx.get('tashabbuskor', '')}"])
-        ws.cell(row=2, column=1).font = SUBTITLE_FONT
-        ws.append([])
+        ws = sheets.get(ilova)
+        if ws is None:
+            ws = wb.create_sheet(title=SHEET_NAMES.get(ilova, ilova[:31]))
+            sheets[ilova] = ws
+            ws.append([f"{tbl.get('ilova', '')}: {tbl.get('title', '')}"])
+            ws.cell(row=1, column=1).font = TITLE_FONT
+            ws.append([f"Loyiha: {ctx.get('loyiha_nomi', 'Biznes Reja')} | Tashabbuskor: {ctx.get('tashabbuskor', '')}"])
+            ws.cell(row=2, column=1).font = SUBTITLE_FONT
+            ws.append([])
+            ws.freeze_panes = "B5"
+        else:
+            ws.append([])
+            ws.append([tbl.get("title", "")])
+            ws.cell(row=ws.max_row, column=1).font = TITLE_FONT
 
         # Headers
         headers = tbl.get("headers", [])
         ws.append(headers)
-        hdr_row = 4
+        hdr_row = ws.max_row
         for c_idx, h in enumerate(headers, 1):
             _format_cell(ws.cell(row=hdr_row, column=c_idx), h, is_header=True)
 
         # Rows
-        rows = tbl.get("rows", [])
-        cur_row = hdr_row + 1
-        for r in rows:
+        for r in tbl.get("rows", []):
             ws.append(r)
+            cur_row = ws.max_row
             first_cell_str = str(r[0] if r else "").upper()
-            is_tot = any(w in first_cell_str for w in ["JAMI", "UMUMIY", "SOF FOYDA", "SOF PUL OQIMI", "YALPI JAMI", "SOF JORIY"])
+            is_tot = any(w in first_cell_str for w in ["JAMI", "UMUMIY", "SOF FOYDA", "SOF PUL OQIMI", "YALPI JAMI", "SOF JORIY", "SOF HOZIRGI", "TANNARX"])
             for c_idx, val in enumerate(r, 1):
                 _format_cell(ws.cell(row=cur_row, column=c_idx), val, is_total=is_tot)
-            cur_row += 1
 
-        ws.freeze_panes = "B5"
+    for ws in sheets.values():
         _adjust_column_widths(ws)
 
     # Alohida: Oylik to'liq kredit amortizatsiya jadvali

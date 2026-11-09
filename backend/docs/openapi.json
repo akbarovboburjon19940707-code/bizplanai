@@ -1836,7 +1836,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProductIn"
+                "$ref": "#/components/schemas/app__modules__admin__router__ProductIn"
               }
             }
           }
@@ -2611,19 +2611,75 @@
               "differensial"
             ],
             "title": "Kredit Turi",
-            "default": "annuitet"
+            "default": "differensial"
+          },
+          "aylanma_kapital": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10000000000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aylanma Kapital"
+          },
+          "sugurta": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10000000000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sugurta"
           },
           "hajm": {
-            "type": "number",
-            "maximum": 1000000000000.0,
-            "exclusiveMinimum": 0.0,
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1000000000000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Hajm"
           },
           "narx": {
-            "type": "number",
-            "maximum": 1000000000000.0,
-            "exclusiveMinimum": 0.0,
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1000000000000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Narx"
+          },
+          "mahsulotlar": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/app__modules__plans__schemas__ProductIn"
+                },
+                "type": "array",
+                "maxItems": 6,
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mahsulotlar"
           },
           "xomashyo_narx": {
             "anyOf": [
@@ -2650,6 +2706,19 @@
               }
             ],
             "title": "Tovar Xaridi"
+          },
+          "tannarx_ulushi": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tannarx Ulushi"
           },
           "urug_yem_narx": {
             "anyOf": [
@@ -2781,6 +2850,48 @@
             ],
             "title": "Oqava"
           },
+          "boshqa_kommunal": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10000000000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boshqa Kommunal"
+          },
+          "quvvat": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array",
+                "maxItems": 10,
+                "minItems": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quvvat"
+          },
+          "diskont": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diskont"
+          },
           "direktor": {
             "anyOf": [
               {
@@ -2865,9 +2976,7 @@
         "required": [
           "faoliyat_turi",
           "loyiha_nomi",
-          "loyiha_qiymati",
-          "hajm",
-          "narx"
+          "loyiha_qiymati"
         ],
         "title": "PlanInput",
         "description": "Moliyaviy yadro kirish maydonlari (nomlari yadrodagidek, frontend formasi bilan bir xil)."
@@ -2984,71 +3093,6 @@
           "context"
         ],
         "title": "PreviewOut"
-      },
-      "ProductIn": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "maxLength": 120,
-            "minLength": 2,
-            "pattern": "^[A-Za-z0-9_\\-]+$",
-            "title": "Id"
-          },
-          "slug": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 2,
-            "pattern": "^[a-z0-9\\-]+$",
-            "title": "Slug"
-          },
-          "category_key": {
-            "type": "string",
-            "title": "Category Key"
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 2,
-            "title": "Title"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description",
-            "default": ""
-          },
-          "price_som": {
-            "type": "integer",
-            "maximum": 100000000.0,
-            "exclusiveMinimum": 0.0,
-            "title": "Price Som"
-          },
-          "file_key": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 3,
-            "title": "File Key"
-          },
-          "preview_image": {
-            "type": "string",
-            "title": "Preview Image",
-            "default": ""
-          },
-          "file_size": {
-            "type": "string",
-            "title": "File Size",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "slug",
-          "category_key",
-          "title",
-          "price_som",
-          "file_key"
-        ],
-        "title": "ProductIn"
       },
       "ProductOut": {
         "properties": {
@@ -3610,6 +3654,127 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "app__modules__admin__router__ProductIn": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2,
+            "pattern": "^[A-Za-z0-9_\\-]+$",
+            "title": "Id"
+          },
+          "slug": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "pattern": "^[a-z0-9\\-]+$",
+            "title": "Slug"
+          },
+          "category_key": {
+            "type": "string",
+            "title": "Category Key"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 2,
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "price_som": {
+            "type": "integer",
+            "maximum": 100000000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Price Som"
+          },
+          "file_key": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 3,
+            "title": "File Key"
+          },
+          "preview_image": {
+            "type": "string",
+            "title": "Preview Image",
+            "default": ""
+          },
+          "file_size": {
+            "type": "string",
+            "title": "File Size",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "category_key",
+          "title",
+          "price_som",
+          "file_key"
+        ],
+        "title": "ProductIn"
+      },
+      "app__modules__plans__schemas__ProductIn": {
+        "properties": {
+          "nomi": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Nomi"
+          },
+          "hajm": {
+            "type": "number",
+            "maximum": 1000000000000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Hajm"
+          },
+          "narx": {
+            "type": "number",
+            "maximum": 1000000000000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Narx"
+          },
+          "olchov": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Olchov"
+          },
+          "xomashyo_narx": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 10000000000000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Xomashyo Narx"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nomi",
+          "hajm",
+          "narx"
+        ],
+        "title": "ProductIn",
+        "description": "Bitta mahsulot/xizmat qatori (Excel shablonidagi ProdPlan qatori)."
       }
     }
   }

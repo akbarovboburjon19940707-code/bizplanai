@@ -53,7 +53,7 @@ python -m app.cli create-admin --phone +998... --password '...'   # 2FA (TOTP) a
 - `APP_ENV=production` da noto'g'ri sozlamada server ishga tushmaydi (config.py `_production_guard`).
 
 ## Qoidalar
-1. **Moliyaviy yadroga (`backend/app/engine/*`) tegma.** U ishlaydi va soha mutaxassisi tekshirgan formulalarni o'z ichiga oladi. Yangi funksiya uni o'rab olsin.
+1. **Moliyaviy hisob-kitob manbai: `G:\Asosiy shablon npv 10 yillik.xls`** (tahlil: `docs/EXCEL_SHABLON_TAHLILI.md`, kod: `backend/app/engine/template_model.py`, test: `tests/test_template_model.py` Excel qiymatlari bilan). Formulani o'zgartirishdan oldin foydalanuvchidan so'ra va Excel moslik testini yashil saqla. 2026-11-10 gacha bo'lgan eski yadro formulalari (15% amortizatsiya, 60% tannarx va h.k.) o'rniga shu shablon olingan.
 2. API shakli o'zgarsa: avval kod, keyin `python scripts/sync_contract.py`, `backend/docs/API_CONTRACT.md` ni yangila. Buzuvchi o'zgarish (maydon o'chirish/nomini o'zgartirish) uchun foydalanuvchidan so'ra.
 3. Har yangi endpoint/biznes qoidasi uchun test. Parallel/pul bilan bog'liq mantiq Postgres'da ham sinalsin.
 4. Sxema o'zgarishi faqat Alembic migratsiyasi orqali (`alembic revision --autogenerate`, keyin qo'lda tekshir).

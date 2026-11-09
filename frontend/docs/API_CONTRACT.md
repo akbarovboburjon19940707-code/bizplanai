@@ -75,7 +75,16 @@ Telefon istalgan ko'rinishda yuborilishi mumkin (`90 123 45 67`, `+998...`); ser
 ## 4. Biznes-reja
 
 Forma maydonlari: `docs/openapi.json` dagi `PlanInput` (nomlar moliyaviy yadrodagi bilan bir xil).
-Majburiy: `faoliyat_turi` (`ishlab_chiqarish`, `qishloq_xojaligi`, `savdo`, `xizmat`), `loyiha_nomi`, `loyiha_qiymati`, `hajm`, `narx`.
+Majburiy: `faoliyat_turi` (`ishlab_chiqarish`, `qishloq_xojaligi`, `savdo`, `xizmat`), `loyiha_nomi`, `loyiha_qiymati`, va `hajm` + `narx` **yoki** `mahsulotlar`.
+Hisob-kitob "Asosiy shablon npv 10 yillik.xls" asosida (`docs/EXCEL_SHABLON_TAHLILI.md`). Yangi ixtiyoriy maydonlar (2026-11-10):
+- `mahsulotlar`: 1-6 ta `{nomi, hajm, narx, olchov?, xomashyo_narx?}` (hajm: yillik, to'liq quvvatda). Berilsa `hajm`/`narx` shart emas.
+- `xomashyo_narx` (yoki `tovar_xaridi`): 1 birlik uchun tovar/xomashyo narxi (mahsulot ichida ham). Berilmasa `tannarx_ulushi` (tushumdan %), u ham bo'lmasa faoliyat turiga qarab: savdo 75%, ishlab chiqarish 55%, qishloq xo'jaligi 40%, xizmat 15% (`urug_yem_narx`/`texnika_xarajat` kiritilsa 0%). Formada savdo uchun tovar narxi yoki ulushini so'rash tavsiya etiladi.
+- `dokon_ijarasi`, `joy_ijarasi`, `transport_xarajat` (oylik), `yer_ijarasi`, `urug_yem_narx`, `texnika_xarajat` (yillik): jadvallarda alohida qator.
+- `aylanma_kapital`, `sugurta`: o'z mablag'idan. Kredit olish xarajati = kreditning 2% (o'z mablag'idan, avtomatik).
+- `boshqa_kommunal`: yillik summa. `elektr`, `gaz`, `suv`, `oqava`: oylik miqdor.
+- `quvvat`: 10 ta foiz (0-150), standart 75, 77, 80, 82, 85, 90, 92, 95, 100, 100. `diskont`: foiz, standart 14.
+- `kredit_turi` standarti endi `differensial` (shablondagidek).
+- `indicators` ga qo'shildi: `dpp`, `dscr_min`, `zararsizlik_nuqtasi` (%). `npv`/`irr`/`payback`/`dpp` sof pul oqimidan (soliq va kredit foizidan keyin), 10 yil.
 Noma'lum maydon yuborilsa 422. Ma'lumotnomalar: `GET /v1/meta/activity-types`, `GET /v1/meta/business-categories`.
 
 | Metod va yo'l | Tavsif |

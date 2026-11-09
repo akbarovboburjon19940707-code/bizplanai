@@ -1,10 +1,21 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Money = Field(default=None, ge=0, le=10**13)
 Count = Field(default=None, ge=0, le=100_000)
+
+
+class ProductIn(BaseModel):
+    """Bitta mahsulot/xizmat qatori (Excel shablonidagi ProdPlan qatori)."""
+    model_config = ConfigDict(extra="forbid")
+
+    nomi: str = Field(min_length=1, max_length=200)
+    hajm: float = Field(gt=0, le=10**12)  # yillik hajm, to'liq quvvatda
+    narx: float = Field(gt=0, le=10**12)
+    olchov: str | None = Field(default=None, max_length=30)
+    xomashyo_narx: float | None = Money  # 1 birlik uchun tovar/xomashyo narxi
 
 
 class PlanInput(BaseModel):
@@ -31,12 +42,17 @@ class PlanInput(BaseModel):
     foiz: float | None = Field(default=None, ge=0, le=100)
     muddat: int | None = Field(default=None, ge=1, le=360)
     imtiyoz: int | None = Field(default=None, ge=0, le=120)
-    kredit_turi: Literal["annuitet", "differensial"] = "annuitet"
+    kredit_turi: Literal["annuitet", "differensial"] = "differensial"
+    aylanma_kapital: float | None = Money  # o'z mablag'idan
+    sugurta: float | None = Money
 
-    hajm: float = Field(gt=0, le=10**12)
-    narx: float = Field(gt=0, le=10**12)
+    # Bitta mahsulot (eski usul) yoki mahsulotlar ro'yxati (6 tagacha)
+    hajm: float | None = Field(default=None, gt=0, le=10**12)
+    narx: float | None = Field(default=None, gt=0, le=10**12)
+    mahsulotlar: list[ProductIn] | None = Field(default=None, min_length=1, max_length=6)
     xomashyo_narx: float | None = Money
     tovar_xaridi: float | None = Money
+    tannarx_ulushi: float | None = Field(default=None, ge=0, le=100)  # tovar/xomashyo, tushumdan %; bo'sh: faoliyat turiga qarab
     urug_yem_narx: float | None = Money
     texnika_xarajat: float | None = Money
     yer_ijarasi: float | None = Money
@@ -47,6 +63,11 @@ class PlanInput(BaseModel):
     gaz: float | None = Money
     suv: float | None = Money
     oqava: float | None = Money
+    boshqa_kommunal: float | None = Money  # yillik summa
+
+    # Ixtiyoriy sozlamalar (standart: Excel shabloni)
+    quvvat: list[float] | None = Field(default=None, min_length=10, max_length=10)  # 10 yil, foizda (0-150)
+    diskont: float | None = Field(default=None, ge=0, le=100)
 
     direktor: int | None = Count
     rahbar_oylik: float | None = Money
@@ -54,6 +75,14 @@ class PlanInput(BaseModel):
     ishchi_oylik: float | None = Money
     yangi_xodim: int | None = Count
     yangi_ishchi_oylik: float | None = Money
+
+    @model_validator(mode="after")
+    def _check(self):
+        if not self.mahsulotlar and not (self.hajm and self.narx):
+            raise ValueError("hajm va narx yoki mahsulotlar ro'yxati kerak")
+        if self.quvvat and any(q < 0 or q > 150 for q in self.quvvat):
+            raise ValueError("quvvat foizlari 0 dan 150 gacha bo'lishi kerak")
+        return self
 
     def engine_payload(self) -> dict:
         return {k: v for k, v in self.model_dump().items() if v is not None}

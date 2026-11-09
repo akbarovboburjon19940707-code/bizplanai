@@ -11,11 +11,11 @@ Foydalanuvchi bilan o'zbek tilida (lotin) gaplash. Kod, o'zgaruvchi va commit xa
 - **Gemini**: mustaqil tahlil va takliflar (kodga to'g'ridan-to'g'ri tegmaydi).
 - Backend va frontend faqat `backend/docs/API_CONTRACT.md` + `backend/docs/openapi.json` orqali bog'lanadi.
 
-## Holat (2026-11-09)
+## Holat (2026-11-10)
 | Qism | Holat |
 | --- | --- |
-| Backend | **Tayyor**: FastAPI, 36 endpoint, 14 jadval, Alembic. 23 test (SQLite 21, Postgres 23), `ruff` toza. Navbat + worker + Postgres + Redis bilan lokal sinalgan |
-| Frontend | **Boshlanmagan.** `frontend/` da faqat topshiriq paketi (AGENTS.md, kontrakt, eski sayt namunasi) |
+| Backend | **Tayyor**: FastAPI, 36 endpoint, 14 jadval, Alembic (0002: `refresh_tokens.replaced_by`). 27 test (SQLite 25), `ruff` toza. 2026-11-10: Click ikkinchi tranzaksiya xatosi to'langan obunani bekor qilardi (tuzatildi); refresh 30 s grace oynasi (bir vaqtdagi tablar). Bu ikkisi Postgres'da hali sinalmagan |
+| Frontend | **1-bosqich tayyor** (Codex): Next 15 skelet, Tailwind, ESLint, OpenAPI tiplar, API klient, auth context, layout. `lint`/`typecheck`/`build` yashil. Refresh oqimi haqiqiy backend bilan hali sinalmagan. Keyingisi: 2-bosqich |
 | Deploy | `backend/render.yaml` yozilgan, **Render'da hali yaratilmagan**. Frontend bloki `frontend/AGENTS.md` 6-bo'limda |
 | Yuklama testi | `backend/loadtest/k6.js` yozilgan, **hali ishga tushirilmagan** (staging kerak) |
 

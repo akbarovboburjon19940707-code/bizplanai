@@ -95,7 +95,12 @@ async def complete(request: Request, session: SessionDep):
         return _resp(f, -6)
     if int(f.get("error") or 0) < 0:
         tx.status = "cancelled"
-        await mark_cancelled(session, p, "click", data={"click_error": f.get("error")})
+        # Boshqa tranzaksiya orqali allaqachon to'langan bo'lsa, faqat shu tranzaksiya bekor bo'ladi
+        if p.status != "paid":
+            await mark_cancelled(session, p, "click", data={"click_error": f.get("error")})
+        else:
+            session.add(PaymentEvent(payment_id=p.id, source="click", event="tx_cancelled",
+                                     data={"click_trans_id": tx.click_trans_id, "click_error": f.get("error")}))
         await session.commit()
         return _resp(f, -9)
     if tx.status == "cancelled" or p.status in ("cancelled", "rejected"):

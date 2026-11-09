@@ -32,4 +32,6 @@ class RefreshToken(TimestampMixin, Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # Rotatsiyada yangi tokenning id si (logout va xavfsizlik yopishida bo'sh qoladi)
+    replaced_by: Mapped[str | None] = mapped_column(String(36))
     user_agent: Mapped[str] = mapped_column(String(255), default="")

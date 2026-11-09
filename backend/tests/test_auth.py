@@ -37,9 +37,8 @@ async def test_refresh_rotation_and_reuse_detection(client):
     r = await client.post("/v1/auth/refresh")
     assert r.status_code == 200
     assert client.cookies.get("bp_refresh") != old_cookie
-    # eski tokenni qayta ishlatish -> barcha sessiyalar yopiladi
-    r = await client.post("/v1/auth/refresh", json={"refresh_token": old_cookie}, cookies={"bp_refresh": ""})
-    assert r.status_code == 401 and r.json()["error"]["code"] == "token_reused"
+    # eski tokenni qayta ishlatish grace oynasidan keyin aniqlanadi:
+    # test_refresh_reuse_after_grace_still_detected
 
 
 async def test_me_requires_auth(client):
@@ -111,3 +110,49 @@ async def test_admin_requires_totp_and_role(client):
     assert r.status_code == 200
     stats = await client.get("/v1/admin/stats", headers=auth(r.json()["access_token"]))
     assert stats.status_code == 200 and stats.json()["users_total"] == 2
+
+
+async def test_concurrent_refresh_grace_does_not_kill_sessions(client):
+    """Ikki tab bir vaqtda eski cookie bilan refresh qilsa, hamma sessiya yopilmasligi kerak."""
+    await register(client)
+    cookie = client.cookies.get("bp_refresh")
+    client.cookies.clear()
+    tab1 = await client.post("/v1/auth/refresh", cookies={"bp_refresh": cookie})
+    tab2 = await client.post("/v1/auth/refresh", cookies={"bp_refresh": cookie})
+    assert tab1.status_code == 200 and tab2.status_code == 200
+    for r in (tab1, tab2):
+        nxt = await client.post("/v1/auth/refresh", cookies={"bp_refresh": r.cookies.get("bp_refresh")})
+        assert nxt.status_code == 200
+
+
+async def test_refresh_reuse_after_grace_still_detected(client):
+    from datetime import timedelta
+
+    from sqlalchemy import select
+
+    from app.db.session import sessionmaker
+    from app.models import RefreshToken
+    from app.modules.auth.service import REFRESH_GRACE_SECONDS
+
+    await register(client)
+    cookie = client.cookies.get("bp_refresh")
+    client.cookies.clear()
+    fresh = await client.post("/v1/auth/refresh", cookies={"bp_refresh": cookie})
+    assert fresh.status_code == 200
+    async with sessionmaker()() as s:
+        for t in (await s.scalars(select(RefreshToken).where(RefreshToken.revoked_at.is_not(None)))).all():
+            t.revoked_at -= timedelta(seconds=REFRESH_GRACE_SECONDS + 5)
+        await s.commit()
+    r = await client.post("/v1/auth/refresh", cookies={"bp_refresh": cookie})
+    assert r.status_code == 401 and r.json()["error"]["code"] == "token_reused"
+    r = await client.post("/v1/auth/refresh", cookies={"bp_refresh": fresh.cookies.get("bp_refresh")})
+    assert r.status_code == 401  # hamma sessiya yopilgan
+
+
+async def test_reuse_after_logout_is_not_graced(client):
+    await register(client)
+    cookie = client.cookies.get("bp_refresh")
+    client.cookies.clear()
+    assert (await client.post("/v1/auth/logout", cookies={"bp_refresh": cookie})).status_code == 204
+    r = await client.post("/v1/auth/refresh", cookies={"bp_refresh": cookie})
+    assert r.status_code == 401

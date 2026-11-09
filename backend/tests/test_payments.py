@@ -173,3 +173,19 @@ async def test_credit_used_after_free_limit(client):
     assert plan["quota_source"] == "credit" and plan["ai_requested"] is True
     plan2 = (await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))).json()
     assert plan2["quota_source"] == "free"
+
+
+async def test_click_failed_second_tx_does_not_revoke_paid(client):
+    token = await register(client)
+    pid = (await client.post("/v1/payments", json={"kind": "subscription", "target_id": "pro", "provider": "click"},
+                             headers=auth(token))).json()["payment"]["id"]
+    p1 = (await client.post("/v1/payments/click/prepare", data=click_form(pid, 50000, 0, click_trans_id="1"))).json()
+    p2 = (await client.post("/v1/payments/click/prepare", data=click_form(pid, 50000, 0, click_trans_id="2"))).json()
+    ok = (await client.post("/v1/payments/click/complete", data=click_form(
+        pid, 50000, 1, click_trans_id="1", prepare_id=p1["merchant_prepare_id"]))).json()
+    assert ok["error"] == 0
+    failed = (await client.post("/v1/payments/click/complete", data=click_form(
+        pid, 50000, 1, click_trans_id="2", prepare_id=p2["merchant_prepare_id"], error="-5017"))).json()
+    assert failed["error"] == -9
+    sub = (await client.get("/v1/me", headers=auth(token))).json()["subscription"]
+    assert sub["tariff_code"] == "pro" and sub["status"] == "active"

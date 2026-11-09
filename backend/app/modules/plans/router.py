@@ -1,7 +1,8 @@
 import asyncio
+import secrets
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy import select
 
 from app.core.config import get_settings
@@ -11,7 +12,8 @@ from app.core.ratelimit import rate_limit
 from app.engine.financial_engine import calculate_financial_model
 from app.models import Plan
 from app.modules.plans import service
-from app.modules.plans.schemas import DownloadOut, PlanCreateIn, PlanInput, PlanOut, PreviewOut
+from app.ai.images import sniff_image
+from app.modules.plans.schemas import DownloadOut, ImageOut, PlanCreateIn, PlanInput, PlanOut, PreviewOut
 from app.storage import get_storage
 
 router = APIRouter(prefix="/v1/plans", tags=["plans"])
@@ -24,6 +26,22 @@ async def preview(data: PlanInput):
     except (ValueError, ZeroDivisionError) as exc:
         raise AppError(400, "calculation_error", "Hisoblab bo'lmadi: kiritilgan qiymatlarni tekshiring") from exc
     return PreviewOut(indicators=model["indicators"], tables=model["tables"], context=model["context"])
+
+
+@router.post("/images", response_model=ImageOut, status_code=201,
+             dependencies=[Depends(rate_limit("plan_image", 20, 60))])
+async def upload_image(user: CurrentUser, file: UploadFile = File(...)):
+    """Muqova rasmi (JPG/PNG, 5 MB gacha). Qaytgan image_id PlanInput.rasm_id ga yoziladi; faqat egasi ishlata oladi."""
+    limit = get_settings().max_plan_image_bytes
+    data = await file.read(limit + 1)
+    if len(data) > limit:
+        raise AppError(413, "file_too_large", "Rasm 5 MB dan oshmasligi kerak")
+    kind = sniff_image(data)
+    if not kind:
+        raise AppError(400, "bad_file", "Faqat JPG yoki PNG rasm")
+    image_id = f"{secrets.token_hex(16)}.{kind[0]}"
+    await get_storage().put_bytes(service.image_key(user.id, image_id), data, kind[1])
+    return ImageOut(image_id=image_id)
 
 
 @router.post("", response_model=PlanOut, status_code=202, dependencies=[Depends(rate_limit("plan_create", 10, 60))])

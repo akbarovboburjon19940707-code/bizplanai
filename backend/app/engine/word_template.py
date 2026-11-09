@@ -338,7 +338,33 @@ def _scalars(ctx: dict) -> dict[str, str]:
 
 
 # ── Asosiy funksiya ──
-def render_plan_docx(model_data: dict, output_path: str, ai_sections: dict | None = None) -> str:
+def _insert_picture(doc, p_el, image: bytes) -> None:
+    """Muqova rasmi: 12x7.5 sm ichiga sig'diriladi, markazda."""
+    import io
+
+    from docx.image.image import Image
+    from docx.text.paragraph import Paragraph
+
+    img = Image.from_blob(image)
+    ratio = img.px_height / img.px_width if img.px_width else 0.6
+    width = min(12.0, 7.5 / ratio if ratio else 12.0)
+    _set_para_text(p_el, "")
+    para = Paragraph(p_el, doc._body)
+    para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    para.paragraph_format.first_line_indent = Pt(0)
+    para.paragraph_format.left_indent = Pt(0)
+    run = para.add_run()
+    run.add_picture(io.BytesIO(image), width=Cm(width))
+    # python-docx id ni faqat asosiy qismdan hisoblaydi; header'dagi rasm/matn maydoni bilan bir xil id
+    # bo'lsa Word faylni ochmaydi. Barcha qismlardagi eng katta id dan keyingisini beramiz.
+    used = [int(v) for part in doc.part.package.iter_parts() if hasattr(part, "_element")
+            for v in part._element.xpath("//wp:docPr/@id") if str(v).isdigit()]
+    for doc_pr in run._r.xpath(".//wp:docPr"):
+        doc_pr.set("id", str(max(used, default=0) + 1))
+
+
+def render_plan_docx(model_data: dict, output_path: str, ai_sections: dict | None = None,
+                     image: bytes | None = None) -> str:
     ctx = model_data.get("context", {})
     ind = model_data.get("indicators", {})
     tables = model_data.get("tables", [])
@@ -361,7 +387,9 @@ def render_plan_docx(model_data: dict, output_path: str, ai_sections: dict | Non
         for p_el in list(root.iter(qn("w:p"))):
             text = "".join(t.text or "" for t in _texts(p_el)).strip()
             m = re.fullmatch(r"\{\{\s*(matn|jadval):([\w\-]+)\s*\}\}", text)
-            if m and m.group(1) == "matn":
+            if m and m.group(1) == "matn" and m.group(2) == "rasm" and image:
+                _insert_picture(doc, p_el, image)
+            elif m and m.group(1) == "matn":
                 _expand_block(p_el, blocks.get(m.group(2), []))
             elif m:
                 for i, t in enumerate(by_ilova.get(m.group(2), [])[: INLINE_TABLES.get(m.group(2), 99)]):

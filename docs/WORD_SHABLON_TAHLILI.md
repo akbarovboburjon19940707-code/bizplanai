@@ -79,4 +79,8 @@ AI matnlari, "N-jadval" sarlavhasini qidirib jadval qo'yish, oxirida barcha ilov
 - Word'da tekshirildi: 4 faoliyat turining hammasi ochiladi, 19-20 bet.
 - Muhim: bo'lim uzilishi uchun python-docx `sectPr.clone()` ishlatiladi (rsid atributlari bilan nusxa Word'da
   "fayl buzilgan" xatosini beradi).
-- Hali yo'q: muqova rasmi yuklash (joy olib tashlanadi), JShShIR va pasport maydonlari formada (bo'sh chiziq qoladi).
+- Muqova rasmi (2026-11-10): foydalanuvchi yuklaydi (`POST /v1/plans/images`, JPG/PNG, 5 MB) yoki avtomatik:
+  AI loyiha nomidan inglizcha qidiruv so'zi tuzadi (AI yo'q bo'lsa faoliyat turi bo'yicha tayyor so'z), Pexels'dan
+  rasm olinadi (`PEXELS_API_KEY`, bo'lmasa rasmsiz). Rasm docPr id barcha qismlar bo'yicha takrorlanmas qilinadi
+  (header'dagi shakl bilan bir xil id bo'lsa Word faylni ochmaydi).
+- JShShIR formada qo'lda kiritiladi (14 raqam). Pasport ma'lumotlari bo'sh chiziq bo'lib qoladi (qo'lda to'ldiriladi).

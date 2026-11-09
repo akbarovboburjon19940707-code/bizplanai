@@ -192,6 +192,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/plans/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Image
+         * @description Muqova rasmi (JPG/PNG, 5 MB gacha). Qaytgan image_id PlanInput.rasm_id ga yoziladi; faqat egasi ishlata oladi.
+         */
+        post: operations["upload_image_v1_plans_images_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/plans": {
         parameters: {
             query?: never;
@@ -653,6 +673,11 @@ export interface components {
             /** Has Receipt */
             has_receipt: boolean;
         };
+        /** Body_upload_image_v1_plans_images_post */
+        Body_upload_image_v1_plans_images_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_receipt_v1_payments__payment_id__receipt_post */
         Body_upload_receipt_v1_payments__payment_id__receipt_post: {
             /** File */
@@ -680,6 +705,11 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ImageOut */
+        ImageOut: {
+            /** Image Id */
+            image_id: string;
         };
         /** LoginIn */
         LoginIn: {
@@ -787,6 +817,8 @@ export interface components {
             mulk?: string | null;
             /** Stir */
             stir?: string | null;
+            /** Jshshir */
+            jshshir?: string | null;
             /** Manzil */
             manzil?: string | null;
             /** Bank */
@@ -875,6 +907,13 @@ export interface components {
             yangi_xodim?: number | null;
             /** Yangi Ishchi Oylik */
             yangi_ishchi_oylik?: number | null;
+            /** Rasm Id */
+            rasm_id?: string | null;
+            /**
+             * Rasm Avto
+             * @default true
+             */
+            rasm_avto: boolean;
         };
         /** PlanOut */
         PlanOut: {
@@ -1507,6 +1546,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PreviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_image_v1_plans_images_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_image_v1_plans_images_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageOut"];
                 };
             };
             /** @description Validation Error */

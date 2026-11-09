@@ -29,6 +29,7 @@ class PlanInput(BaseModel):
     fio: str | None = Field(default=None, max_length=150)
     mulk: str | None = Field(default=None, max_length=50)
     stir: str | None = Field(default=None, pattern=r"^\d{9}$")
+    jshshir: str | None = Field(default=None, pattern=r"^\d{14}$")  # qo'lda kiritiladi, faqat hujjatga yoziladi
     manzil: str | None = Field(default=None, max_length=300)
     bank: str | None = Field(default=None, max_length=150)
     soliq_turi: Literal["ytt", "mchj"] = "ytt"
@@ -84,6 +85,10 @@ class PlanInput(BaseModel):
             raise ValueError("quvvat foizlari 0 dan 150 gacha bo'lishi kerak")
         return self
 
+    # Muqova rasmi: POST /v1/plans/images natijasi yoki avtomatik (faoliyat turiga qarab)
+    rasm_id: str | None = Field(default=None, pattern=r"^[a-f0-9]{32}\.(jpg|png)$")
+    rasm_avto: bool = True
+
     def engine_payload(self) -> dict:
         return {k: v for k, v in self.model_dump().items() if v is not None}
 
@@ -111,6 +116,10 @@ class PreviewOut(BaseModel):
     indicators: dict
     tables: list
     context: dict
+
+
+class ImageOut(BaseModel):
+    image_id: str
 
 
 class DownloadOut(BaseModel):

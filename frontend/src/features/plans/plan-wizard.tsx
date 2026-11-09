@@ -22,7 +22,7 @@ const DRAFT_KEY = "bp_plan_draft"; // faqat forma ma'lumoti, token emas
 
 // Har bosqichda "Keyingi" bosilganda tekshiriladigan maydonlar
 const STEP_FIELDS: FieldPath<PlanFormValues>[][] = [
-  ["faoliyat_turi", "loyiha_nomi", "stir", "soliq_turi"],
+  ["faoliyat_turi", "loyiha_nomi", "stir", "jshshir", "soliq_turi"],
   ["loyiha_qiymati", "oz_mablag", "kredit", "foiz", "muddat", "imtiyoz"],
   ["mahsulotlar", "tannarx_ulushi"],
   ["direktor", "xodim", "yangi_xodim"],
@@ -44,6 +44,7 @@ export function PlanWizard() {
   const { status } = useAuth();
   const [step, setStep] = useState(0);
   const [submitError, setSubmitError] = useState<{ message: string; quota?: boolean } | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null); // faqat xotirada
   const form = useForm<PlanFormValues>({ resolver: zodResolver(planFormSchema), defaultValues, mode: "onTouched" });
   const preview = usePlanPreview(form.control);
 
@@ -69,9 +70,16 @@ export function PlanWizard() {
   const onSubmit = form.handleSubmit(async (values) => {
     setSubmitError(null);
     try {
+      const input = toPlanInput(values);
+      if (values.rasm_turi === "yuklash" && coverFile) {
+        const body = new FormData();
+        body.append("file", coverFile);
+        const { image_id } = await apiRequest<{ image_id: string }>("/v1/plans/images", { method: "POST", body });
+        input.rasm_id = image_id;
+      }
       const plan = await apiRequest<PlanOut>("/v1/plans", {
         method: "POST",
-        body: JSON.stringify({ input: toPlanInput(values), use_ai: values.use_ai }),
+        body: JSON.stringify({ input, use_ai: values.use_ai }),
       });
       window.sessionStorage.removeItem(DRAFT_KEY);
       router.push(`/reja/?id=${encodeURIComponent(plan.id)}`);
@@ -87,7 +95,7 @@ export function PlanWizard() {
     }
   });
 
-  const StepView = [StepProject, StepFinance, StepProducts, StepStaff][step];
+  const StepView = [null, StepFinance, StepProducts, StepStaff][step];
 
   return (
     <FormProvider {...form}>
@@ -123,7 +131,15 @@ export function PlanWizard() {
               ))}
             </ol>
           </nav>
-          <div className="mt-5">{step === 4 ? <StepResult preview={preview} /> : StepView ? <StepView /> : null}</div>
+          <div className="mt-5">
+            {step === 0 ? (
+              <StepProject coverFile={coverFile} onCoverFile={setCoverFile} />
+            ) : step === 4 ? (
+              <StepResult preview={preview} />
+            ) : StepView ? (
+              <StepView />
+            ) : null}
+          </div>
 
           {submitError ? (
             <p role="alert" className="mt-4 rounded-control bg-red-50 p-3 text-sm text-red-700">

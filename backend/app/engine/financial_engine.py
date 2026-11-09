@@ -47,7 +47,7 @@ def calculate_financial_model(payload: dict) -> dict:
         "imtiyoz": m["imtiyoz"],
         "irr": irr_pct,
         "ishchi_oylik": w["ishchi_oylik"],
-        "jshshir": "",
+        "jshshir": s("jshshir"),
         "kredit": m["kredit"],
         "kredit_turi": s("kredit_turi", "differensial"),
         "loyiha_nomi": s("loyiha_nomi"),

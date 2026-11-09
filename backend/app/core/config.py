@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     catalog_file_prefix: str = "catalog/pdfs/"
     download_url_ttl_seconds: int = 600
     max_receipt_bytes: int = 10 * 1024 * 1024
+    max_plan_image_bytes: int = 5 * 1024 * 1024
+    # Muqova rasmini avtomatik topish (Pexels: bepul, tijoriy foydalanishga ruxsat). Bo'sh bo'lsa o'chiq.
+    pexels_api_key: str = ""
 
     telegram_bot_token: str = ""
     telegram_bot_name: str = "uzbiznesssbot"

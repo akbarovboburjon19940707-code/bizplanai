@@ -199,8 +199,9 @@ def generate_swot_and_market_analysis(ctx: dict) -> dict:
     }
 
 
-def generate_word_report(model_data: dict, output_path: str, ai_sections: dict | None = None) -> str:
+def generate_word_report(model_data: dict, output_path: str, ai_sections: dict | None = None,
+                         image: bytes | None = None) -> str:
     """Biznes-reja Word hujjati: bank shabloni asosida (app/engine/word_template.py)."""
     from app.engine.word_template import render_plan_docx
 
-    return render_plan_docx(model_data, output_path, ai_sections)
+    return render_plan_docx(model_data, output_path, ai_sections, image)

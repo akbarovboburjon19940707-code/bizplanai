@@ -84,6 +84,10 @@ Hisob-kitob "Asosiy shablon npv 10 yillik.xls" asosida (`docs/EXCEL_SHABLON_TAHL
 - `boshqa_kommunal`: yillik summa. `elektr`, `gaz`, `suv`, `oqava`: oylik miqdor.
 - `quvvat`: 10 ta foiz (0-150), standart 75, 77, 80, 82, 85, 90, 92, 95, 100, 100. `diskont`: foiz, standart 14.
 - `kredit_turi` standarti endi `differensial` (shablondagidek).
+- `jshshir`: 14 raqam, ixtiyoriy, qo'lda kiritiladi (faqat Word hujjatiga yoziladi).
+- Muqova rasmi: `POST /v1/plans/images` (kirgan foydalanuvchi, multipart `file`, JPG/PNG, 5 MB gacha, 20/daq)
+  -> 201 `{image_id}`; uni `PlanInput.rasm_id` ga yozing (faqat o'z rasmingiz ishlaydi). `rasm_avto` (standart `true`):
+  rasm yuklanmasa faoliyat turiga mos rasm avtomatik qo'yiladi (server `PEXELS_API_KEY` bo'lsa). Xatolar: `bad_file`, `file_too_large`.
 - `indicators` ga qo'shildi: `dpp`, `dscr_min`, `zararsizlik_nuqtasi` (%). `npv`/`irr`/`payback`/`dpp` sof pul oqimidan (soliq va kredit foizidan keyin), 10 yil.
 Noma'lum maydon yuborilsa 422. Ma'lumotnomalar: `GET /v1/meta/activity-types`, `GET /v1/meta/business-categories`.
 

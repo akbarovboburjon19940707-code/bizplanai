@@ -40,6 +40,10 @@ export const planFormSchema = z.object({
     .string()
     .regex(/^(\d{9})?$/, "STIR 9 ta raqamdan iborat")
     .optional(),
+  jshshir: z
+    .string()
+    .regex(/^(\d{14})?$/, "JShShIR 14 ta raqamdan iborat")
+    .optional(),
   faoliyat_turi_text: text(200),
   manzil: text(300),
   bank: text(150),
@@ -80,6 +84,7 @@ export const planFormSchema = z.object({
   quvvat: z.array(z.number().min(0).max(150)).length(10),
   diskont: z.number().min(0).max(100),
   use_ai: z.boolean(),
+  rasm_turi: z.enum(["avto", "yuklash", "yoq"]),
 });
 
 export type PlanFormValues = z.infer<typeof planFormSchema>;
@@ -98,13 +103,14 @@ export const defaultValues: PlanFormValues = {
   quvvat: [...DEFAULT_CAPACITY],
   diskont: DEFAULT_DISCOUNT,
   use_ai: true,
+  rasm_turi: "avto",
 };
 
 const sameList = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 
 /** Forma qiymatlaridan API uchun PlanInput: bo‘sh maydonlar yuborilmaydi, standart sozlamalar ham. */
 export function toPlanInput(values: PlanFormValues): PlanInput {
-  const { quvvat, diskont, mahsulotlar, ...rest } = values;
+  const { quvvat, diskont, mahsulotlar, rasm_turi, ...rest } = values;
   const out: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(rest)) {
     if (key === "use_ai" || value === undefined || value === null || value === "") continue;
@@ -120,5 +126,6 @@ export function toPlanInput(values: PlanFormValues): PlanInput {
   out.mahsulot = mahsulotlar.map((p) => p.nomi.trim()).join(", ");
   if (!sameList(quvvat, DEFAULT_CAPACITY)) out.quvvat = quvvat;
   if (diskont !== DEFAULT_DISCOUNT) out.diskont = diskont;
+  out.rasm_avto = rasm_turi === "avto";
   return out as PlanInput;
 }

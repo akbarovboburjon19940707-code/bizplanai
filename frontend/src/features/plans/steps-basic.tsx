@@ -2,12 +2,13 @@
 
 import { useFormContext } from "react-hook-form";
 import { uz } from "@/messages/uz";
+import { CoverPicker } from "./cover-picker";
 import { ChoiceField, NumberField, Section, TextField } from "./fields";
 import { ACTIVITIES, type PlanFormValues } from "./schema";
 
 const t = uz.plans;
 
-export function StepProject() {
+export function StepProject({ coverFile, onCoverFile }: { coverFile: File | null; onCoverFile: (f: File | null) => void }) {
   return (
     <div className="flex flex-col gap-4">
       <section className="rounded-card border border-border bg-white p-4 shadow-sm sm:p-6">
@@ -26,6 +27,7 @@ export function StepProject() {
         <TextField name="fio" label={t.project.fio} />
         <TextField name="mulk" label={t.project.mulk} placeholder="MChJ, YaTT, FX" />
         <TextField name="stir" label={t.project.stir} placeholder={t.project.stir_ph} />
+        <TextField name="jshshir" label={t.project.jshshir} placeholder={t.project.jshshir_ph} />
         <TextField name="faoliyat_turi_text" label={t.project.faoliyat_turi_text} />
         <TextField name="bank" label={t.project.bank} />
         <TextField name="manzil" label={t.project.manzil} placeholder={t.project.manzil_ph} className="sm:col-span-2" />
@@ -41,6 +43,7 @@ export function StepProject() {
           />
         </div>
       </Section>
+      <CoverPicker file={coverFile} onFile={onCoverFile} />
     </div>
   );
 }

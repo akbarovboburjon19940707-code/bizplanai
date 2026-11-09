@@ -93,4 +93,5 @@ envVarGroups:
       - { key: OPENAI_API_KEY, sync: false }
       - { key: DEEPSEEK_API_KEY, sync: false }
       - { key: ANTHROPIC_API_KEY, sync: false }
+      - { key: PEXELS_API_KEY, sync: false }
       - { key: SENTRY_DSN, sync: false }

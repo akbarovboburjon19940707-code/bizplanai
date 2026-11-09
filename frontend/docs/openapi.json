@@ -523,6 +523,66 @@
         }
       }
     },
+    "/v1/plans/images": {
+      "post": {
+        "tags": [
+          "plans"
+        ],
+        "summary": "Upload Image",
+        "description": "Muqova rasmi (JPG/PNG, 5 MB gacha). Qaytgan image_id PlanInput.rasm_id ga yoziladi; faqat egasi ishlata oladi.",
+        "operationId": "upload_image_v1_plans_images_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_image_v1_plans_images_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/plans": {
       "post": {
         "tags": [
@@ -2065,6 +2125,20 @@
         ],
         "title": "AdminPaymentOut"
       },
+      "Body_upload_image_v1_plans_images_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_image_v1_plans_images_post"
+      },
       "Body_upload_receipt_v1_payments__payment_id__receipt_post": {
         "properties": {
           "file": {
@@ -2137,6 +2211,19 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "ImageOut": {
+        "properties": {
+          "image_id": {
+            "type": "string",
+            "title": "Image Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image_id"
+        ],
+        "title": "ImageOut"
       },
       "LoginIn": {
         "properties": {
@@ -2463,6 +2550,18 @@
               }
             ],
             "title": "Stir"
+          },
+          "jshshir": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{14}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jshshir"
           },
           "manzil": {
             "anyOf": [
@@ -2969,6 +3068,23 @@
               }
             ],
             "title": "Yangi Ishchi Oylik"
+          },
+          "rasm_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}\\.(jpg|png)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rasm Id"
+          },
+          "rasm_avto": {
+            "type": "boolean",
+            "title": "Rasm Avto",
+            "default": true
           }
         },
         "additionalProperties": false,

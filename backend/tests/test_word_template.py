@@ -103,3 +103,12 @@ def test_blank_fields_get_lines_and_ai_text_used(tmp_path):
     assert "AI bozor matni 1." in body and "AI bozor matni 2." in body
     rows = {r.cells[1].text.strip(): r.cells[2].text.strip() for r in doc.tables[1].rows[1:]}
     assert rows["STIR:"].startswith("____")
+
+
+def test_default_text_color_matches_body(tmp_path):
+    """Jadvallardagi (rangi berilmagan) matn asosiy matn bilan bir xil qora bo'lishi kerak, kulrang emas."""
+    _, path = render(tmp_path)
+    with zipfile.ZipFile(path) as z:
+        styles = z.read("word/styles.xml").decode()
+    default = re.search(r"<w:rPrDefault>.*?</w:rPrDefault>", styles, re.S).group(0)
+    assert '<w:color w:val="000000"/>' in default

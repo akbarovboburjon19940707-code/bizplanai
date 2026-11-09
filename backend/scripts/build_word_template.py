@@ -277,6 +277,16 @@ def main():
                 sdt.addprevious(r)
                 sdt.getparent().remove(sdt)
 
+    # Standart matn rangi asl shablonda kulrang (#595959): rangi berilmagan matn (jadvallar, ilovalar) asosiy
+    # matndan (qora) och chiqardi. Hamma joyda bir xil bo'lishi uchun standart rang qora.
+    defaults = doc.styles.element.find(qn("w:docDefaults"))
+    color = defaults.find(".//" + qn("w:rPrDefault") + "/" + qn("w:rPr") + "/" + qn("w:color"))
+    if color is None:
+        sys.exit("docDefaults rangini topib bo'lmadi")
+    for attr in ("w:themeColor", "w:themeTint", "w:themeShade"):
+        color.attrib.pop(qn(attr), None)
+    color.set(qn("w:val"), "000000")
+
     doc.core_properties.title = "BIZNES-REJA"  # muqova va headerdagi sarlavha shu xususiyatdan olinadi
     doc.save(OUT)
     leftovers = sorted({m for p in Document(OUT).paragraphs for m in re.findall(r"\{\{[^}]+\}\}", p.text)})

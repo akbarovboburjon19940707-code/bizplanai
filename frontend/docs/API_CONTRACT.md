@@ -44,6 +44,7 @@ Frontend `message` ni foydalanuvchiga ko'rsatadi, mantiqni `code` bo'yicha qurad
 - Refresh token httpOnly cookie'da (`bp_refresh`, path `/v1/auth`); JS uni ko'rmaydi. `/v1/auth/*` so'rovlari `credentials: "include"` bilan yuboriladi.
 - Sahifa ochilganda `POST /v1/auth/refresh`: 200 bo'lsa foydalanuvchi kirgan, 401 bo'lsa mehmon.
 - Bir vaqtda bir nechta 401 kelsa, refresh **bitta** bajariladi (umumiy promise), qolganlari kutadi.
+- Bir nechta tab bir vaqtda refresh qilsa (30 soniya ichida bir xil eski cookie), server hammasiga yangi sessiya beradi; `token_reused` faqat 30 soniyadan keyingi qayta ishlatishda qaytadi.
 
 | Metod va yo'l | Body | Javob |
 | --- | --- | --- |

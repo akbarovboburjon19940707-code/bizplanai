@@ -1,0 +1,13 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript"],
+  "rules": {
+    "react/no-danger": "error",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "MemberExpression[property.name='innerHTML']",
+        "message": "Use React rendering or textContent; innerHTML is not allowed."
+      }
+    ]
+  }
+}

@@ -39,8 +39,10 @@ async def test_ai_sections_appended_with_fallback(client, monkeypatch):
     from app.core.security import decode_token
     from app.storage import get_storage
     path = get_storage().path_for(decode_token(url.rsplit("/", 1)[-1], "file")["key"])
-    headings = [p.text for p in Document(path).paragraphs if p.style.name.startswith("Heading")]
-    assert "Qo'shimcha tahlil" in headings and "SWOT tahlili" in headings
+    texts = [p.text for p in Document(path).paragraphs]
+    # AI matnlari shablondagi o'z bo'limlariga joylanadi (alohida bob emas), belgilar qolmaydi
+    assert sum("Loyiha bozorda barqaror talabga ega." in t for t in texts) >= 6
+    assert not any("{{" in t for t in texts)
 
 
 async def test_ai_budget_stops_calls(monkeypatch):

@@ -5,7 +5,6 @@ import tempfile
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.ai.appendix import append_ai_chapter
 from app.ai.service import generate_sections
 from app.core.config import get_settings
 from app.core.security import utcnow
@@ -49,13 +48,12 @@ async def enqueue(plan_id: str) -> None:
     await pool.enqueue_job("generate_plan", plan_id, _job_id=f"plan:{plan_id}")
 
 
-def _render_files(payload: dict, workdir: str) -> tuple[dict, str, str]:
-    model = calculate_financial_model(payload)
+def _render_files(model: dict, workdir: str, ai_sections: dict | None = None) -> tuple[str, str]:
     word = os.path.join(workdir, "biznes_reja.docx")
     excel = os.path.join(workdir, "jadvallar.xlsx")
-    generate_word_report(model, word)
+    generate_word_report(model, word, ai_sections)  # AI matnlari shablondagi o'z bo'limlariga joylanadi
     generate_excel_report(model, excel)
-    return model, word, excel
+    return word, excel
 
 
 async def run_generation(plan_id: str) -> None:
@@ -69,12 +67,12 @@ async def run_generation(plan_id: str) -> None:
         try:
             payload = plan.input_json["engine"]
             with tempfile.TemporaryDirectory() as workdir:
-                model, word, excel = await asyncio.to_thread(_render_files, payload, workdir)
+                model = await asyncio.to_thread(calculate_financial_model, payload)
+                sections = None
                 if plan.ai_requested:
                     sections = await generate_sections(model["context"], model["indicators"])
-                    if sections:
-                        await asyncio.to_thread(append_ai_chapter, word, sections)
-                        plan.ai_used = True
+                    plan.ai_used = bool(sections)
+                word, excel = await asyncio.to_thread(_render_files, model, workdir, sections)
                 storage = get_storage()
                 base = f"plans/{plan.user_id}/{plan.id}"
                 await storage.put_file(f"{base}/biznes_reja.docx", word, DOCX)

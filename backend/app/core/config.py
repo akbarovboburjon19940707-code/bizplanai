@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     max_plan_image_bytes: int = 5 * 1024 * 1024
     # Muqova rasmini avtomatik topish (Pexels: bepul, tijoriy foydalanishga ruxsat). Bo'sh bo'lsa o'chiq.
     pexels_api_key: str = ""
+    pixabay_api_key: str = ""  # Pexels kaliti bo'lmasa (yoki topilmasa) shu ishlatiladi
 
     telegram_bot_token: str = ""
     telegram_bot_name: str = "uzbiznesssbot"

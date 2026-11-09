@@ -126,3 +126,22 @@ def test_picture_id_unique_across_parts(tmp_path):
         ids = [i for n in z.namelist() if re.match(r"word/(document|header\d*|footer\d*)\.xml$", n)
                for i in re.findall(r'<wp:docPr id="(\d+)"', z.read(n).decode())]
     assert len(ids) == len(set(ids)) >= 2
+
+
+async def test_fetch_cover_image_pixabay(monkeypatch):
+    import app.ai.images as images
+    from app.core.config import get_settings
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/":
+            assert request.url.params["q"] == "farm agriculture field"
+            return httpx.Response(200, json={"hits": [{"largeImageURL": "https://pixabay.com/get/x.png", "user": "Bobur"}]})
+        assert request.url.host == "pixabay.com"
+        return httpx.Response(200, content=png())
+
+    real = httpx.AsyncClient
+    monkeypatch.setattr(images.httpx, "AsyncClient", lambda **kw: real(transport=httpx.MockTransport(handler), **kw))
+    monkeypatch.setattr(get_settings(), "pixabay_api_key", "pb-key")
+    monkeypatch.setattr(get_settings(), "ai_enabled", False)
+    cover = await images.fetch_cover_image({"faoliyat_turi": "qishloq_xojaligi"})
+    assert cover and cover.credit == "Foto: Bobur / Pixabay"

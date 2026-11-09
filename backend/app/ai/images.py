@@ -1,7 +1,8 @@
-"""Biznes-reja muqovasi uchun rasm: foydalanuvchi yuklagan yoki faoliyat turiga qarab avtomatik (Pexels).
+"""Biznes-reja muqovasi uchun rasm: foydalanuvchi yuklagan yoki faoliyat turiga qarab avtomatik (Pexels yoki Pixabay).
 
 Avtomatik rasm: AI loyiha nomi va mahsulotdan 2-4 ta inglizcha qidiruv so'zi tuzadi (AI bo'lmasa faoliyat turi
-bo'yicha tayyor so'zlar), Pexels API dan landscape rasm olinadi. PEXELS_API_KEY bo'lmasa o'chiq.
+bo'yicha tayyor so'zlar), Pexels yoki Pixabay API dan landscape rasm olinadi. Ikkala kalit ham bo'lmasa o'chiq.
+Pexels 2026-11 holatiga yangi kalit bermayapti, shuning uchun Pixabay qo'shilgan.
 Pexels litsenziyasi rasmlarni bepul va tijoriy maqsadda ishlatishga ruxsat beradi; Pexels API qoidalari esa
 Pexels va fotografni ko'rsatishni so'raydi, shuning uchun rasm ostiga "Foto: <fotograf> / Pexels" yoziladi.
 Tashqi xizmatga faqat qidiruv so'zlari ketadi (shaxsiy ma'lumot emas).
@@ -18,7 +19,9 @@ from app.core.config import get_settings
 log = logging.getLogger(__name__)
 
 PEXELS_SEARCH = "https://api.pexels.com/v1/search"
-ALLOWED_IMAGE_HOSTS = ("images.pexels.com",)
+PIXABAY_SEARCH = "https://pixabay.com/api/"
+PEXELS_HOSTS = ("images.pexels.com",)
+PIXABAY_HOSTS = ("pixabay.com", "cdn.pixabay.com")
 FALLBACK_QUERY = {
     "ishlab_chiqarish": "factory production workshop",
     "qishloq_xojaligi": "farm agriculture field",
@@ -73,8 +76,8 @@ async def _ai_query(ctx: dict) -> str | None:
     return None
 
 
-async def _download(client: httpx.AsyncClient, url: str, max_bytes: int) -> bytes | None:
-    if urlparse(url).hostname not in ALLOWED_IMAGE_HOSTS or urlparse(url).scheme != "https":
+async def _download(client: httpx.AsyncClient, url: str, max_bytes: int, hosts: tuple[str, ...]) -> bytes | None:
+    if urlparse(url).hostname not in hosts or urlparse(url).scheme != "https":
         return None
     async with client.stream("GET", url) as r:
         if r.status_code != 200:
@@ -87,30 +90,54 @@ async def _download(client: httpx.AsyncClient, url: str, max_bytes: int) -> byte
     return data if sniff_image(data) else None
 
 
-def _credit(photo: dict) -> str:
-    name = re.sub(r"\s+", " ", str(photo.get("photographer") or "")).strip()[:80]
-    return f"Foto: {name} / Pexels" if name else "Foto: Pexels"
+def _credit(name: object, source: str) -> str:
+    name = re.sub(r"\s+", " ", str(name or "")).strip()[:80]
+    return f"Foto: {name} / {source}" if name else f"Foto: {source}"
+
+
+async def _from_pexels(client: httpx.AsyncClient, key: str, query: str, max_bytes: int) -> CoverImage | None:
+    r = await client.get(PEXELS_SEARCH, headers={"Authorization": key},
+                         params={"query": query, "orientation": "landscape", "per_page": 5, "size": "medium"})
+    if r.status_code != 200:
+        log.warning("Pexels javobi: %s", r.status_code)
+        return None
+    for photo in r.json().get("photos", []):
+        url = (photo.get("src") or {}).get("large")
+        data = await _download(client, url, max_bytes, PEXELS_HOSTS) if url else None
+        if data:
+            return CoverImage(data, _credit(photo.get("photographer"), "Pexels"))
+    return None
+
+
+async def _from_pixabay(client: httpx.AsyncClient, key: str, query: str, max_bytes: int) -> CoverImage | None:
+    """Pixabay: rasm yuklab olinib hujjatga joylanadi (hotlink emas); Content License tijoriy foydalanishga ruxsat beradi."""
+    r = await client.get(PIXABAY_SEARCH, params={"key": key, "q": query[:100], "image_type": "photo",
+                                                 "orientation": "horizontal", "safesearch": "true", "per_page": 5})
+    if r.status_code != 200:
+        log.warning("Pixabay javobi: %s", r.status_code)
+        return None
+    for hit in r.json().get("hits", []):
+        url = hit.get("largeImageURL") or hit.get("webformatURL")
+        data = await _download(client, url, max_bytes, PIXABAY_HOSTS) if url else None
+        if data:
+            return CoverImage(data, _credit(hit.get("user"), "Pixabay"))
+    return None
 
 
 async def fetch_cover_image(ctx: dict) -> CoverImage | None:
-    """Faoliyat turiga mos muqova rasmi yoki None (kalit yo'q, topilmadi, tarmoq xatosi)."""
+    """Faoliyat turiga mos muqova rasmi yoki None (kalit yo'q, topilmadi, tarmoq xatosi).
+    Manbalar tartibi: Pexels (PEXELS_API_KEY), keyin Pixabay (PIXABAY_API_KEY); qaysi kalit bo'lsa o'sha ishlaydi."""
     s = get_settings()
-    if not s.pexels_api_key:
+    sources = [(fn, key) for fn, key in ((_from_pexels, s.pexels_api_key), (_from_pixabay, s.pixabay_api_key)) if key]
+    if not sources:
         return None
     query = await _ai_query(ctx) or FALLBACK_QUERY.get(ctx.get("faoliyat_turi") or "", FALLBACK_QUERY["xizmat"])
-    try:
-        async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
-            r = await client.get(PEXELS_SEARCH, headers={"Authorization": s.pexels_api_key},
-                                 params={"query": query, "orientation": "landscape", "per_page": 5, "size": "medium"})
-            if r.status_code != 200:
-                log.warning("Pexels javobi: %s", r.status_code)
-                return None
-            for photo in r.json().get("photos", []):
-                url = (photo.get("src") or {}).get("large")
-                if url:
-                    data = await _download(client, url, s.max_plan_image_bytes)
-                    if data:
-                        return CoverImage(data, _credit(photo))
-    except (httpx.HTTPError, ValueError) as exc:
-        log.warning("Muqova rasmini olib bo'lmadi: %s", exc)
+    async with httpx.AsyncClient(timeout=20, follow_redirects=False) as client:
+        for fn, key in sources:
+            try:
+                cover = await fn(client, key, query, s.max_plan_image_bytes)
+                if cover:
+                    return cover
+            except (httpx.HTTPError, ValueError) as exc:
+                log.warning("Muqova rasmini olib bo'lmadi (%s): %s", fn.__name__, exc)
     return None

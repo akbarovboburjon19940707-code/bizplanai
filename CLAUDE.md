@@ -66,7 +66,7 @@ Eski loyiha ZIP'larida haqiqiy maxfiy ma'lumotlar bo'lgan va ular boshqa joylarg
 1. Click va Payme maxfiy kalitlarini kabinetlardan **qayta yaratish** (eski `providers/*/.env.local` da edi).
 2. Barcha JWT/SECRET_KEY, admin parolini yangilash; Mongo/DB parollari.
 3. Telegram bot tokenini @BotFather orqali qayta yaratish (agar ZIP'larda bo'lgan bo'lsa).
-4. Katalogdagi 269 PDF turgan Cloudflare R2 bucket hozir **ochiq** (`r2.dev`): Public Access ni o'chirish. Unda eski saytning `generated/` (mijoz hujjatlari) ham bor. Yangi backend tayyor (rasm va PDF imzolangan havola bilan). Yopilgach eski jonli saytda katalog rasmlari ko'rinmaydi (PDF yuklab olish ishlaydi: S3 API orqali).
+4. ~~R2 bucket ochiq~~ **Bajarildi 2026-11-10**: `bizplanai-files` da Public Development URL o'chirildi, custom domen yo'q; `r2.dev` havolalari 401 qaytaradi (tekshirildi). Eski jonli saytda katalog rasmlari endi ko'rinmaydi (PDF yuklab olish S3 API orqali). Bucket'da `generated/` papkasi yo'q ekan.
 5. Eski GitHub repo (`uzbiznesss_site`, 112 commit) tarixida maxfiy fayl bo'lsa, repo'ni private qilish yoki tarixni tozalash.
 6. Mijozlarning chek rasmlari/foydalanuvchi bazasi ZIP'larda edi: kelajakda bunday fayllarni arxivga qo'shma.
 

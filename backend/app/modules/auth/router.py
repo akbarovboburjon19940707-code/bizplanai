@@ -1,6 +1,5 @@
 import json
 import secrets
-import time
 
 from fastapi import APIRouter, Cookie, Depends, Request, Response
 from sqlalchemy import select
@@ -16,6 +15,9 @@ from app.modules.auth import service
 from app.modules.auth.schemas import (LoginIn, RefreshIn, RegisterIn, TelegramLoginInitOut,
                                       TelegramLoginPollOut, TelegramWebAppIn, TokenOut)
 from app.modules.telegram.service import get_or_create_telegram_user, validate_init_data
+
+LOGIN_MAX_FAILS = 10
+LOGIN_LOCK_SECONDS = 900
 
 router = APIRouter(prefix="/v1/auth", tags=["auth"])
 TG_LOGIN_TTL = 300
@@ -34,22 +36,27 @@ async def register(data: RegisterIn, request: Request, response: Response, sessi
 
 @router.post("/login", response_model=TokenOut, dependencies=[Depends(rate_limit("login", 20, 60))])
 async def login(data: LoginIn, request: Request, response: Response, session: SessionDep):
-    # Bitta raqamga parol tanlab ko'rishdan himoya (IP dan qat'i nazar)
+    # Bitta raqamga parol tanlab ko'rishdan himoya (IP dan qat'i nazar): faqat noto'g'ri urinishlar sanaladi,
+    # oxirgi xatodan 15 daqiqa o'tguncha blok; to'g'ri kirish hisoblagichni tozalaydi.
     r = get_redis()
-    key = f"rl:login_phone:{data.phone}:{int(time.time()) // 900}"
-    if await r.incr(key) == 1:
-        await r.expire(key, 901)
-    if int(await r.get(key) or 0) > 10:
-        raise AppError(429, "rate_limited", "Juda ko'p urinish. 15 daqiqadan so'ng qayta urinib ko'ring.")
+    key = f"login_fail:{data.phone}"
+    if int(await r.get(key) or 0) >= LOGIN_MAX_FAILS:
+        raise AppError(429, "rate_limited", "Juda ko'p noto'g'ri urinish. 15 daqiqadan so'ng qayta urinib ko'ring.")
+
+    async def fail(status: int, code: str, message: str) -> AppError:
+        await r.incr(key)
+        await r.expire(key, LOGIN_LOCK_SECONDS)
+        return AppError(status, code, message)
 
     user = await session.scalar(select(User).where(User.phone == data.phone))
     if not user or not user.is_active or not verify_password(data.password, user.password_hash):
-        raise AppError(401, "invalid_credentials", "Telefon raqam yoki parol noto'g'ri")
+        raise await fail(401, "invalid_credentials", "Telefon raqam yoki parol noto'g'ri")
     if user.totp_secret:
         if not data.totp_code:
             raise AppError(401, "totp_required", "Autentifikator ilovasidagi 6 xonali kodni kiriting")
         if not verify_totp(user.totp_secret, data.totp_code):
-            raise AppError(401, "totp_invalid", "Kod noto'g'ri yoki eskirgan")
+            raise await fail(401, "totp_invalid", "Kod noto'g'ri yoki eskirgan")
+    await r.delete(key)
     return await service.issue_session(session, response, request, user)
 
 

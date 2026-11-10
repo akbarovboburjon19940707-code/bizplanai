@@ -19,6 +19,8 @@ import { usePlanPreview } from "./use-preview";
 
 const t = uz.plans;
 const DRAFT_KEY = "bp_plan_draft"; // faqat forma ma'lumoti, token emas
+// Shaxsiy identifikatorlar qoralamaga yozilmaydi (sahifa yangilansa qayta kiritiladi)
+const DRAFT_EXCLUDE = ["jshshir", "stir"] as const;
 
 // Har bosqichda "Keyingi" bosilganda tekshiriladigan maydonlar
 const STEP_FIELDS: FieldPath<PlanFormValues>[][] = [
@@ -55,7 +57,9 @@ export function PlanWizard() {
   useEffect(() => {
     const sub = form.watch((values) => {
       try {
-        window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(values));
+        const draft: Record<string, unknown> = { ...values };
+        for (const key of DRAFT_EXCLUDE) delete draft[key];
+        window.sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
       } catch {
         // xotira to'lgan yoki o'chirilgan
       }

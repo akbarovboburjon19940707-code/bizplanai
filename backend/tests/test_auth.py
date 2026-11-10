@@ -156,3 +156,30 @@ async def test_reuse_after_logout_is_not_graced(client):
     assert (await client.post("/v1/auth/logout", cookies={"bp_refresh": cookie})).status_code == 204
     r = await client.post("/v1/auth/refresh", cookies={"bp_refresh": cookie})
     assert r.status_code == 401
+
+
+async def test_login_lockout_counts_only_failures(client):
+    from app.core.redis import get_redis
+    from app.modules.auth.router import LOGIN_MAX_FAILS
+
+    async def reset_ip_limit():  # IP bo'yicha umumiy limit (20/daq) bu testda raqam bo'yicha mantiqqa xalaqit bermasin
+        for k in await get_redis().keys("rl:login:*"):
+            await get_redis().delete(k)
+
+    await register(client)
+    good = {"phone": "+998901112233", "password": "parol12345"}
+    bad = {**good, "password": "notogri123"}
+    # muvaffaqiyatli kirishlar hisoblanmaydi (tez-tez kiradigan foydalanuvchi bloklanmaydi)
+    for _ in range(LOGIN_MAX_FAILS + 2):
+        assert (await client.post("/v1/auth/login", json=good)).status_code == 200
+    # noto'g'ri urinishlar, to'g'ri kirish hisoblagichni tozalaydi
+    await reset_ip_limit()
+    for _ in range(LOGIN_MAX_FAILS - 1):
+        assert (await client.post("/v1/auth/login", json=bad)).status_code == 401
+    assert (await client.post("/v1/auth/login", json=good)).status_code == 200
+    await reset_ip_limit()
+    for _ in range(LOGIN_MAX_FAILS):
+        assert (await client.post("/v1/auth/login", json=bad)).status_code == 401
+    # endi to'g'ri parol bilan ham blok (IP dan qat'i nazar raqam bo'yicha)
+    r = await client.post("/v1/auth/login", json=good)
+    assert r.status_code == 429 and r.json()["error"]["code"] == "rate_limited"

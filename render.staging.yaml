@@ -8,9 +8,8 @@ services:
   - type: web
     name: bizplan-stg-api
     runtime: docker
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerfilePath: ./backend/Dockerfile   # repo ildiziga nisbatan (rootDir ataylab yo'q)
+    dockerContext: ./backend
     region: frankfurt
     plan: starter
     numInstances: 1
@@ -38,9 +37,8 @@ services:
   - type: worker
     name: bizplan-stg-worker
     runtime: docker
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerfilePath: ./backend/Dockerfile   # repo ildiziga nisbatan (rootDir ataylab yo'q)
+    dockerContext: ./backend
     region: frankfurt
     plan: starter
     numInstances: 1
@@ -59,9 +57,8 @@ services:
   - type: web
     name: bizplan-stg-web
     runtime: static
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: out
+    buildCommand: cd frontend && npm ci && npm run build   # rootDir ataylab yo'q
+    staticPublishPath: ./frontend/out
     buildFilter:
       paths: ["frontend/**"]
     domains: [yangi.bizplanai.uz]
@@ -91,26 +88,24 @@ databases:
 envVarGroups:
   - name: bizplan-stg-secrets
     envVars:
-      # Bitta qiymat API va worker uchun umumiy (har servisda alohida generatsiya qilinmasin)
       - { key: SECRET_KEY, generateValue: true }
-      # R2: yangi sayt uchun alohida API token (bucket: bizplanai-files, Object Read & Write)
-      - { key: R2_ACCOUNT_ID, sync: false }
-      - { key: R2_ACCESS_KEY_ID, sync: false }
-      - { key: R2_SECRET_ACCESS_KEY, sync: false }
-      - { key: R2_BUCKET, sync: false }
-      # Telegram: ALOHIDA test bot (asosiy bot webhook'i eski saytda)
-      - { key: TELEGRAM_BOT_TOKEN, sync: false }
-      - { key: TELEGRAM_BOT_NAME, sync: false }
       - { key: TELEGRAM_WEBHOOK_SECRET, generateValue: true }
-      - { key: TELEGRAM_ADMIN_CHAT_ID, sync: false }
-      # Staging'da faqat qo'lda karta to'lovi
-      - { key: MANUAL_CARD_NUMBER, sync: false }
-      - { key: MANUAL_CARD_HOLDER, sync: false }
-      - { key: GROQ_API_KEY, sync: false }
-      - { key: GEMINI_API_KEY, sync: false }
-      - { key: OPENAI_API_KEY, sync: false }
-      - { key: DEEPSEEK_API_KEY, sync: false }
-      - { key: ANTHROPIC_API_KEY, sync: false }
-      - { key: PIXABAY_API_KEY, sync: false }
-      - { key: PEXELS_API_KEY, sync: false }
-      - { key: SENTRY_DSN, sync: false }
+# Quyidagi kalitlarni Dashboard > Environment Groups > bizplan-stg-secrets da QO'LDA qo'shing
+# (Render guruhda `sync: false` ni qo'llab-quvvatlamaydi; qo'lda qo'shilgan kalitlarni sync o'chirmaydi):
+#   R2_ACCOUNT_ID
+#   R2_ACCESS_KEY_ID
+#   R2_SECRET_ACCESS_KEY
+#   R2_BUCKET
+#   TELEGRAM_BOT_TOKEN
+#   TELEGRAM_BOT_NAME
+#   TELEGRAM_ADMIN_CHAT_ID
+#   MANUAL_CARD_NUMBER
+#   MANUAL_CARD_HOLDER
+#   GROQ_API_KEY
+#   GEMINI_API_KEY
+#   OPENAI_API_KEY
+#   DEEPSEEK_API_KEY
+#   ANTHROPIC_API_KEY
+#   PIXABAY_API_KEY
+#   PEXELS_API_KEY
+#   SENTRY_DSN

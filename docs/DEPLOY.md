@@ -22,7 +22,7 @@ Ular o'tish kunigacha eski saytda qoladi.
    git remote add origin https://github.com/<login>/bizplanai-v2.git
    git push -u origin main
    ```
-3. Settings > Branches > `main` uchun himoya: "Require status checks" (CI: Backend, Frontend, Docker).
+3. (Ixtiyoriy, GitHub Pro/Team kerak) Settings > Branches > `main` himoyasi: "Require status checks". Bepul tarifda private repo uchun yo'q.
 4. Actions bo'limida CI yashil bo'lishini kuting. Backend job testlarni **Postgres 16** da ham ishga tushiradi
    (to'lov va kvota uchun parallel testlar faqat Postgres'da ishlaydi).
 
@@ -45,7 +45,9 @@ Repo'da `.env`, kalit va token yo'q (tarix tekshirilgan). `reference/` da eski s
 1. Render > New > **Blueprint** > GitHub repo'ni ulang > **Blueprint path: `render.staging.yaml`**.
 2. Yaratiladi: `bizplan-stg-api` (web), `bizplan-stg-worker`, `bizplan-stg-kv` (Redis), `bizplan-stg-db` (Postgres 16),
    `bizplan-stg-web` (static frontend). Narxlarni Render pricing sahifasida tekshiring (frontend static: bepul).
-3. `bizplan-stg-secrets` guruhi qiymatlarini kiriting (2-bo'lim) > Apply.
+3. Apply. Render guruhda `sync: false` ni qo'llab-quvvatlamaydi, shuning uchun Blueprint guruhga faqat `SECRET_KEY` va
+   `TELEGRAM_WEBHOOK_SECRET` ni yaratadi. Qolgan kalitlarni (2-bo'lim jadvali, `render.staging.yaml` oxiridagi ro'yxat)
+   Dashboard > Environment Groups > `bizplan-stg-secrets` da **qo'lda** qo'shing; keyingi sync'lar ularni o'chirmaydi.
 4. Birinchi deployda `preDeployCommand` migratsiya va katalogni (269 reja, 3 tarif) yozadi; qayta deployda takrorlamaydi.
 
 ## 4. DNS (Cloudflare, `bizplanai.uz` zonasi)

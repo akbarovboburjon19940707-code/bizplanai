@@ -7,9 +7,8 @@ services:
   - type: web
     name: bizplan-api
     runtime: docker
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerfilePath: ./backend/Dockerfile   # repo ildiziga nisbatan (rootDir ataylab yo'q)
+    dockerContext: ./backend
     region: frankfurt
     plan: standard
     healthCheckPath: /readyz
@@ -40,9 +39,8 @@ services:
   - type: worker
     name: bizplan-worker
     runtime: docker
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    dockerfilePath: ./backend/Dockerfile   # repo ildiziga nisbatan (rootDir ataylab yo'q)
+    dockerContext: ./backend
     region: frankfurt
     plan: standard
     dockerCommand: arq app.workers.settings.WorkerSettings
@@ -64,9 +62,8 @@ services:
   - type: web
     name: bizplan-web
     runtime: static
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: out
+    buildCommand: cd frontend && npm ci && npm run build   # rootDir ataylab yo'q
+    staticPublishPath: ./frontend/out
     buildFilter:
       paths: ["frontend/**"]
     domains: [bizplanai.uz, www.bizplanai.uz]
@@ -95,28 +92,30 @@ databases:
 envVarGroups:
   - name: bizplan-secrets
     envVars:
-      - { key: SECRET_KEY, generateValue: true }   # API va worker uchun bitta umumiy qiymat
-      - { key: R2_ACCOUNT_ID, sync: false }
-      - { key: R2_ACCESS_KEY_ID, sync: false }
-      - { key: R2_SECRET_ACCESS_KEY, sync: false }
-      - { key: R2_BUCKET, sync: false }
-      - { key: TELEGRAM_BOT_TOKEN, sync: false }
-      - { key: TELEGRAM_BOT_NAME, sync: false }
+      - { key: SECRET_KEY, generateValue: true }
       - { key: TELEGRAM_WEBHOOK_SECRET, generateValue: true }
-      - { key: TELEGRAM_ADMIN_CHAT_ID, sync: false }
-      - { key: CLICK_SERVICE_ID, sync: false }
-      - { key: CLICK_MERCHANT_ID, sync: false }
-      - { key: CLICK_MERCHANT_USER_ID, sync: false }
-      - { key: CLICK_SECRET_KEY, sync: false }
-      - { key: PAYME_MERCHANT_ID, sync: false }
-      - { key: PAYME_SECRET_KEY, sync: false }
-      - { key: MANUAL_CARD_NUMBER, sync: false }
-      - { key: MANUAL_CARD_HOLDER, sync: false }
-      - { key: GROQ_API_KEY, sync: false }
-      - { key: GEMINI_API_KEY, sync: false }
-      - { key: OPENAI_API_KEY, sync: false }
-      - { key: DEEPSEEK_API_KEY, sync: false }
-      - { key: ANTHROPIC_API_KEY, sync: false }
-      - { key: PIXABAY_API_KEY, sync: false }
-      - { key: PEXELS_API_KEY, sync: false }
-      - { key: SENTRY_DSN, sync: false }
+# Quyidagi kalitlarni Dashboard > Environment Groups > bizplan-secrets da QO'LDA qo'shing
+# (Render guruhda `sync: false` ni qo'llab-quvvatlamaydi; qo'lda qo'shilgan kalitlarni sync o'chirmaydi):
+#   R2_ACCOUNT_ID
+#   R2_ACCESS_KEY_ID
+#   R2_SECRET_ACCESS_KEY
+#   R2_BUCKET
+#   TELEGRAM_BOT_TOKEN
+#   TELEGRAM_BOT_NAME
+#   TELEGRAM_ADMIN_CHAT_ID
+#   CLICK_SERVICE_ID
+#   CLICK_MERCHANT_ID
+#   CLICK_MERCHANT_USER_ID
+#   CLICK_SECRET_KEY
+#   PAYME_MERCHANT_ID
+#   PAYME_SECRET_KEY
+#   MANUAL_CARD_NUMBER
+#   MANUAL_CARD_HOLDER
+#   GROQ_API_KEY
+#   GEMINI_API_KEY
+#   OPENAI_API_KEY
+#   DEEPSEEK_API_KEY
+#   ANTHROPIC_API_KEY
+#   PIXABAY_API_KEY
+#   PEXELS_API_KEY
+#   SENTRY_DSN

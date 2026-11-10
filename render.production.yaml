@@ -1,0 +1,122 @@
+# Render Blueprint: YANGI saytning PRODUCTION muhiti (o'tish kunida, staging sinovlaridan keyin).
+# Render: New > Blueprint > repo > Blueprint path: render.production.yaml
+# Domenlar: bizplanai.uz, www.bizplanai.uz (frontend), api.bizplanai.uz (API). O'tish tartibi: docs/DEPLOY.md
+# Autoscaling (scaling:) faqat Render Professional workspace'da ishlaydi; aks holda numInstances ishlating.
+
+services:
+  - type: web
+    name: bizplan-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: frankfurt
+    plan: standard
+    healthCheckPath: /readyz
+    preDeployCommand: alembic upgrade head && python -m app.cli seed
+    buildFilter:
+      paths: ["backend/**"]
+    domains: [api.bizplanai.uz]
+    scaling:
+      minInstances: 2
+      maxInstances: 8
+      targetCPUPercent: 60
+    envVars: &prod_env
+      - { key: APP_ENV, value: production }
+      - { key: JOB_MODE, value: queue }
+      - { key: STORAGE_BACKEND, value: r2 }
+      - { key: COOKIE_SECURE, value: "true" }
+      # COOKIE_DOMAIN yo'q: refresh cookie faqat api.bizplanai.uz ga (boshqa subdomenlarga yuborilmaydi)
+      - { key: ALLOWED_ORIGINS, value: "https://bizplanai.uz,https://www.bizplanai.uz" }
+      - { key: FRONTEND_URL, value: https://bizplanai.uz }
+      - { key: PUBLIC_API_URL, value: https://api.bizplanai.uz }
+      - { key: WEB_CONCURRENCY, value: "2" }
+      - key: DATABASE_URL
+        fromDatabase: { name: bizplan-db, property: connectionString }
+      - key: REDIS_URL
+        fromService: { type: keyvalue, name: bizplan-kv, property: connectionString }
+      - fromGroup: bizplan-secrets
+
+  - type: worker
+    name: bizplan-worker
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: frankfurt
+    plan: standard
+    dockerCommand: arq app.workers.settings.WorkerSettings
+    buildFilter:
+      paths: ["backend/**"]
+    scaling:
+      minInstances: 2
+      maxInstances: 6
+      targetCPUPercent: 70
+    envVars: *prod_env
+
+  - type: keyvalue
+    name: bizplan-kv
+    region: frankfurt
+    plan: standard
+    maxmemoryPolicy: noeviction   # navbat va kvota kalitlari o'chib ketmasligi kerak
+    ipAllowList: []               # faqat Render ichki tarmog'i
+
+  - type: web
+    name: bizplan-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: out
+    buildFilter:
+      paths: ["frontend/**"]
+    domains: [bizplanai.uz, www.bizplanai.uz]
+    envVars:
+      - { key: NEXT_PUBLIC_API_URL, value: https://api.bizplanai.uz }
+      - { key: NODE_VERSION, value: "20" }
+      - { key: NEXT_TELEMETRY_DISABLED, value: "1" }
+    routes:
+      - { type: rewrite, source: /tolov/*, destination: /tolov/_/index.html }
+    headers:
+      - { path: /*, name: X-Frame-Options, value: DENY }
+      - { path: /*, name: X-Content-Type-Options, value: nosniff }
+      - { path: /*, name: Referrer-Policy, value: strict-origin-when-cross-origin }
+      - { path: /*, name: Strict-Transport-Security, value: "max-age=31536000; includeSubDomains" }
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://api.bizplanai.uz; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+databases:
+  - name: bizplan-db
+    region: frankfurt
+    plan: basic-1gb
+    postgresMajorVersion: "16"
+    ipAllowList: []
+
+envVarGroups:
+  - name: bizplan-secrets
+    envVars:
+      - { key: SECRET_KEY, generateValue: true }   # API va worker uchun bitta umumiy qiymat
+      - { key: R2_ACCOUNT_ID, sync: false }
+      - { key: R2_ACCESS_KEY_ID, sync: false }
+      - { key: R2_SECRET_ACCESS_KEY, sync: false }
+      - { key: R2_BUCKET, sync: false }
+      - { key: TELEGRAM_BOT_TOKEN, sync: false }
+      - { key: TELEGRAM_BOT_NAME, sync: false }
+      - { key: TELEGRAM_WEBHOOK_SECRET, generateValue: true }
+      - { key: TELEGRAM_ADMIN_CHAT_ID, sync: false }
+      - { key: CLICK_SERVICE_ID, sync: false }
+      - { key: CLICK_MERCHANT_ID, sync: false }
+      - { key: CLICK_MERCHANT_USER_ID, sync: false }
+      - { key: CLICK_SECRET_KEY, sync: false }
+      - { key: PAYME_MERCHANT_ID, sync: false }
+      - { key: PAYME_SECRET_KEY, sync: false }
+      - { key: MANUAL_CARD_NUMBER, sync: false }
+      - { key: MANUAL_CARD_HOLDER, sync: false }
+      - { key: GROQ_API_KEY, sync: false }
+      - { key: GEMINI_API_KEY, sync: false }
+      - { key: OPENAI_API_KEY, sync: false }
+      - { key: DEEPSEEK_API_KEY, sync: false }
+      - { key: ANTHROPIC_API_KEY, sync: false }
+      - { key: PIXABAY_API_KEY, sync: false }
+      - { key: PEXELS_API_KEY, sync: false }
+      - { key: SENTRY_DSN, sync: false }

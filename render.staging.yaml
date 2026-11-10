@@ -1,0 +1,116 @@
+# Render Blueprint: YANGI saytning staging (parallel) muhiti. Eski bizplanai.uz ga tegmaydi.
+# Render: New > Blueprint > repo > Blueprint path: render.staging.yaml
+# Domenlar: yangi.bizplanai.uz (frontend), api-yangi.bizplanai.uz (API). DNS: docs/DEPLOY.md
+# Maxfiy qiymatlar (sync: false) Blueprint yaratilayotganda Dashboard'da so'raladi.
+# Click/Payme bu yerda YO'Q: bitta merchant'da bitta callback bor va u eski saytda (o'tish kunigacha).
+
+services:
+  - type: web
+    name: bizplan-stg-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: frankfurt
+    plan: starter
+    numInstances: 1
+    healthCheckPath: /readyz
+    preDeployCommand: alembic upgrade head && python -m app.cli seed
+    buildFilter:
+      paths: ["backend/**"]
+    domains: [api-yangi.bizplanai.uz]
+    envVars: &stg_env
+      - { key: APP_ENV, value: production }
+      - { key: JOB_MODE, value: queue }
+      - { key: STORAGE_BACKEND, value: r2 }
+      - { key: COOKIE_SECURE, value: "true" }
+      # COOKIE_DOMAIN ataylab yo'q: refresh cookie faqat API xostiga (production sessiyalari bilan aralashmaydi)
+      - { key: ALLOWED_ORIGINS, value: https://yangi.bizplanai.uz }
+      - { key: FRONTEND_URL, value: https://yangi.bizplanai.uz }
+      - { key: PUBLIC_API_URL, value: https://api-yangi.bizplanai.uz }
+      - { key: WEB_CONCURRENCY, value: "1" }
+      - key: DATABASE_URL
+        fromDatabase: { name: bizplan-stg-db, property: connectionString }
+      - key: REDIS_URL
+        fromService: { type: keyvalue, name: bizplan-stg-kv, property: connectionString }
+      - fromGroup: bizplan-stg-secrets
+
+  - type: worker
+    name: bizplan-stg-worker
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: frankfurt
+    plan: starter
+    numInstances: 1
+    dockerCommand: arq app.workers.settings.WorkerSettings
+    buildFilter:
+      paths: ["backend/**"]
+    envVars: *stg_env
+
+  - type: keyvalue
+    name: bizplan-stg-kv
+    region: frankfurt
+    plan: starter
+    maxmemoryPolicy: noeviction   # navbat va kvota kalitlari o'chib ketmasligi kerak
+    ipAllowList: []               # faqat Render ichki tarmog'i
+
+  - type: web
+    name: bizplan-stg-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: out
+    buildFilter:
+      paths: ["frontend/**"]
+    domains: [yangi.bizplanai.uz]
+    envVars:
+      - { key: NEXT_PUBLIC_API_URL, value: https://api-yangi.bizplanai.uz }
+      - { key: NODE_VERSION, value: "20" }
+      - { key: NEXT_TELEMETRY_DISABLED, value: "1" }
+    routes:
+      - { type: rewrite, source: /tolov/*, destination: /tolov/_/index.html }
+    headers:
+      - { path: /*, name: X-Robots-Tag, value: "noindex, nofollow" }   # staging qidiruvda chiqmasin
+      - { path: /*, name: X-Frame-Options, value: DENY }
+      - { path: /*, name: X-Content-Type-Options, value: nosniff }
+      - { path: /*, name: Referrer-Policy, value: strict-origin-when-cross-origin }
+      - { path: /*, name: Strict-Transport-Security, value: "max-age=31536000" }
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://api-yangi.bizplanai.uz; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+databases:
+  - name: bizplan-stg-db
+    region: frankfurt
+    plan: basic-256mb
+    postgresMajorVersion: "16"
+    ipAllowList: []   # tashqaridan ulanib bo'lmaydi
+
+envVarGroups:
+  - name: bizplan-stg-secrets
+    envVars:
+      # Bitta qiymat API va worker uchun umumiy (har servisda alohida generatsiya qilinmasin)
+      - { key: SECRET_KEY, generateValue: true }
+      # R2: yangi sayt uchun alohida API token (bucket: bizplanai-files, Object Read & Write)
+      - { key: R2_ACCOUNT_ID, sync: false }
+      - { key: R2_ACCESS_KEY_ID, sync: false }
+      - { key: R2_SECRET_ACCESS_KEY, sync: false }
+      - { key: R2_BUCKET, sync: false }
+      # Telegram: ALOHIDA test bot (asosiy bot webhook'i eski saytda)
+      - { key: TELEGRAM_BOT_TOKEN, sync: false }
+      - { key: TELEGRAM_BOT_NAME, sync: false }
+      - { key: TELEGRAM_WEBHOOK_SECRET, generateValue: true }
+      - { key: TELEGRAM_ADMIN_CHAT_ID, sync: false }
+      # Staging'da faqat qo'lda karta to'lovi
+      - { key: MANUAL_CARD_NUMBER, sync: false }
+      - { key: MANUAL_CARD_HOLDER, sync: false }
+      - { key: GROQ_API_KEY, sync: false }
+      - { key: GEMINI_API_KEY, sync: false }
+      - { key: OPENAI_API_KEY, sync: false }
+      - { key: DEEPSEEK_API_KEY, sync: false }
+      - { key: ANTHROPIC_API_KEY, sync: false }
+      - { key: PIXABAY_API_KEY, sync: false }
+      - { key: PEXELS_API_KEY, sync: false }
+      - { key: SENTRY_DSN, sync: false }

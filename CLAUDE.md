@@ -16,7 +16,7 @@ Foydalanuvchi bilan o'zbek tilida (lotin) gaplash. Kod, o'zgaruvchi va commit xa
 | --- | --- |
 | Backend | **Tayyor**: FastAPI, 36 endpoint, 14 jadval, Alembic (0002: `refresh_tokens.replaced_by`). 27 test (SQLite 25), `ruff` toza. 2026-11-10: Click ikkinchi tranzaksiya xatosi to'langan obunani bekor qilardi (tuzatildi); refresh 30 s grace oynasi (bir vaqtdagi tablar). Bu ikkisi Postgres'da hali sinalmagan |
 | Frontend | **1-bosqich** (Codex) va **3-bosqichning `/dashboard` + `/reja` qismi** (Claude, 2026-11-10): 5 bosqichli forma (RHF + Zod), 6 tagacha mahsulot, tovar narxi/ulushi, aylanma kapital, quvvat va diskont, jonli preview (500 ms debounce), sessionStorage qoralama, reja yaratish va holat. Haqiqiy backend bilan brauzerda sinalgan. Hali yo'q: 2-bosqich (`/kirish`, `/royxat`, `/kabinet`), unit/e2e testlar |
-| Deploy | `backend/render.yaml` yozilgan, **Render'da hali yaratilmagan**. Frontend bloki `frontend/AGENTS.md` 6-bo'limda |
+| Deploy | Blueprint'lar: `render.staging.yaml` (yangi.bizplanai.uz, eski sayt bilan parallel), `render.production.yaml` (o'tish kuni). Yo'riqnoma: `docs/DEPLOY.md`. CI: `.github/workflows/ci.yml` (Postgres 16 testlari ham). GitHub repo va Render hali yaratilmagan |
 | Yuklama testi | `backend/loadtest/k6.js` yozilgan, **hali ishga tushirilmagan** (staging kerak) |
 
 ## Tuzilma
@@ -73,7 +73,7 @@ Eski loyiha ZIP'larida haqiqiy maxfiy ma'lumotlar bo'lgan va ular boshqa joylarg
 ## Keyingi ishlar (ustuvorlik bo'yicha)
 | # | Ish | Izoh |
 | --- | --- | --- |
-| 1 | Render staging: blueprint, R2, Postgres, Redis; Click/Payme/Telegram sinov | `backend/README.md` "Render'ga chiqarish". Click/Payme callback manzillari u yerda |
+| 1 | Render staging (`docs/DEPLOY.md`): private GitHub repo, CI yashil, Blueprint, DNS, sinov ro'yxati | Click/Payme staging'da yo'q (callback eski saytda), test bot alohida |
 | 2 | Frontend 1-7 bosqichlar | `frontend/AGENTS.md`; har bosqichdan keyin integratsiya tekshiruvi |
 | 3 | k6 yuklama testi (staging), natijaga qarab nusxa sonlari | Maqsad: p95 < 300 ms, xato < 0.1%, generatsiya navbatida kutish < 30 s |
 | 4 | Eski ma'lumotlarni ko'chirish skripti | `reference/old-uzbiznesss/database.py` sxemasi → yangi jadvallar (users, payments, subscriptions). Parol xeshlari formati farq qiladi: tekshir |

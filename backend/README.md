@@ -36,18 +36,9 @@ ruff check .
 
 ## Render'ga chiqarish
 
-1. Cloudflare R2'da **yopiq** bucket yarating; katalog PDF'larini `catalog/pdfs/<mahsulot_id>.pdf` kalitiga ko'chiring.
-   Hozirgi ochiq `r2.dev` bucket'ni yoping (fayl nomini bilgan har kim pulsiz yuklay oladi).
-2. Render: New > Blueprint > shu repo. `render.yaml` API, worker, Postgres va Key Value'ni yaratadi.
-3. `bizplan-secrets` guruhiga kalitlarni kiriting. **Eski ZIP'larda sizgan kalitlarni emas, kabinetlardan yangidan yaratilganlarini.**
-4. Deploydan keyin API Shell'ida: `python -m app.cli create-admin --phone ... --password ...`, chiqqan `otpauth://` havolani Google Authenticator'ga qo'shing.
-5. Telegram: `python scripts/set_telegram_webhook.py https://api.bizplanai.uz`
-6. Merchant kabinetlarida callback manzillari:
-   - Click Prepare: `https://api.bizplanai.uz/v1/payments/click/prepare`
-   - Click Complete: `https://api.bizplanai.uz/v1/payments/click/complete`
-   - Payme endpoint: `https://api.bizplanai.uz/v1/payments/payme` (hisob maydoni `order_id`)
-7. DNS: `api.bizplanai.uz` -> `bizplan-api`.
-8. Staging'da yuklama testi: `k6 run -e API=https://... loadtest/k6.js`.
+To'liq yo'riqnoma: **`docs/DEPLOY.md`** (GitHub, staging va production Blueprint'lari, DNS, sinovlar, o'tish kuni).
+Blueprint'lar repo ildizida: `render.staging.yaml` (eski sayt bilan parallel), `render.production.yaml` (o'tish kuni).
+CI: `.github/workflows/ci.yml` (ruff, pytest SQLite + Postgres 16, frontend build, Docker image).
 
 `APP_ENV=production` da server noto'g'ri sozlama bilan (SQLite, Redis yo'q, zaif SECRET_KEY) ishga tushmaydi.
 

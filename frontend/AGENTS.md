@@ -125,7 +125,7 @@ Next static export'da yo'nalish build vaqtida ma'lum bo'lishi kerak:
 - `/reja?id=` va admin ichki sahifalar query yoki client routing bilan; dinamik segment ishlatma.
 - `next/image` o'rniga oddiy `<img loading="lazy" width height>` (static export'da optimizer yo'q); katalog rasmlari Cloudflare R2 URL'laridan keladi.
 
-`render.yaml` ga qo'shiladigan blok (Claude backend repo'siga birlashtiradi):
+Render bloki allaqachon qo'shilgan: repo ildizidagi `render.staging.yaml` va `render.production.yaml` (`bizplan-*-web`). Quyidagi asl taklif ma'lumot uchun:
 
 ```yaml
 - type: web

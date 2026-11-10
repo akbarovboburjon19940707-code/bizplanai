@@ -3,7 +3,7 @@
 !.env.example
 *.db
 *.sqlite*
-storage/
+/backend/storage/
 node_modules/
 .next/
 out/

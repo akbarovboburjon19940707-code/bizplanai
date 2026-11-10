@@ -12,7 +12,7 @@ services:
     region: frankfurt
     plan: standard
     healthCheckPath: /readyz
-    preDeployCommand: alembic upgrade head && python -m app.cli seed
+    preDeployCommand: sh -c "alembic upgrade head && python -m app.cli seed"
     buildFilter:
       paths: ["backend/**"]
     domains: [api.bizplanai.uz]

@@ -14,7 +14,7 @@ services:
     plan: starter
     numInstances: 1
     healthCheckPath: /readyz
-    preDeployCommand: sh -c "alembic upgrade head && python -m app.cli seed"
+    preDeployCommand: sh /app/scripts/predeploy.sh
     buildFilter:
       paths: ["backend/**"]
     domains: [api-yangi.bizplanai.uz]

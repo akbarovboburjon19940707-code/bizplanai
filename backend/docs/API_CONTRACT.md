@@ -104,6 +104,8 @@ Oqim: `POST /v1/plans` -> har 2 soniyada `GET /v1/plans/{id}` (AI bilan 1 daqiqa
 
 ## 5. Katalog
 
+R2 bucket yopiq (2026-11-10): `preview_image` endi `r2.dev` havolasi emas, backend manzili `GET /v1/catalog/products/{id}/image` (302, 1 soatlik imzolangan havola, `Cache-Control: public, max-age=1800`). `<img src>` ga to'g'ridan-to'g'ri qo'yiladi. PDF faqat `GET .../download` (sotib olgan foydalanuvchi, 10 daqiqalik havola).
+
 | Metod va yo'l | Tavsif |
 | --- | --- |
 | `GET /v1/catalog/categories` | `{key, label, icon, count}[]` |

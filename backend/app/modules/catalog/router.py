@@ -1,4 +1,7 @@
+from urllib.parse import urlparse
+
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 
@@ -41,9 +44,25 @@ class ProductPage(BaseModel):
     offset: int
 
 
+IMAGE_PREFIX = "catalog/images/"  # faqat shu papkadagi rasmlar imzolanadi (PDF yoki mijoz fayllari emas)
+IMAGE_TTL = 3600
+
+
+def image_key(preview_image: str) -> str | None:
+    """Bazadagi qiymat (eski r2.dev URL yoki kalit) -> R2 kaliti. Ruxsat etilmagan yo'l bo'lsa None."""
+    raw = (preview_image or "").strip()
+    key = urlparse(raw).path.lstrip("/") if raw.startswith(("http://", "https://")) else raw.lstrip("/")
+    if not key.startswith(IMAGE_PREFIX) or ".." in key or not key.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+        return None
+    return key
+
+
 def product_out(p: CatalogProduct) -> ProductOut:
+    # Bucket yopiq: rasm r2.dev dan emas, backend orqali (imzolangan havolaga yo'naltirish) beriladi
+    image = (f"{get_settings().public_api_url.rstrip('/')}/v1/catalog/products/{p.id}/image"
+             if image_key(p.preview_image) else "")
     return ProductOut(id=p.id, slug=p.slug, category_key=p.category_key, title=p.title, description=p.description,
-                      price_som=p.price_tiyin // 100, file_size=p.file_size, preview_image=p.preview_image,
+                      price_som=p.price_tiyin // 100, file_size=p.file_size, preview_image=image,
                       views=p.views, downloads=p.downloads)
 
 
@@ -82,6 +101,18 @@ async def get_product(session, id_or_slug: str) -> CatalogProduct:
 @router.get("/products/{id_or_slug}", response_model=ProductOut)
 async def product(id_or_slug: str, session: SessionDep):
     return product_out(await get_product(session, id_or_slug))
+
+
+@router.get("/products/{id_or_slug}/image", status_code=302, dependencies=[Depends(rate_limit("catalog_image", 300, 60))],
+            responses={302: {"description": "Imzolangan rasm havolasiga yo'naltirish"}})
+async def product_image(id_or_slug: str, session: SessionDep):
+    """Katalog muqova rasmi: yopiq bucket'dan 1 soatlik imzolangan havolaga 302 (brauzer 30 daqiqa keshlaydi)."""
+    p = await get_product(session, id_or_slug)
+    key = image_key(p.preview_image)
+    if not key:
+        raise not_found("Rasm topilmadi")
+    url = await get_storage().signed_url(key, key.rsplit("/", 1)[-1], IMAGE_TTL, inline=True)
+    return RedirectResponse(url, status_code=302, headers={"Cache-Control": "public, max-age=1800"})
 
 
 @router.post("/products/{product_id}/view", status_code=204, dependencies=[Depends(rate_limit("view", 120, 60))])

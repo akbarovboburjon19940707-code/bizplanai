@@ -1004,6 +1004,47 @@
         }
       }
     },
+    "/v1/catalog/products/{id_or_slug}/image": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Product Image",
+        "description": "Katalog muqova rasmi: yopiq bucket'dan 1 soatlik imzolangan havolaga 302 (brauzer 30 daqiqa keshlaydi).",
+        "operationId": "product_image_v1_catalog_products__id_or_slug__image_get",
+        "parameters": [
+          {
+            "name": "id_or_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id Or Slug"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Imzolangan rasm havolasiga yo'naltirish",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/catalog/products/{product_id}/view": {
       "post": {
         "tags": [

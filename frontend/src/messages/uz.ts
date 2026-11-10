@@ -1,3 +1,4 @@
+import { accountMessages, authMessages } from "./auth";
 import { planMessages } from "./plan";
 
 export const uz = {
@@ -7,7 +8,11 @@ export const uz = {
     home: "Bosh sahifa",
     workspace: "Ish maydoni",
     signIn: "Kirish",
+    signUp: "Ro‘yxatdan o‘tish",
     signOut: "Chiqish",
+    account: "Kabinet",
+    createPlan: "Reja yaratish",
+    menu: "Menyu",
   },
   auth: {
     loading: "Sessiya tekshirilmoqda",
@@ -20,8 +25,10 @@ export const uz = {
     description:
       "Loyihangizni tartib bilan rejalashtiring, moliyaviy ko‘rsatkichlarni ko‘ring va keyingi qadamlarni belgilang.",
     primaryAction: "Ish maydoniga o‘tish",
-    phaseLabel: "Yangi platforma bosqichi 1",
+    phaseLabel: "Ro‘yxatdan o‘tmasdan ham ko‘rsatkichlarni hisoblab ko‘ring",
   },
   footer: "Biznes rejalash uchun yagona ish maydoni.",
   plans: planMessages,
+  authForms: authMessages,
+  account: accountMessages,
 } as const;

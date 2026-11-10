@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { uz } from "@/messages/uz";
 
@@ -13,8 +14,8 @@ export default function HomePage() {
         </h1>
         <p className="mt-6 max-w-xl text-lg leading-8 text-muted">{uz.home.description}</p>
         <div className="mt-9 flex flex-wrap items-center gap-4">
-          <Button size="lg" disabled title="Kirish va ish maydoni keyingi bosqichda ulanadi">
-            {uz.home.primaryAction}
+          <Button asChild size="lg">
+            <Link href="/dashboard/">{uz.home.primaryAction}</Link>
           </Button>
           <span className="text-sm font-medium text-muted">{uz.home.phaseLabel}</span>
         </div>

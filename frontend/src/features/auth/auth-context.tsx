@@ -16,6 +16,8 @@ type UserOut = components["schemas"]["UserOut"];
 type AuthContextValue = {
   status: "loading" | "guest" | "authenticated";
   user: UserOut | null;
+  /** Foydalanuvchi o'zi "Chiqish" ni bosgan (himoyalangan sahifa uni kirishga emas, bosh sahifaga yuboradi). */
+  signedOutByUser: boolean;
   signOut: () => Promise<void>;
 };
 
@@ -24,6 +26,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthContextValue["status"]>("loading");
   const [user, setUser] = useState<UserOut | null>(null);
+  const [signedOutByUser, setSignedOutByUser] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -31,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
       setUser(snapshot.accessToken ? snapshot.user : null);
       setStatus(snapshot.accessToken ? "authenticated" : "guest");
+      if (snapshot.accessToken) setSignedOutByUser(false);
     });
 
     void refreshAccessToken().then((token) => {
@@ -46,10 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleSignOut = useCallback(async () => {
+    setSignedOutByUser(true);
     await signOut();
   }, []);
 
-  const value = useMemo(() => ({ status, user, signOut: handleSignOut }), [status, user, handleSignOut]);
+  const value = useMemo(
+    () => ({ status, user, signedOutByUser, signOut: handleSignOut }),
+    [status, user, signedOutByUser, handleSignOut],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

@@ -82,7 +82,8 @@ Frontend'da hali yo'q (o'tishdan oldin kerak): `/kirish`, `/royxat`, `/kabinet`,
 
 ## 7. O'tish kuni (production)
 1. Eski saytdagi foydalanuvchi, to'lov va obunalarni ko'chirish skripti (yoziladi; CLAUDE.md keyingi ishlar 4-band), avval staging'da sinab.
-2. Render > New > Blueprint > `render.production.yaml` (staging bilan bir xil sinovlar).
+2. `production` branch'ini yarating (sinovdan o'tgan `main` holatidan): `git push origin main:production`.
+   Keyin Render > New > Blueprint > `render.production.yaml` (staging bilan bir xil sinovlar).
 3. Eski saytni faqat o'qish rejimiga o'tkazish (yangi to'lov qabul qilmasin), oxirgi ma'lumotlarni ko'chirish.
 4. DNS: `bizplanai.uz`, `www` > `bizplan-web`; `api` > `bizplan-api`.
 5. Click kabinet: Prepare `https://api.bizplanai.uz/v1/payments/click/prepare`, Complete `.../click/complete`;
@@ -92,3 +93,24 @@ Frontend'da hali yo'q (o'tishdan oldin kerak): `/kirish`, `/royxat`, `/kabinet`,
 
 **Orqaga qaytish:** DNS yozuvlarini va Click/Payme/Telegram manzillarini eski qiymatlarga qaytarish (eski servis o'chirilmaydi,
 kamida 2 hafta zaxira sifatida turadi).
+
+## 8. Production'ga chiqarish (o'tish kunidan keyin, har safar)
+`main` ga push faqat **staging**ga chiqadi. Production servislari `production` branch'ini kuzatadi va faqat CI yashil
+bo'lgan commit'ni deploy qiladi (`branch: production`, `autoDeployTrigger: checksPass`).
+
+1. O'zgarish `main` da, CI yashil, staging'da tekshirilgan.
+2. Chiqarish (faqat fast-forward, ya'ni staging'da sinalgan aynan o'sha commit):
+   ```bash
+   git fetch origin
+   git push origin origin/main:production
+   ```
+3. Render `bizplan-api` > Events da deploy'ni kuzating; `https://api.bizplanai.uz/readyz` 200.
+
+**Orqaga qaytarish:** Render > servis > Deploys > oldingi deploy > Rollback (tez), keyin `production` branch'ini tuzating.
+Migratsiya orqaga qaytmaydi: sxemani buzuvchi o'zgarishlarni ikki bosqichda chiqaring (avval qo'shish, keyin o'chirish).
+
+### Postgres ulanish byudjeti
+`basic-1gb` da 100 ta ulanish bor (RAM 8 GB dan kam har qanday tarifda shu). `render.production.yaml` dagi
+`DB_POOL_SIZE=3`, `DB_MAX_OVERFLOW=1` shu limitga moslangan: 22 jarayon x 4 = 88. Nusxa soni yoki `WEB_CONCURRENCY`
+o'zgarsa `backend/tests/test_deploy_blueprints.py` CI'da xato beradi. k6 testida pool yetmasa (loglarda
+`QueuePool limit ... reached`), pool'ni kattalashtirish o'rniga PgBouncer (transaction rejimi) qo'ying.

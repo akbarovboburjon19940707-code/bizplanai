@@ -139,10 +139,9 @@ Render bloki allaqachon qo'shilgan: repo ildizidagi `render.staging.yaml` va `re
   routes:
     - { type: rewrite, source: /tolov/*, destination: /tolov/_/index.html }
   headers:
-    - { path: /*, name: X-Frame-Options, value: DENY }
     - { path: /*, name: X-Content-Type-Options, value: nosniff }
     - { path: /*, name: Referrer-Policy, value: strict-origin-when-cross-origin }
-    - { path: /*, name: Content-Security-Policy, value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.bizplanai.uz; frame-ancestors 'none'" }
+    - { path: /*, name: Content-Security-Policy, value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.bizplanai.uz; frame-ancestors 'self' https://*.telegram.org" }   # Telegram Web Mini App'ni iframe'da ochadi
 ```
 
 CSP'ni haqiqiy ishlaydigan holga keltirish (Next inline skriptlari uchun nonce/hash kerak bo'lsa) sening vazifang.

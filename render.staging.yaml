@@ -70,13 +70,14 @@ services:
       - { type: rewrite, source: /tolov/*, destination: /tolov/_/index.html }
     headers:
       - { path: /*, name: X-Robots-Tag, value: "noindex, nofollow" }   # staging qidiruvda chiqmasin
-      - { path: /*, name: X-Frame-Options, value: DENY }
+      # X-Frame-Options ataylab yo'q: u faqat DENY/SAMEORIGIN ni biladi. Iframe ruxsati CSP frame-ancestors da:
+      # Telegram Web (web.telegram.org) Mini App'ni iframe ichida ochadi, boshqa saytlar uchun taqiq saqlanadi.
       - { path: /*, name: X-Content-Type-Options, value: nosniff }
       - { path: /*, name: Referrer-Policy, value: strict-origin-when-cross-origin }
       - { path: /*, name: Strict-Transport-Security, value: "max-age=31536000" }
       - path: /*
         name: Content-Security-Policy
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://api-yangi.bizplanai.uz; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://api-yangi.bizplanai.uz; frame-ancestors 'self' https://*.telegram.org; base-uri 'self'; form-action 'self'"
 
 databases:
   - name: bizplan-stg-db

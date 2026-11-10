@@ -27,7 +27,7 @@ def main() -> int:
         return 1
     url = sys.argv[1].rstrip("/") + "/v1/telegram/webhook"
     r = httpx.post(f"https://api.telegram.org/bot{s.telegram_bot_token}/setWebhook", timeout=15,
-                   json={"url": url, "secret_token": s.telegram_webhook_secret, "allowed_updates": ["message"]})
+                   json={"url": url, "secret_token": s.telegram_webhook_header_token, "allowed_updates": ["message"]})
     body = r.json()
     print(r.status_code, body.get("description", body))  # tokenni chiqarmaymiz
     return 0 if body.get("ok") else 1

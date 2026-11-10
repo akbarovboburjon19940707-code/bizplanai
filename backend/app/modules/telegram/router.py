@@ -22,8 +22,8 @@ def _keyboard() -> dict:
 @router.post("/webhook", include_in_schema=False)
 async def webhook(request: Request,
                   x_telegram_bot_api_secret_token: Annotated[str | None, Header()] = None):
-    secret = get_settings().telegram_webhook_secret
-    if not secret or not hmac.compare_digest(x_telegram_bot_api_secret_token or "", secret):
+    expected = get_settings().telegram_webhook_header_token
+    if not expected or not hmac.compare_digest(x_telegram_bot_api_secret_token or "", expected):
         raise AppError(403, "forbidden", "Webhook sirri noto'g'ri")
     update = await request.json()
     message = update.get("message") or {}

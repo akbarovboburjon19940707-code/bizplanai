@@ -1,9 +1,11 @@
 import hashlib
 import hmac
 import json
+import re
 import time
 from urllib.parse import urlencode
 
+from app.core.config import Settings, get_settings
 from tests.conftest import auth, register
 
 
@@ -79,7 +81,7 @@ async def test_telegram_bot_login_flow(client):
     update = {"message": {"text": f"/start login_{token}", "chat": {"id": 5}, "from": {"id": 555, "first_name": "Vali"}}}
     bad = await client.post("/v1/telegram/webhook", json=update, headers={"X-Telegram-Bot-Api-Secret-Token": "xato"})
     assert bad.status_code == 403
-    ok = await client.post("/v1/telegram/webhook", json=update, headers={"X-Telegram-Bot-Api-Secret-Token": "hook-secret"})
+    ok = await client.post("/v1/telegram/webhook", json=update, headers={"X-Telegram-Bot-Api-Secret-Token": get_settings().telegram_webhook_header_token})
     assert ok.status_code == 200
 
     r = await client.get("/v1/auth/telegram/login-poll", params={"token": token})
@@ -183,3 +185,16 @@ async def test_login_lockout_counts_only_failures(client):
     # endi to'g'ri parol bilan ham blok (IP dan qat'i nazar raqam bo'yicha)
     r = await client.post("/v1/auth/login", json=good)
     assert r.status_code == 429 and r.json()["error"]["code"] == "rate_limited"
+
+
+def test_telegram_webhook_header_token_is_telegram_safe():
+    # Render generateValue base64 beradi: Telegram secret_token da + / = ruxsat etilmaydi (setWebhook 400)
+    token = Settings(telegram_webhook_secret="aB3+/x=Q9/zz==").telegram_webhook_header_token
+    assert re.fullmatch(r"[A-Za-z0-9_-]{1,256}", token)
+    assert Settings(telegram_webhook_secret="").telegram_webhook_header_token == ""
+
+
+async def test_telegram_webhook_rejects_raw_secret(client):
+    update = {"message": {"text": "salom", "chat": {"id": 5}, "from": {"id": 555}}}
+    raw = await client.post("/v1/telegram/webhook", json=update, headers={"X-Telegram-Bot-Api-Secret-Token": "hook-secret"})
+    assert raw.status_code == 403

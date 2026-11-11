@@ -87,8 +87,12 @@ class R2Storage(Storage):
         try:
             await asyncio.to_thread(self.client.head_object, Bucket=self.bucket, Key=key)
             return True
-        except ClientError:
-            return False
+        except ClientError as e:
+            # Faqat "yo'q" javobi False: kalit/ruxsat xatosi (403 va h.k.) yashirilmaydi, aks holda
+            # sozlama xatosi "hamma fayl yo'q" bo'lib ko'rinadi va katalog savdosi to'xtaydi
+            if e.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "NotFound"):
+                return False
+            raise
 
     async def get_bytes(self, key, max_bytes):
         from botocore.exceptions import ClientError

@@ -78,3 +78,19 @@ async def test_flush_views_and_stale_payments(client):
     await cancel_stale_payments({})
     async with sessionmaker()() as s:
         assert (await s.get(Payment, pid)).status == "cancelled"
+
+
+async def test_worker_startup_initialises_sentry(monkeypatch):
+    """Worker ham Sentry'ga yozadi (ilgari faqat API yozardi): reja generatsiyasi xatolari yo'qolmasin."""
+    import sentry_sdk
+
+    from app.core.config import get_settings
+    from app.workers.settings import startup
+
+    calls = {}
+    monkeypatch.setattr(get_settings(), "sentry_dsn", "https://key@o0.ingest.sentry.io/1")
+    monkeypatch.setattr(sentry_sdk, "init", lambda **kw: calls.setdefault("init", kw))
+    monkeypatch.setattr(sentry_sdk, "set_tag", lambda k, v: calls.setdefault("tag", (k, v)))
+    await startup({})
+    assert calls["init"]["send_default_pii"] is False
+    assert calls["tag"] == ("component", "worker")

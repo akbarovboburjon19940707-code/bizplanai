@@ -149,6 +149,19 @@ jobs:
           pip install -r requirements-dev.txt   # aiosqlite (SQLite drayveri) dev ro'yxatida
           alembic upgrade head
           python -m app.cli seed
+          # Fayli yo'q reja sotilmaydi: e2e xarid qiladigan reja uchun namunaviy PDF
+          python - <<'PY'
+          import asyncio
+          from sqlalchemy import select
+          from app.db.session import sessionmaker
+          from app.models import CatalogProduct
+          from app.storage import get_storage
+          async def main():
+              async with sessionmaker()() as s:
+                  p = await s.scalar(select(CatalogProduct).where(CatalogProduct.slug == "qoy-sotib-olish-biznes-rejasi"))
+              await get_storage().put_bytes(p.file_key, b"%PDF-1.4 e2e", "application/pdf")
+          asyncio.run(main())
+          PY
           secret=$(python -m app.cli create-admin --phone "$E2E_ADMIN_PHONE" --password "$E2E_ADMIN_PASSWORD" | grep -o 'secret=[A-Z2-7]*' | cut -d= -f2)
           test -n "$secret"
           echo "::add-mask::$secret"

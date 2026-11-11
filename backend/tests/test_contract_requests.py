@@ -1,5 +1,5 @@
 """frontend/docs/CONTRACT_REQUESTS.md dagi 1-4 so'rovlar."""
-from tests.conftest import auth, register
+from tests.conftest import auth, put_catalog_pdf, register
 from tests.test_admin import _admin_headers
 
 
@@ -35,6 +35,7 @@ async def test_owned_lists_only_my_paid_catalog_products(client):
     assert (await client.get("/v1/catalog/owned", headers=h)).json() == {"product_ids": []}
 
     pid = (await client.get("/v1/catalog/products", params={"limit": 1})).json()["items"][0]["id"]
+    await put_catalog_pdf(pid)
     pay = (await client.post("/v1/payments", json={"kind": "catalog", "target_id": pid, "provider": "manual"}, headers=h)).json()
     assert (await client.get("/v1/catalog/owned", headers=h)).json()["product_ids"] == []  # to'lanmaguncha yo'q
     approved = await client.post(f"/v1/admin/payments/{pay['payment']['id']}/approve", json={}, headers=await _admin_headers())

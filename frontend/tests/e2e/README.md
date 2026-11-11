@@ -8,6 +8,8 @@ CI'da `.github/workflows/ci.yml` dagi `e2e` job aynan shu qadamlarni bajaradi.
    `TELEGRAM_BOT_TOKEN=123456:TEST`, `TELEGRAM_WEBHOOK_SECRET=e2e+secret/=`, `MANUAL_CARD_NUMBER=...`):
    ```bash
    alembic upgrade head && python -m app.cli seed
+   # xarid testi uchun "qoy-sotib-olish-biznes-rejasi" rejasining PDF'i kerak (fayli yo'q reja sotilmaydi):
+   # ci.yml dagi "Backend: o'rnatish" qadamidagi kichik Python blokini ishga tushiring
    python -m app.cli create-admin --phone +998901110000 --password 'admin-e2e-pass-123'   # chiqqan secret= ni oling
    uvicorn app.main:app --port 8000
    ```

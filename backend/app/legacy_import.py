@@ -62,8 +62,33 @@ def _naive_utc(value: object) -> datetime | None:
     return value.astimezone(UTC).replace(tzinfo=None) if value.tzinfo else value
 
 
+def clean_source_url(raw: str) -> str:
+    """Terminalga joylashtirilgan manzil: "bracketed paste" belgilari (ESC[200~ ... ESC[201~), bo'sh joy va
+    tirnoqlar olib tashlanadi (Render Shell'da joylashtirish shularni qo'shadi)."""
+    url = raw.replace("\x1b[200~", "").replace("\x1b[201~", "").replace("^[[200~", "").replace("^[[201~", "")
+    url = "".join(ch for ch in url if ch.isprintable()).strip().strip("'\"").strip()
+    return url
+
+
+def check_host(url: str) -> None:
+    """Xost noto'g'ri bo'lsa (masalan, parolda kodlanmagan @ yoki / bor) tushunarli xato, parolni ko'rsatmasdan."""
+    from sqlalchemy.engine import make_url
+
+    try:
+        u = make_url(url)
+    except Exception:  # noqa: BLE001
+        raise SystemExit("Baza manzilini o'qib bo'lmadi. Render'dan qayta nusxalang (butun qatorni).") from None
+    if u.drivername.startswith("sqlite"):
+        return
+    host = u.host or ""
+    if not host or any(not part or len(part) > 63 for part in host.split(".")) or any(c in host for c in " /@:?#"):
+        raise SystemExit(f"Baza manzilida xost noto'g'ri: {host!r}. Manzil to'liq va bitta qatorda nusxalanganini "
+                         "tekshiring (Render > eski baza > Connect > External Database URL).")
+
+
 def async_url(url: str) -> str:
     """Eski saytdagi URL ko'rinishlari (postgres://, postgresql://, postgresql+psycopg2://, sqlite:///) -> async drayver."""
+    url = clean_source_url(url)
     scheme, sep, rest = url.partition("://")
     if not sep:
         # manzil parol bo'lishi mumkin: to'liq ko'rsatilmaydi
@@ -80,7 +105,9 @@ def async_url(url: str) -> str:
 
 async def read_source(url: str, tables: dict[str, str]) -> dict[str, list[dict]]:
     """Eski bazani o'qiydi; kerakli ustunlar bo'lmasa aniq xato beradi (eski models/ repo'da yo'q)."""
-    engine = create_async_engine(async_url(url))
+    target = async_url(url)
+    check_host(target)
+    engine = create_async_engine(target)
     try:
         async with engine.connect() as conn:
             meta = MetaData()

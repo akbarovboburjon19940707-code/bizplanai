@@ -150,3 +150,21 @@ def test_async_url_rejects_unknown():
     for bad in ("mysql://x/y", "not-a-url"):
         with pytest.raises(SystemExit):
             async_url(bad)
+
+
+
+def test_pasted_url_is_cleaned_and_bad_host_explained():
+    import pytest
+
+    from app.legacy_import import async_url, check_host, clean_source_url
+
+    pasted = "\x1b[200~postgresql://u:p@dpg-abc.oregon-postgres.render.com/db?sslmode=require\x1b[201~\n"
+    assert clean_source_url(pasted) == "postgresql://u:p@dpg-abc.oregon-postgres.render.com/db?sslmode=require"
+    assert async_url(pasted) == "postgresql+asyncpg://u:p@dpg-abc.oregon-postgres.render.com/db?ssl=require"
+    check_host(async_url(pasted))
+    with pytest.raises(SystemExit) as e:
+        check_host("postgresql+asyncpg://u:p@host..com/db")
+    assert "xost noto'g'ri" in str(e.value) and ":p@" not in str(e.value)
+    with pytest.raises(SystemExit) as e:
+        async_url("read -rs")
+    assert "read -rs" in str(e.value)  # faqat boshi ko'rsatiladi

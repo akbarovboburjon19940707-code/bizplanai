@@ -2,7 +2,7 @@
   python -m app.cli seed [--min-catalog-price 25000]
   python -m app.cli create-admin --phone +998901234567 --password '...'
   python -m app.cli unlock-login --phone +998901234567
-  python -m app.cli import-legacy --source postgresql://... [--apply] [--report hisobot.csv]
+  python -m app.cli import-legacy [--source postgresql://...] [--apply] [--report hisobot.csv]  (--source yo'q: yashirin so'raydi)
   python -m app.cli check-catalog [--hide-missing] [--report katalog.csv]
 """
 import argparse
@@ -164,7 +164,7 @@ def main() -> None:
     p_admin.add_argument("--phone", required=True)
     p_admin.add_argument("--password", required=True)
     p_legacy = sub.add_parser("import-legacy")
-    p_legacy.add_argument("--source", required=True, help="eski saytning DATABASE_URL i")
+    p_legacy.add_argument("--source", help="eski saytning DATABASE_URL i (berilmasa yashirin so'raladi)")
     p_legacy.add_argument("--apply", action="store_true", help="yozish (bo'lmasa faqat hisobot)")
     p_legacy.add_argument("--report", help="CSV hisobot fayli")
     p_legacy.add_argument("--users-table", default="users")
@@ -180,7 +180,11 @@ def main() -> None:
         asyncio.run(seed(args.min_catalog_price))
     elif args.cmd == "import-legacy":
         tables = {"users": args.users_table, "subscriptions": args.subscriptions_table, "payments": args.payments_table}
-        asyncio.run(import_legacy(args.source, args.apply, args.report, tables))
+        source = (args.source or os.environ.get("LEGACY_DATABASE_URL") or "").strip()
+        if not source:
+            import getpass  # manzil ekranda ko'rinmaydi va shell tarixiga yozilmaydi
+            source = getpass.getpass("Eski baza manzili (postgres://...), joylashtiring va Enter: ").strip()
+        asyncio.run(import_legacy(source, args.apply, args.report, tables))
     elif args.cmd == "unlock-login":
         asyncio.run(unlock_login(args.phone))
     elif args.cmd == "check-catalog":

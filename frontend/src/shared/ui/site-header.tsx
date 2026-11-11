@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-context";
 import { uz } from "@/messages/uz";
 import { cn } from "@/shared/lib/cn";
+import { BrandLogo } from "./brand-logo";
 import { Button } from "./button";
 
 const nav = uz.navigation;
@@ -43,7 +44,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex shrink-0 items-center gap-3" aria-label={uz.appName}>
-          <span className="grid size-10 place-items-center rounded-xl bg-brand text-lg font-bold text-white">B</span>
+          <BrandLogo size={40} className="size-10" />
           <span className="hidden text-lg font-bold tracking-tight text-ink sm:inline">{uz.appName}</span>
         </Link>
         <nav aria-label={nav.menu} className="flex items-center gap-1 sm:gap-2">

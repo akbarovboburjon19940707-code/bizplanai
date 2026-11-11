@@ -1,7 +1,7 @@
 // Admin panel matnlari (uz.ts ga ulanadi)
 export const adminMessages = {
   title: "Admin panel",
-  nav: { stats: "Statistika", payments: "To‘lovlar", users: "Foydalanuvchilar", catalog: "Katalog" },
+  nav: { stats: "Statistika", payments: "To‘lovlar", users: "Foydalanuvchilar", catalog: "Katalog", messages: "Murojaatlar" },
   notFoundTitle: "Sahifa topilmadi",
   loadError: "Ma’lumotlarni yuklab bo‘lmadi.",
   retry: "Qayta urinish",
@@ -17,6 +17,7 @@ export const adminMessages = {
     payments_reviewing: "Tekshirilishi kerak",
     revenue_som: "Tushum (so‘m)",
     active_subscriptions: "Faol obunalar",
+    messages_new: "Yangi murojaatlar",
     reviewCta: "Cheklarni ko‘rib chiqish",
   },
   payments: {
@@ -57,5 +58,16 @@ export const adminMessages = {
     open: "Saytda ochish",
     total: (n: number) => `Jami: ${n}`,
     redeployHint: "Narx va ko‘rinish darhol API’da o‘zgaradi. Katalog sahifalaridagi statik matn keyingi sayt deploy’ida yangilanadi.",
+  },
+  messages: {
+    filters: { new: "Yangi", done: "Javob berilgan", all: "Barchasi" },
+    topic: "Mavzu",
+    from: "Kimdan",
+    registered: "ro‘yxatdan o‘tgan",
+    call: "Qo‘ng‘iroq",
+    markDone: "Javob berildi",
+    note: "Izoh (ixtiyoriy)",
+    done: "Belgilandi",
+    noteLabel: "Izoh",
   },
 } as const;

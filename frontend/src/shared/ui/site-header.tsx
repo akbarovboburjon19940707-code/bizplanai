@@ -49,6 +49,7 @@ export function SiteHeader() {
         <nav aria-label={nav.menu} className="flex items-center gap-1 sm:gap-2">
           <NavLink href="/katalog/" label={nav.catalog} className="hidden md:inline-flex" />
           <NavLink href="/tariflar/" label={nav.tariffs} className="hidden md:inline-flex" />
+          <NavLink href="/aloqa/" label={nav.contact} className="hidden lg:inline-flex" />
           <NavLink href="/dashboard/" label={nav.createPlan} className="hidden sm:inline-flex" />
           {status === "loading" ? (
             <span className="h-9 w-24 animate-pulse rounded-control bg-slate-100" aria-label={uz.auth.loading} />
@@ -70,12 +71,13 @@ export function SiteHeader() {
           )}
         </nav>
       </div>
-      {/* Kichik ekranlar: asosiy bo'limlar header ostida (md dan kattada yuqoridagi menyuda) */}
-      <nav aria-label={nav.menu} className="border-t border-slate-100 md:hidden">
+      {/* Kichik ekranlar: asosiy bo'limlar header ostida (katta ekranda yuqoridagi menyuda; Aloqa lg dan) */}
+      <nav aria-label={nav.menu} className="border-t border-slate-100 lg:hidden">
         <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-2 py-1">
-          <NavLink href="/katalog/" label={nav.catalog} />
-          <NavLink href="/tariflar/" label={nav.tariffs} />
+          <NavLink href="/katalog/" label={nav.catalog} className="md:hidden" />
+          <NavLink href="/tariflar/" label={nav.tariffs} className="md:hidden" />
           <NavLink href="/dashboard/" label={nav.createPlan} className="sm:hidden" />
+          <NavLink href="/aloqa/" label={nav.contact} />
         </div>
       </nav>
     </header>

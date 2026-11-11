@@ -1,6 +1,7 @@
 import { adminMessages } from "./admin";
 import { accountMessages, authMessages } from "./auth";
 import { catalogMessages, paymentMessages, tariffMessages } from "./commerce";
+import { contactMessages } from "./contact";
 import { planMessages } from "./plan";
 import { telegramMessages } from "./telegram";
 
@@ -18,6 +19,7 @@ export const uz = {
     catalog: "Katalog",
     tariffs: "Tariflar",
     admin: "Admin panel",
+    contact: "Aloqa",
     menu: "Menyu",
   },
   auth: {
@@ -57,6 +59,7 @@ export const uz = {
   footer: "Biznes rejalash uchun yagona ish maydoni.",
   plans: planMessages,
   authForms: authMessages,
+  contact: contactMessages,
   account: accountMessages,
   catalog: catalogMessages,
   tariffs: tariffMessages,

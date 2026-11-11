@@ -14,6 +14,7 @@ const TABS = [
   { href: "/admin/tolovlar/", label: t.nav.payments },
   { href: "/admin/foydalanuvchilar/", label: t.nav.users },
   { href: "/admin/katalog/", label: t.nav.catalog },
+  { href: "/admin/murojaatlar/", label: t.nav.messages },
 ] as const;
 
 function NotFoundView() {

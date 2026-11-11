@@ -12,7 +12,7 @@ const t = uz.admin.stats;
 type StatKey = Exclude<keyof typeof t, "reviewCta">;
 const ORDER: StatKey[] = [
   "payments_reviewing", "revenue_som", "active_subscriptions", "users_total",
-  "users_24h", "plans_total", "plans_24h", "plans_failed_24h",
+  "users_24h", "plans_total", "plans_24h", "plans_failed_24h", "messages_new",
 ];
 
 export function StatsView() {
@@ -30,6 +30,7 @@ export function StatsView() {
               "rounded-card border bg-white p-4 shadow-soft",
               key === "payments_reviewing" && reviewing > 0 ? "border-amber-300" : "border-border",
               key === "plans_failed_24h" && (data?.[key] ?? 0) > 0 && "border-red-200",
+              key === "messages_new" && (data?.[key] ?? 0) > 0 && "border-amber-300",
             )}
           >
             <p className="text-xs font-medium text-muted">{t[key]}</p>
@@ -41,6 +42,11 @@ export function StatsView() {
           </div>
         ))}
       </div>
+      {(data?.messages_new ?? 0) > 0 ? (
+        <Button asChild variant="outline" className="self-start">
+          <Link href="/admin/murojaatlar/">{t.messages_new} ({data?.messages_new})</Link>
+        </Button>
+      ) : null}
       {reviewing > 0 ? (
         <Button asChild className="self-start"><Link href="/admin/tolovlar/">{t.reviewCta} ({reviewing})</Link></Button>
       ) : null}

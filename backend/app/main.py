@@ -14,6 +14,7 @@ from app.core.logging import setup_logging
 from app.core.redis import get_redis
 from app.db.session import dispose_engine, get_engine
 from app.modules.admin.router import router as admin_router
+from app.modules.contact.router import router as contact_router
 from app.modules.auth.router import router as auth_router
 from app.modules.billing.router import pricing_router
 from app.modules.billing.router import router as tariffs_router
@@ -66,7 +67,7 @@ def create_app() -> FastAPI:
         return response
 
     for r in (auth_router, me_router, tariffs_router, pricing_router, plans_router, catalog_router, payments_router,
-              click_router, payme_router, admin_router, meta_router, telegram_router, files_router):
+              click_router, payme_router, admin_router, meta_router, telegram_router, files_router, contact_router):
         app.include_router(r)
 
     @app.get("/healthz", include_in_schema=False)

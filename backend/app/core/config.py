@@ -1,4 +1,5 @@
 """Ilova sozlamalari. Barcha qiymatlar muhit o'zgaruvchilaridan (Render Environment) o'qiladi."""
+import hashlib
 from functools import lru_cache
 from typing import Literal
 
@@ -107,6 +108,17 @@ class Settings(BaseSettings):
             if problems:
                 raise ValueError("Production sozlamalari xato: " + "; ".join(problems))
         return self
+
+    @property
+    def telegram_webhook_header_token(self) -> str:
+        """Telegram `secret_token` sifatida yuboriladigan qiymat (bo'sh sir: "").
+
+        Telegram faqat `A-Z a-z 0-9 _ -` (1-256 belgi) qabul qiladi, Render `generateValue` esa `+ / =` berishi mumkin
+        (setWebhook 400 qaytaradi). Shuning uchun sirning o'zi emas, undan olingan sha256 hex yuboriladi.
+        """
+        if not self.telegram_webhook_secret:
+            return ""
+        return hashlib.sha256(self.telegram_webhook_secret.encode()).hexdigest()
 
     @property
     def is_production(self) -> bool:

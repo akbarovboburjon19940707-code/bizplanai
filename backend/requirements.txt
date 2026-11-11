@@ -16,3 +16,4 @@ boto3==1.43.126
 python-docx==1.2.0
 openpyxl==3.1.5
 sentry-sdk==2.74.0
+segno==1.6.1  # admin TOTP QR kodi terminalda (cli create-admin)

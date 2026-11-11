@@ -1,6 +1,7 @@
 """Boshqaruv buyruqlari:
   python -m app.cli seed [--min-catalog-price 25000]
   python -m app.cli create-admin --phone +998901234567 --password '...'
+  python -m app.cli unlock-login --phone +998901234567
   python -m app.cli import-legacy --source postgresql://... [--apply] [--report hisobot.csv]
   python -m app.cli check-catalog [--hide-missing] [--report katalog.csv]
 """
@@ -76,8 +77,24 @@ async def create_admin(phone: str, password: str) -> None:
         user.password_hash, user.role, user.totp_secret = hash_password(password), "admin", secret
         await s.commit()
     await dispose_engine()
-    print("Admin tayyor. Google Authenticator yoki shunga o'xshash ilovaga qo'shing:")
-    print(totp_uri(secret, phone))
+    uri = totp_uri(secret, phone)
+    print("Admin tayyor. Google Authenticator: \"+\" > \"QR kodni skanerlash\" va quyidagi kodni skanerlang:")
+    try:
+        import segno
+        segno.make(uri, error="l").terminal(compact=True)
+    except Exception:  # QR chizib bo'lmasa (masalan, kutubxona yo'q) kalit qo'lda kiritiladi
+        pass
+    print("Skanerlab bo'lmasa, \"Kalitni kiritish\" > Kalitingiz:", secret)
+    print(uri)
+
+
+async def unlock_login(phone: str) -> None:
+    """Ko'p noto'g'ri urinishdan keyingi 15 daqiqalik kirish blokini olib tashlaydi."""
+    from app.core.redis import get_redis
+
+    phone = normalize_phone(phone)
+    removed = await get_redis().delete(f"login_fail:{phone}")
+    print(f"{phone}: blok olib tashlandi" if removed else f"{phone}: blok yo'q edi")
 
 
 async def import_legacy(source_url: str, apply: bool, report_path: str | None, tables: dict[str, str]) -> None:
@@ -153,6 +170,8 @@ def main() -> None:
     p_legacy.add_argument("--users-table", default="users")
     p_legacy.add_argument("--subscriptions-table", default="subscriptions")
     p_legacy.add_argument("--payments-table", default="payments")
+    p_unlock = sub.add_parser("unlock-login")
+    p_unlock.add_argument("--phone", required=True)
     p_check = sub.add_parser("check-catalog")
     p_check.add_argument("--hide-missing", action="store_true", help="PDF fayli yo'q rejalarni katalogdan yashirish")
     p_check.add_argument("--report", help="CSV hisobot fayli")
@@ -162,6 +181,8 @@ def main() -> None:
     elif args.cmd == "import-legacy":
         tables = {"users": args.users_table, "subscriptions": args.subscriptions_table, "payments": args.payments_table}
         asyncio.run(import_legacy(args.source, args.apply, args.report, tables))
+    elif args.cmd == "unlock-login":
+        asyncio.run(unlock_login(args.phone))
     elif args.cmd == "check-catalog":
         asyncio.run(check_catalog(args.hide_missing, args.report))
     else:

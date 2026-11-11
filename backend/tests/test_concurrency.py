@@ -32,6 +32,8 @@ async def test_double_payme_perform_grants_once(client):
     h = {"Authorization": "Basic " + base64.b64encode(b"Paycom:payme-key").decode()}
     token = await register(client)
     prod = (await client.get("/v1/catalog/products", params={"limit": 1})).json()["items"][0]
+    from tests.conftest import put_catalog_pdf
+    await put_catalog_pdf(prod["id"])  # fayli yo'q reja sotilmaydi (saqlash har test uchun toza)
     pid = (await client.post("/v1/payments", json={"kind": "catalog", "target_id": prod["id"], "provider": "payme"},
                              headers=auth(token))).json()["payment"]["id"]
     await client.post("/v1/payments/payme", headers=h, json={"id": 1, "method": "CreateTransaction", "params": {

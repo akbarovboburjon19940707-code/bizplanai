@@ -26,12 +26,16 @@ test("chat widget: suggestion, catalog cards, contact handoff, history survives 
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-test("chat widget fits a phone screen and is hidden in admin and Mini App", async ({ page }) => {
+test("chat widget fits a phone screen and is hidden in the Mini App", async ({ page, context }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await page.goto("/aloqa/");
   await page.getByRole("button", { name: "Savol berish" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   expect(await noHorizontalScroll(page)).toBe(true);
-  await page.goto("/admin/");
+  // Mini App'da yordamchi bot o'zida; /admin/ ni mehmon ochsa /kirish/ ga yo'naltiriladi (u yerda chat bor), shuning
+  // uchun admin holati bu yerda emas, yo'naltirishsiz /tg/ da tekshiriladi
+  await context.route("https://telegram.org/**", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
+  await page.goto("/tg/");
+  await expect(page.getByText("Bu sahifa Telegram ichida ochiladi")).toBeVisible();
   await expect(page.getByRole("button", { name: "Savol berish" })).toHaveCount(0);
 });

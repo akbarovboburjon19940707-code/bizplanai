@@ -91,6 +91,8 @@ envVarGroups:
     envVars:
       - { key: SECRET_KEY, generateValue: true }
       - { key: TELEGRAM_WEBHOOK_SECRET, generateValue: true }
+      # k6 yuklama testi uchun (faqat staging!): backend/loadtest/README.md
+      - { key: LOADTEST_TOKEN, generateValue: true }
 # Quyidagi kalitlarni Dashboard > Environment Groups > bizplan-stg-secrets da QO'LDA qo'shing
 # (Render guruhda `sync: false` ni qo'llab-quvvatlamaydi; qo'lda qo'shilgan kalitlarni sync o'chirmaydi):
 #   R2_ACCOUNT_ID

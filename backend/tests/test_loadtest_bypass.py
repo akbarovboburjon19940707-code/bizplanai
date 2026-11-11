@@ -45,7 +45,19 @@ async def test_bypass_needs_a_configured_long_matching_token(client, loadtest_to
 
 def test_production_rejects_short_loadtest_token():
     base = dict(app_env="production", secret_key="s" * 40, database_url="postgresql://u:p@h/db", redis_url="redis://r",
-                job_mode="queue", storage_backend="r2", cookie_secure=True)
+                job_mode="queue", storage_backend="r2", cookie_secure=True,
+                r2_account_id="a", r2_access_key_id="k", r2_secret_access_key="s", r2_bucket="b")
     with pytest.raises(ValueError, match="LOADTEST_TOKEN"):
         Settings(**base, loadtest_token="short")
     assert Settings(**base, loadtest_token=TOKEN).loadtest_token == TOKEN
+
+
+
+def test_production_requires_all_r2_settings():
+    """2026-11-11: production'da R2_BUCKET o'rniga R2_BUCKET_NAME kiritilgan, server ishlab, har sotuv 500 bergan."""
+    base = dict(app_env="production", secret_key="s" * 40, database_url="postgresql://u:p@h/db", redis_url="redis://r",
+                job_mode="queue", storage_backend="r2", cookie_secure=True,
+                r2_account_id="a", r2_access_key_id="k", r2_secret_access_key="s")
+    with pytest.raises(ValueError, match="R2_BUCKET"):
+        Settings(**base)
+    assert Settings(**base, r2_bucket="b").r2_bucket == "b"

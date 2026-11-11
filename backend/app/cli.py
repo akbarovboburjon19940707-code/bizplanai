@@ -1,6 +1,7 @@
 """Boshqaruv buyruqlari:
   python -m app.cli seed [--min-catalog-price 25000]
   python -m app.cli create-admin --phone +998901234567 --password '...'
+  python -m app.cli check-catalog [--hide-missing] [--report katalog.csv]
 """
 import argparse
 import asyncio
@@ -78,6 +79,49 @@ async def create_admin(phone: str, password: str) -> None:
     print(totp_uri(secret, phone))
 
 
+async def check_catalog(hide_missing: bool, report_path: str | None) -> None:
+    """Faol katalog rejalarining PDF va muqova rasmi saqlashda (R2) borligini tekshiradi."""
+    import csv
+
+    from app.models import AuditLog
+    from app.modules.catalog.router import image_key
+    from app.storage import get_storage
+
+    storage = get_storage()
+    limit = asyncio.Semaphore(16)
+
+    async def probe(p: CatalogProduct) -> dict:
+        async with limit:
+            img = image_key(p.preview_image)
+            return {"id": p.id, "title": p.title, "pdf": await storage.exists(p.file_key),
+                    "image": (await storage.exists(img)) if img else None, "file_key": p.file_key}
+
+    async with sessionmaker()() as s:
+        products = list(await s.scalars(select(CatalogProduct).where(CatalogProduct.is_active.is_(True))))
+        rows = await asyncio.gather(*(probe(p) for p in products))
+        no_pdf = [r for r in rows if not r["pdf"]]
+        no_img = [r for r in rows if r["image"] is False]
+        print(f"faol rejalar: {len(rows)}, PDF yo'q: {len(no_pdf)}, rasm yo'q: {len(no_img)}, "
+              f"rasm ko'rsatilmagan: {sum(r['image'] is None for r in rows)}")
+        for r in no_pdf[:20]:
+            print(f"  PDF yo'q: {r['id']}  ({r['file_key']})")
+        if hide_missing and no_pdf:
+            ids = {r["id"] for r in no_pdf}
+            for p in products:
+                if p.id in ids:
+                    p.is_active = False
+                    s.add(AuditLog(actor_id=None, action="catalog.hide_missing_file", entity="product", entity_id=p.id))
+            await s.commit()
+            print(f"{len(ids)} ta reja yashirildi (admin panel > Katalog > Yashirilgan; fayl yuklangach Ko'rsatish)")
+    await dispose_engine()
+    if report_path:
+        with open(report_path, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=["id", "title", "pdf", "image", "file_key"])
+            w.writeheader()
+            w.writerows(rows)
+        print(f"hisobot: {report_path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -86,9 +130,14 @@ def main() -> None:
     p_admin = sub.add_parser("create-admin")
     p_admin.add_argument("--phone", required=True)
     p_admin.add_argument("--password", required=True)
+    p_check = sub.add_parser("check-catalog")
+    p_check.add_argument("--hide-missing", action="store_true", help="PDF fayli yo'q rejalarni katalogdan yashirish")
+    p_check.add_argument("--report", help="CSV hisobot fayli")
     args = parser.parse_args()
     if args.cmd == "seed":
         asyncio.run(seed(args.min_catalog_price))
+    elif args.cmd == "check-catalog":
+        asyncio.run(check_catalog(args.hide_missing, args.report))
     else:
         if len(args.password) < 12:
             raise SystemExit("Admin paroli kamida 12 belgi bo'lsin")

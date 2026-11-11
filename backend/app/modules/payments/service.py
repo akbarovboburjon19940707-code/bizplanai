@@ -12,6 +12,7 @@ from app.core.config import get_settings
 from app.core.errors import AppError, not_found
 from app.core.security import utcnow
 from app.models import (AuditLog, CatalogProduct, Entitlement, Payment, PaymentEvent, Subscription, Tariff, User)
+from app.storage import get_storage
 
 log = logging.getLogger(__name__)
 PREFIX = {"subscription": "sub", "catalog": "cat", "plan_credit": "crd"}
@@ -40,6 +41,10 @@ async def _price_and_title(session: AsyncSession, user: User, kind: str, target_
             Entitlement.user_id == user.id, Entitlement.product_id == product.id, Entitlement.revoked_at.is_(None)))
         if owned:
             raise AppError(409, "already_owned", "Bu reja allaqachon sotib olingan")
+        # Fayli yo'q rejaga pul olinmasin (aks holda mijoz to'lab, yuklab ololmaydi)
+        if not await get_storage().exists(product.file_key):
+            log.error("katalog fayli yo'q, sotuv to'xtatildi: product=%s key=%s", product.id, product.file_key)
+            raise AppError(409, "file_missing", "Bu reja fayli hozircha mavjud emas. Administrator xabardor qilindi.")
         return product.price_tiyin, product.title, product.id
     if kind == "plan_credit":
         return get_settings().plan_credit_price_som * 100, "Bitta biznes-reja (AI bilan)", None

@@ -4,7 +4,7 @@ import time
 
 from sqlalchemy import select
 
-from tests.conftest import PLAN_INPUT, auth, register
+from tests.conftest import PLAN_INPUT, auth, put_catalog_pdf, register, remove_catalog_pdf
 
 PAYME_AUTH = {"Authorization": "Basic " + base64.b64encode(b"Paycom:payme-key").decode()}
 
@@ -74,6 +74,7 @@ async def test_payme_catalog_flow(client):
     assert products["total"] == 269
     prod = products["items"][0]
     assert prod["price_som"] == 25000
+    await put_catalog_pdf(prod["id"])
 
     assert (await client.get(f"/v1/catalog/products/{prod['id']}/download", headers=auth(token))).status_code == 403
 
@@ -99,7 +100,8 @@ async def test_payme_catalog_flow(client):
     assert performed["result"]["state"] == 2
     assert (await rpc("PerformTransaction", {"id": "pm1"})).json()["result"]["state"] == 2  # idempotent
 
-    # PDF hali bucket'da yo'q -> aniq xato
+    # Sotilgandan keyin fayl yo'qolsa -> aniq xato (pul olingan, admin faylni tiklaydi)
+    await remove_catalog_pdf(prod["id"])
     r = await client.get(f"/v1/catalog/products/{prod['id']}/download", headers=auth(token))
     assert r.status_code == 404 and r.json()["error"]["code"] == "file_missing"
     from app.storage import get_storage
@@ -189,3 +191,21 @@ async def test_click_failed_second_tx_does_not_revoke_paid(client):
     assert failed["error"] == -9
     sub = (await client.get("/v1/me", headers=auth(token))).json()["subscription"]
     assert sub["tariff_code"] == "pro" and sub["status"] == "active"
+
+
+async def test_catalog_plan_without_file_cannot_be_bought(client):
+    """Fayli yo'q reja: to'lov yaratilmaydi (pul olinmaydi), fayl qo'yilgach sotiladi."""
+    from app.db.session import sessionmaker
+    from app.models import Payment
+
+    token = await register(client)
+    pid = (await client.get("/v1/catalog/products", params={"limit": 1})).json()["items"][0]["id"]
+    await remove_catalog_pdf(pid)
+    r = await client.post("/v1/payments", json={"kind": "catalog", "target_id": pid, "provider": "manual"}, headers=auth(token))
+    assert r.status_code == 409 and r.json()["error"]["code"] == "file_missing"
+    async with sessionmaker()() as s:
+        assert (await s.scalars(select(Payment))).first() is None
+
+    await put_catalog_pdf(pid)
+    r = await client.post("/v1/payments", json={"kind": "catalog", "target_id": pid, "provider": "manual"}, headers=auth(token))
+    assert r.status_code == 201

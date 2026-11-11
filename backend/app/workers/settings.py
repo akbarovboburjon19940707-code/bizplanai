@@ -7,6 +7,7 @@ from sqlalchemy import update
 
 from app.core.config import get_settings
 from app.core.logging import setup_logging
+from app.core.observability import init_sentry
 from app.core.redis import get_redis
 from app.core.security import utcnow
 from app.db.session import dispose_engine, sessionmaker
@@ -48,6 +49,7 @@ async def cancel_stale_payments(ctx) -> None:
 
 async def startup(ctx) -> None:
     setup_logging(get_settings().log_level)
+    init_sentry("worker")  # reja generatsiyasi xatolari ham Sentry'ga
 
 
 async def shutdown(ctx) -> None:

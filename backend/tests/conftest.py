@@ -60,3 +60,29 @@ PLAN_INPUT = {
     "imtiyoz": 6, "hajm": 2500, "narx": 120000, "direktor": 1, "rahbar_oylik": 5_000_000, "xodim": 4,
     "ishchi_oylik": 3_500_000,
 }
+
+
+async def put_catalog_pdf(product_id: str) -> None:
+    """Katalog rejasining PDF faylini saqlashga qo'yadi (fayli yo'q reja sotilmaydi)."""
+    from app.db.session import sessionmaker
+    from app.models import CatalogProduct
+    from app.storage import get_storage
+
+    async with sessionmaker()() as s:
+        key = (await s.get(CatalogProduct, product_id)).file_key
+    await get_storage().put_bytes(key, b"%PDF-1.4 test", "application/pdf")
+
+
+async def remove_catalog_pdf(product_id: str) -> None:
+    """Lokal saqlashdan katalog PDF'ini o'chiradi (fayl yo'qolgan holatni sinash uchun)."""
+    import os
+
+    from app.db.session import sessionmaker
+    from app.models import CatalogProduct
+    from app.storage import get_storage
+
+    async with sessionmaker()() as s:
+        key = (await s.get(CatalogProduct, product_id)).file_key
+    path = get_storage().path_for(key)
+    if os.path.exists(path):
+        os.remove(path)

@@ -74,6 +74,10 @@ python scripts/set_telegram_webhook.py https://api-yangi.bizplanai.uz           
 - [ ] Ro'yxatdan o'tish, sahifani yangilaganda sessiya saqlanadi (refresh cookie)
 - [ ] `/dashboard`: jonli ko'rsatkichlar, reja yaratish, Word va Excel yuklab olish (Word'da muqova rasmi, jadvallar)
 - [ ] Katalog: rasmlar `/v1/catalog/products/{id}/image` orqali ko'rinadi; sotib olinmagan PDF 403
+- [ ] Katalog fayllari: `bizplan-stg-api` Shell'da `python -m app.cli check-catalog --report /tmp/katalog.csv`
+      (PDF va muqova rasmi R2'da bormi). PDF'i yo'q reja sotilmaydi (`409 file_missing`, pul olinmaydi);
+      ularni vaqtincha yashirish: `--hide-missing` (admin panel > Katalog > Yashirilgan, fayl yuklangach Ko'rsatish)
+- [ ] Sentry: `SENTRY_DSN` qo'shilgan bo'lsa, xatolar `component=api` va `component=worker` belgisi bilan keladi
 - [ ] Qo'lda to'lov: chek yuklash > admin tasdiqlaydi > huquq beriladi
 - [ ] Test bot orqali kirish
 - [ ] k6 yuklama testi: `k6 run -e API=https://api-yangi.bizplanai.uz backend/loadtest/k6.js` (maqsad: p95 < 300 ms, xato < 0.1%)

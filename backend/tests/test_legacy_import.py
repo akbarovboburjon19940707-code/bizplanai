@@ -168,3 +168,48 @@ def test_pasted_url_is_cleaned_and_bad_host_explained():
     with pytest.raises(SystemExit) as e:
         async_url("read -rs")
     assert "read -rs" in str(e.value)  # faqat boshi ko'rsatiladi
+
+
+def _live_schema_db(path, product_ids: list[str], titles: list[str]) -> str:
+    """Jonli eski bazaning haqiqiy `payments` tuzilishi (2026-11-11 staging'da ko'rilgan ustunlar)."""
+    c = sqlite3.connect(path)
+    c.executescript("""
+        CREATE TABLE users (id TEXT PRIMARY KEY, phone TEXT, first_name TEXT);
+        CREATE TABLE subscriptions (id INTEGER PRIMARY KEY, user_id TEXT, plan_name TEXT, status TEXT, end_date DATETIME);
+        CREATE TABLE payments (id TEXT PRIMARY KEY, order_id TEXT, user_id TEXT, user_name TEXT, project_name TEXT,
+            product_id TEXT, amount NUMERIC, payment_provider TEXT, payment_status TEXT, admin_status TEXT,
+            receipt_file TEXT, created_at DATETIME);
+    """)
+    c.executemany("INSERT INTO users VALUES (?,?,?)", [
+        ("u1", "+998901112200", "Aziz"), ("u2", "+998901112201", "Aziz"), ("u3", "+998901112202", "Vali")])
+    c.executemany("INSERT INTO payments VALUES (?,?,?,?,?,?,?,?,?,?,NULL,'2025-03-01')", [
+        ("p1", "o1", "u2", "Aziz", titles[0], product_ids[0], 25000, "click", "success", "pending"),   # user_id: aniq
+        ("p2", "o2", None, "Vali", titles[1], product_ids[1], 25000, "card", "pending", "approved"),   # karta, tasdiqlangan
+        ("p3", "o3", "u1", "Aziz", titles[2], product_ids[2], 25000, "payme", "pending", "pending"),   # to'lanmagan
+        ("p4", "o4", "u1", "Aziz", "Standart obuna", None, 50000, "click", "success", "pending"),     # obuna: emas
+        ("p5", "o5", "u1", "Aziz", titles[2], None, 25000, "click", "success", "pending"),            # id yo'q: review
+        ("p6", "o6", "u1", "Aziz", "Yo'q reja", "yoq-id", 25000, "click", "success", "pending"),       # topilmadi
+        ("p7", "o7", None, "Aziz", titles[0], product_ids[0], 25000, "click", "success", "pending"),  # 2 ta Aziz
+        ("p8", "o8", "u1", "Aziz", "Mening loyiham", None, 50000, "card", "success", "approved"),     # bitta reja
+    ])
+    c.commit()
+    c.close()
+    return f"sqlite+aiosqlite:///{path}"
+
+
+async def test_import_live_payments_schema(client, tmp_path):
+    from app.db.session import sessionmaker
+    from app.legacy_import import read_source, run_import
+    from app.models import CatalogProduct
+
+    async with sessionmaker()() as s:
+        rows = (await s.execute(select(CatalogProduct.id, CatalogProduct.title).order_by(CatalogProduct.id).limit(3))).all()
+    ids, titles = [r[0] for r in rows], [r[1] for r in rows]
+    source = await read_source(_live_schema_db(tmp_path / "live.db", ids, titles),
+                               {"users": "users", "subscriptions": "subscriptions", "payments": "payments"})
+    async with sessionmaker()() as s:
+        report = await run_import(s, source, apply=False)
+    c = report.counts()
+    assert c["purchase.created"] == 2  # p1 (user_id), p2 (karta tasdiqlangan, yagona Vali)
+    assert c["purchase.review"] == 3   # p5 (id yo'q), p6 (topilmadi), p7 (2 ta Aziz)
+    assert c["user.created"] == 3

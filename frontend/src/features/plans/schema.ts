@@ -16,6 +16,12 @@ export const DEFAULT_COGS_PCT: Record<Activity, number> = {
   xizmat: 15,
 };
 export const DEFAULT_CAPACITY = [75, 77, 80, 82, 85, 90, 92, 95, 100, 100];
+
+/** Loyiha davri (yil) kredit muddatidan: backend `horizon_years` bilan bir xil (36 oy -> 3, 30 oy -> 3; 1..10). */
+export function horizonYears(muddat: number | null | undefined): number {
+  const m = muddat && muddat > 0 ? muddat : 120;
+  return Math.max(1, Math.min(10, Math.ceil(m / 12)));
+}
 export const DEFAULT_DISCOUNT = 14;
 
 const money = z.number().min(0).max(1e13).optional();

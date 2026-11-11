@@ -1,4 +1,4 @@
-"""10 yillik moliyaviy model: "Asosiy shablon npv 10 yillik.xls" mantiqi asosida.
+"""Moliyaviy model (1-10 yil, davr kredit muddatidan): "Asosiy shablon npv 10 yillik.xls" mantiqi asosida.
 
 Excel shablonining formulalari aynan takrorlanadi (docs/EXCEL_SHABLON_TAHLILI.md), quyidagi tuzatishlar bilan
 (foydalanuvchi qarori, 2026-11-10):
@@ -16,7 +16,7 @@ Foydalanuvchi qarorlari: NPV/IRR/PP/DPP sof pul oqimidan (soliq va kredit foizid
 from __future__ import annotations
 
 
-N_YEARS = 10
+N_YEARS = 10  # eng uzun loyiha davri (shablon); haqiqiy davr kredit muddatidan: horizon_years()
 DEFAULT_CAPACITY = [0.75, 0.77, 0.80, 0.82, 0.85, 0.90, 0.92, 0.95, 1.00, 1.00]
 DEFAULT_DISCOUNT_PCT = 14.0
 SOCIAL_TAX = 0.12
@@ -113,11 +113,17 @@ def _products(p: dict) -> list[dict]:
     return out
 
 
-def _loan(kredit: float, foiz_pct: float, muddat: int, imtiyoz: int, turi: str) -> dict:
+def horizon_years(muddat: int) -> int:
+    """Loyiha davri (yil) = kredit muddati yilga yaxlitlab (36 oy -> 3, 30 oy -> 3), 1..10 oralig'ida
+    (foydalanuvchi qarori, 2026-11-11). Muddat kiritilmasa 120 oy, ya'ni 10 yil."""
+    return max(1, min(N_YEARS, -(-int(muddat) // 12)))
+
+
+def _loan(kredit: float, foiz_pct: float, muddat: int, imtiyoz: int, turi: str, n: int = N_YEARS) -> dict:
     r = foiz_pct / 100 / 12
     amort_oy = max(1, muddat - imtiyoz)
     qoldiq = kredit
-    asosiy, foiz, tolov, oxir = ([0.0] * N_YEARS for _ in range(4))
+    asosiy, foiz, tolov, oxir = ([0.0] * n for _ in range(4))
     for m in range(1, muddat + 1):
         y = (m - 1) // 12
         f = qoldiq * r
@@ -129,7 +135,7 @@ def _loan(kredit: float, foiz_pct: float, muddat: int, imtiyoz: int, turi: str) 
             a = kredit / amort_oy
         a = min(a, qoldiq)
         qoldiq -= a
-        if y < N_YEARS:
+        if y < n:
             asosiy[y] += a
             foiz[y] += f
             tolov[y] += a + f
@@ -138,6 +144,8 @@ def _loan(kredit: float, foiz_pct: float, muddat: int, imtiyoz: int, turi: str) 
 
 
 def build_model(p: dict) -> dict:
+    muddat = int(_num(p.get("muddat"), 120)) or 120
+    n = horizon_years(muddat)
     # ── 1-3 ILOVA: loyiha qiymati va moliyalashtirish ──
     kredit = _num(p.get("kredit"))
     oz = _num(p.get("oz_mablag"))
@@ -155,7 +163,7 @@ def build_model(p: dict) -> dict:
         asosiy_oz = 0.0
     asosiy = kredit + asosiy_oz
 
-    # ── 4-ILOVA: amortizatsiya (10 yil, teng) ──
+    # ── 4-ILOVA: amortizatsiya (foydali xizmat muddati 10 yil, teng; loyiha davri qisqa bo'lsa qoldiq qiymat qoladi) ──
     amort = asosiy / 10
 
     # ── 5-ILOVA: ish haqi va foydalanish xarajatlari ──
@@ -182,8 +190,8 @@ def build_model(p: dict) -> dict:
 
     # ── 6-ILOVA: sotish rejasi ──
     products = _products(p)
-    cap = [max(0.0, min(_num(c), 150.0)) / 100 for c in (p.get("quvvat") or [])][:N_YEARS]  # foizda
-    cap = cap + DEFAULT_CAPACITY[len(cap):]
+    cap = [max(0.0, min(_num(c), 150.0)) / 100 for c in (p.get("quvvat") or [])][:n]  # foizda
+    cap = cap + DEFAULT_CAPACITY[len(cap):n]
     max_tushum = sum(pr["hajm"] * pr["narx"] for pr in products)
     tushum = [max_tushum * q for q in cap]
 
@@ -234,10 +242,9 @@ def build_model(p: dict) -> dict:
         return fixed.get(k, 0.0) + var.get(k, 0.0) * q
 
     # ── 8-9-ILOVA: kredit ──
-    muddat = int(_num(p.get("muddat"), 120)) or 120
     imtiyoz = min(int(_num(p.get("imtiyoz"))), max(0, muddat - 1))
     foiz_pct = _num(p.get("foiz"), 18)
-    loan = _loan(kredit, foiz_pct, muddat, imtiyoz, (p.get("kredit_turi") or "differensial").strip())
+    loan = _loan(kredit, foiz_pct, muddat, imtiyoz, (p.get("kredit_turi") or "differensial").strip(), n)
 
     # ── 11-14 ILOVA: yillik hisob ──
     soliq_turi = (p.get("soliq_turi") or "ytt").strip()
@@ -271,13 +278,16 @@ def build_model(p: dict) -> dict:
     disc_cf = [c / (1 + disc) ** (t + 1) for t, c in enumerate(cf)]
     pv = sum(disc_cf)
     npv = pv - loyiha_qiymati
-    npv_by_year = [sum(disc_cf[: n + 1]) - loyiha_qiymati for n in range(N_YEARS)]
+    npv_by_year = [sum(disc_cf[: k + 1]) - loyiha_qiymati for k in range(len(disc_cf))]
     irr_v = irr([-loyiha_qiymati] + cf)
     pi = pv / loyiha_qiymati if loyiha_qiymati > 0 else 0.0
     pp = _payback(loyiha_qiymati, cf)
     dpp = _payback(loyiha_qiymati, disc_cf)
-    roi = (sum(y["sof"] for y in Y) / N_YEARS) / loyiha_qiymati * 100 if loyiha_qiymati > 0 else 0.0
+    roi = (sum(y["sof"] for y in Y) / n) / loyiha_qiymati * 100 if loyiha_qiymati > 0 else 0.0
     dscr_vals = [y["dscr"] for y in Y if y["dscr"] is not None]
+    if n < N_YEARS:
+        warnings.append(f"Loyiha davri kredit muddatiga moslangan: {muddat} oy ({n} yil). NPV, IRR va qoplash "
+                        f"muddati shu {n} yil uchun hisoblangan.")
     if npv <= 0:
         warnings.insert(0, "DIQQAT: Loyiha o'zini oqlamaydi (NPV salbiy). Rentabellikni oshirish uchun "
                            "mahsulot/xizmat narxini ko'taring yoki xarajatlarni qisqartiring.")
@@ -293,7 +303,7 @@ def build_model(p: dict) -> dict:
         cost_total=cost_total, bep_ratio=bep_ratio, loan=loan, muddat=muddat, imtiyoz=imtiyoz,
         foiz_pct=foiz_pct, tax=(tax_rate, tax_label, tax_rate_str), disc=disc, years=Y, disc_cf=disc_cf,
         pv=pv, npv=npv, npv_by_year=npv_by_year, irr=irr_v, pi=pi, pp=pp, dpp=dpp, roi=roi,
-        dscr_min=min(dscr_vals) if dscr_vals else None, warnings=warnings,
+        n_years=n, dscr_min=min(dscr_vals) if dscr_vals else None, warnings=warnings,
     )
 
 
@@ -312,8 +322,8 @@ def _opt(Y: list[dict]) -> list[list]:
 
 
 def build_tables(m: dict) -> list[dict]:
-    Y, w = m["years"], m["wages"]
-    yh = [f"{i + 1}-yil" for i in range(N_YEARS)]
+    Y, w, n = m["years"], m["wages"], m["n_years"]
+    yh = [f"{i + 1}-yil" for i in range(n)]
     lq = m["loyiha_qiymati"] or 1
     fin_oz = m["kredit_xarajat"] + m["sugurta"]
     t = []
@@ -339,11 +349,11 @@ def build_tables(m: dict) -> list[dict]:
                        ["Aylanma kapital", _r(m["aylanma"]), 0, _r(m["aylanma"])],
                        ["Moliyaviy xarajatlar (sug'urta, kredit olish)", _r(fin_oz), 0, _r(fin_oz)],
                        ["JAMI birinchi investitsiya xarajatlari", _r(m["oz"]), _r(m["kredit"]), _r(m["loyiha_qiymati"])]]})
-    cum = [m["amort"] * (i + 1) for i in range(N_YEARS)]
-    t.append({"ilova": "4-ILOVA", "title": "AMORTIZATSIYA HISOBI (10 yil, teng ulushda)",
+    cum = [m["amort"] * (i + 1) for i in range(n)]
+    t.append({"ilova": "4-ILOVA", "title": "AMORTIZATSIYA HISOBI (foydali xizmat muddati 10 yil, teng ulushda)",
               "headers": ["Ko'rsatkich", "Amortizatsiya bazasi (so'm)", "Stavka", *yh],
-              "rows": [["Asosiy vositalar", _r(m["asosiy"]), "10.0%", *_yrs([m["amort"]] * N_YEARS)],
-                       ["Jami amortizatsiya", "", "", *_yrs([m["amort"]] * N_YEARS)],
+              "rows": [["Asosiy vositalar", _r(m["asosiy"]), "10.0%", *_yrs([m["amort"]] * n)],
+                       ["Jami amortizatsiya", "", "", *_yrs([m["amort"]] * n)],
                        ["Yig'ilgan amortizatsiya", "", "", *_yrs(cum)]]})
     t.append({"ilova": "5-ILOVA", "title": "ISH HAQI XARAJATLARI",
               "headers": ["Lavozim", "Soni", "Maosh (so'm)", "Oylik jami (so'm)", "Yillik (so'm)"],
@@ -373,7 +383,7 @@ def build_tables(m: dict) -> list[dict]:
         sales_rows.append([f"{pr['nomi']}: hajm ({pr['olchov']})", *_yrs([pr["hajm"] * q for q in m["cap"]])])
         sales_rows.append([f"{pr['nomi']}: daromad (so'm)", *_yrs([pr["hajm"] * pr["narx"] * q for q in m["cap"]])])
     sales_rows.append(["JAMI SOTISH DAROMADLARI", *_yrs(m["tushum"])])
-    t.append({"ilova": "6-ILOVA", "title": "SOTISH REJASI (10 yil)", "headers": ["Ko'rsatkich", *yh], "rows": sales_rows})
+    t.append({"ilova": "6-ILOVA", "title": f"SOTISH REJASI ({n} yil)", "headers": ["Ko'rsatkich", *yh], "rows": sales_rows})
     tax_rate, tax_label, tax_rate_str = m["tax"]
     t.append({"ilova": "7-ILOVA", "title": "SOLIQ VA BOJLAR",
               "headers": ["Soliq turi", "Stavka", "Soliq solish obyekti", *yh],
@@ -382,7 +392,7 @@ def build_tables(m: dict) -> list[dict]:
     ln = m["loan"]
     t.append({"ilova": "8-9-ILOVA", "title": f"KREDIT TO'LOV GRAFIGI ({m['muddat']} oy, imtiyoz {m['imtiyoz']} oy, {m['foiz_pct']:g}%)",
               "headers": ["Davr", "Asosiy qarz to'lovi (so'm)", "Foiz to'lovi (so'm)", "Jami to'lov (so'm)", "Yil oxiri qoldiq (so'm)"],
-              "rows": [*[[yh[i], _r(ln["asosiy"][i]), _r(ln["foiz"][i]), _r(ln["tolov"][i]), _r(ln["qoldiq"][i])] for i in range(N_YEARS)],
+              "rows": [*[[yh[i], _r(ln["asosiy"][i]), _r(ln["foiz"][i]), _r(ln["tolov"][i]), _r(ln["qoldiq"][i])] for i in range(n)],
                        ["JAMI", _r(sum(ln["asosiy"])), _r(sum(ln["foiz"])), _r(sum(ln["tolov"])), ""]]})
     ct = m["cost_total"] or 1
     bep = m["bep_ratio"]
@@ -402,7 +412,7 @@ def build_tables(m: dict) -> list[dict]:
                        ["Ishlab chiqarish xodimlarining ish haqi", *_yrs(y["ishchi"] for y in Y)],
                        ["Ijtimoiy soliq", *_yrs(y["ishchi_ijt"] for y in Y)],
                        ["Operatsion xarajatlar (kommunal)", *_yrs(y["kommunal"] for y in Y)],
-                       ["Amortizatsiya", *_yrs([m["amort"]] * N_YEARS)],
+                       ["Amortizatsiya", *_yrs([m["amort"]] * n)],
                        ["TANNARX", *_yrs(y["tannarx"] for y in Y)],
                        ["Ma'muriy xarajatlar (ish haqi, ijtimoiy soliq)", *_yrs(y["admin"] for y in Y)],
                        ["Marketing xarajatlari", *_yrs(y["marketing"] for y in Y)],
@@ -437,15 +447,15 @@ def build_tables(m: dict) -> list[dict]:
               "rows": [["Sotishdan tushgan tushum", 0, *_yrs(m["tushum"])],
                        ["Xizmatning bevosita xarajatlari (tannarx)", 0, *_yrs(y["tannarx"] for y in Y)],
                        ["Yalpi pul tushumi", 0, *_yrs(y["yalpi"] for y in Y)],
-                       ["Amortizatsiya (+)", 0, *_yrs([m["amort"]] * N_YEARS)],
+                       ["Amortizatsiya (+)", 0, *_yrs([m["amort"]] * n)],
                        ["Marketing xarajatlari", 0, *_yrs(y["marketing"] for y in Y)],
                        ["Ma'muriy xarajatlar", 0, *_yrs(y["admin"] for y in Y)],
                        *[[r[0], 0, *r[1:]] for r in _opt(Y)],
                        ["Boshqa xarajatlar", 0, *_yrs(y["boshqa"] for y in Y)],
                        ["Operatsion pul oqimi", 0, *_yrs(y["op_cf"] for y in Y)],
-                       ["O'z mablag'lari", _r(m["oz"]), *[""] * N_YEARS],
-                       ["Bank krediti", _r(m["kredit"]), *[""] * N_YEARS],
-                       ["Investitsiyalar (loyiha qiymati)", _r(-m["loyiha_qiymati"]), *[""] * N_YEARS],
+                       ["O'z mablag'lari", _r(m["oz"]), *[""] * n],
+                       ["Bank krediti", _r(m["kredit"]), *[""] * n],
+                       ["Investitsiyalar (loyiha qiymati)", _r(-m["loyiha_qiymati"]), *[""] * n],
                        ["Foiz to'lovlari", 0, *_yrs(y["foiz"] for y in Y)],
                        ["Soliqlar", 0, *_yrs(y["soliq"] for y in Y)],
                        ["SOF PUL OQIMI", 0, *_yrs(y["sof_cf"] for y in Y)],
@@ -458,11 +468,11 @@ def build_tables(m: dict) -> list[dict]:
     t.append({"ilova": "14-ILOVA", "title": "NPV, IRR, DPP, PI HISOBI",
               "headers": ["Davr", "Sof pul oqimi (soliq va foizdan keyin)", f"Diskontlangan oqim ({rate_pct})", "Sof hozirgi qiymat (NPV)"],
               "rows": [["0-yil", _r(-m["loyiha_qiymati"]), _r(-m["loyiha_qiymati"]), _r(-m["loyiha_qiymati"])],
-                       *[[yh[i], _r(Y[i]["sof_cf"]), _r(m["disc_cf"][i]), _r(m["npv_by_year"][i])] for i in range(N_YEARS)],
+                       *[[yh[i], _r(Y[i]["sof_cf"]), _r(m["disc_cf"][i]), _r(m["npv_by_year"][i])] for i in range(n)],
                        ["", "", "", ""],
-                       ["SOF HOZIRGI QIYMAT (NPV, 10 yil)", "", "", _r(m["npv"])],
+                       [f"SOF HOZIRGI QIYMAT (NPV, {n} yil)", "", "", _r(m["npv"])],
                        ["Ichki daromadlilik darajasi (IRR)", "", "", f"{irr_v * 100:.1f}%" if irr_v is not None else "—"],
                        ["Daromadlilik indeksi (PI)", "", "", f"{m['pi']:.2f}"],
-                       ["Investitsiyaning qaytarilish muddati (PP)", "", "", f"{m['pp']:.1f} yil" if m["pp"] is not None else "10 yildan ortiq"],
-                       ["Diskontlangan qaytarilish muddati (DPP)", "", "", f"{m['dpp']:.1f} yil" if m["dpp"] is not None else "10 yildan ortiq"]]})
+                       ["Investitsiyaning qaytarilish muddati (PP)", "", "", f"{m['pp']:.1f} yil" if m["pp"] is not None else f"{n} yildan ortiq"],
+                       ["Diskontlangan qaytarilish muddati (DPP)", "", "", f"{m['dpp']:.1f} yil" if m["dpp"] is not None else f"{n} yildan ortiq"]]})
     return t

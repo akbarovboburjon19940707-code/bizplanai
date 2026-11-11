@@ -1,17 +1,19 @@
 "use client";
 
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { uz } from "@/messages/uz";
 import { Button } from "@/shared/ui/button";
 import { NumberField, NumberInput } from "./fields";
 import { IndicatorCards, PreviewTables } from "./preview-panel";
-import { DEFAULT_CAPACITY, DEFAULT_DISCOUNT, type PlanFormValues } from "./schema";
+import { DEFAULT_CAPACITY, DEFAULT_DISCOUNT, horizonYears, type PlanFormValues } from "./schema";
 import type { PreviewState } from "./use-preview";
 
 const t = uz.plans.result;
 
 export function StepResult({ preview }: { preview: PreviewState }) {
   const { control, register, setValue } = useFormContext<PlanFormValues>();
+  const muddat = useWatch({ control, name: "muddat" });
+  const n = horizonYears(muddat);
   return (
     <div className="flex flex-col gap-4">
       <section className="rounded-card border border-border bg-white p-4 shadow-sm sm:p-6 lg:hidden">
@@ -22,9 +24,10 @@ export function StepResult({ preview }: { preview: PreviewState }) {
       <details className="rounded-card border border-border bg-white p-4 shadow-sm sm:p-6">
         <summary className="cursor-pointer font-[var(--font-outfit)] text-lg font-bold text-ink">{t.advanced}</summary>
         <fieldset className="mt-4">
-          <legend className="text-sm font-medium text-ink">{t.quvvat}</legend>
+          <legend className="text-sm font-medium text-ink">{t.quvvat(n)}</legend>
+          <p className="mt-1 text-xs text-muted">{t.horizonHint(muddat && muddat > 0 ? muddat : 120, n)}</p>
           <div className="mt-2 grid grid-cols-5 gap-2 sm:grid-cols-10">
-            {DEFAULT_CAPACITY.map((_, i) => (
+            {DEFAULT_CAPACITY.slice(0, n).map((_, i) => (
               <Controller
                 key={i}
                 control={control}

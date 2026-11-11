@@ -91,7 +91,8 @@ Hisob-kitob "Asosiy shablon npv 10 yillik.xls" asosida (`docs/EXCEL_SHABLON_TAHL
 - Muqova rasmi: `POST /v1/plans/images` (kirgan foydalanuvchi, multipart `file`, JPG/PNG, 5 MB gacha, 20/daq)
   -> 201 `{image_id}`; uni `PlanInput.rasm_id` ga yozing (faqat o'z rasmingiz ishlaydi). `rasm_avto` (standart `true`):
   rasm yuklanmasa faoliyat turiga mos rasm avtomatik qo'yiladi (server `PEXELS_API_KEY` yoki `PIXABAY_API_KEY` bo'lsa), ostida "Foto: muallif / manba" yozuvi. Xatolar: `bad_file`, `file_too_large`.
-- `indicators` ga qo'shildi: `dpp`, `dscr_min`, `zararsizlik_nuqtasi` (%). `npv`/`irr`/`payback`/`dpp` sof pul oqimidan (soliq va kredit foizidan keyin), 10 yil.
+- `indicators` ga qo'shildi: `dpp`, `dscr_min`, `zararsizlik_nuqtasi` (%). `npv`/`irr`/`payback`/`dpp` sof pul oqimidan (soliq va kredit foizidan keyin).
+- 2026-11-11: loyiha davri kredit muddatidan: `ceil(muddat / 12)` yil, 1..10 (36 oy -> 3 yil; muddat yo'q -> 10). `indicators.loyiha_yillari` (yangi maydon) shu davr; jadvallardagi yil ustunlari, `npv`/`irr`/`payback`/`dpp`/`roi` faqat shu yillar uchun. `quvvat` hali 10 ta qiymat qabul qiladi, ortiqchasi e'tiborsiz.
 Noma'lum maydon yuborilsa 422. Ma'lumotnomalar: `GET /v1/meta/activity-types`, `GET /v1/meta/business-categories`.
 
 | Metod va yo'l | Tavsif |

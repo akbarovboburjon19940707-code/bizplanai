@@ -122,3 +122,31 @@ async def test_api_accepts_products_and_validates(client):
     assert r.json()["indicators"]["npv"] != 0
     payload["quvvat"] = [75] * 9
     assert (await client.post("/v1/plans/preview", json=payload)).status_code == 422
+
+
+@pytest.mark.parametrize("muddat,years", [(36, 3), (30, 3), (12, 1), (60, 5), (120, 10), (180, 10), (None, 10)])
+def test_horizon_follows_loan_term(muddat, years):
+    """Loyiha davri kredit muddatiga moslashadi: 36 oy -> 3 yil, qolgan yillar jadvallarda yo'q."""
+    data = {**EXCEL_INPUT, "imtiyoz": 0, "muddat": muddat}
+    res = calculate_financial_model(data)
+    m = build_model(data)
+    assert m["n_years"] == years and len(m["years"]) == years and len(m["cap"]) == years
+    assert res["indicators"]["loyiha_yillari"] == years
+    for t in res["tables"]:
+        yil_cols = [h for h in t.get("headers", []) if str(h).endswith("-yil") and h != "0-yil"]
+        assert yil_cols in ([], [f"{i + 1}-yil" for i in range(years)]), t["title"]
+    if muddat and muddat <= 120:
+        assert sum(m["loan"]["asosiy"]) == pytest.approx(EXCEL_INPUT["kredit"])  # kredit davr ichida to'liq qaytadi
+        assert m["loan"]["qoldiq"][-1] == pytest.approx(0, abs=0.01)
+
+
+def test_short_horizon_metrics_use_only_those_years():
+    long_ = build_model({**EXCEL_INPUT, "muddat": 120, "imtiyoz": 0})
+    short = build_model({**EXCEL_INPUT, "muddat": 36, "imtiyoz": 0})
+    assert len(short["npv_by_year"]) == 3 and short["npv"] == pytest.approx(short["npv_by_year"][-1])
+    assert short["npv"] < long_["npv"]
+    assert any("36 oy (3 yil)" in w for w in short["warnings"])
+    assert not any("Loyiha davri" in w for w in long_["warnings"])
+    # quvvat grafigi 10 qiymat bilan kelsa ham faqat 3 yili olinadi
+    custom = build_model({**EXCEL_INPUT, "muddat": 36, "quvvat": [50, 60, 70, 80, 90, 100, 100, 100, 100, 100]})
+    assert custom["cap"] == [0.5, 0.6, 0.7]

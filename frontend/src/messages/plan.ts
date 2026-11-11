@@ -101,7 +101,7 @@ export const planMessages = {
   },
   result: {
     indicators: "Asosiy ko‘rsatkichlar",
-    npv: "NPV (10 yil)",
+    npv: (n: number) => `NPV (${n} yil)`,
     irr: "IRR",
     payback: "Qoplash muddati",
     dpp: "Diskontlangan qoplash",
@@ -113,7 +113,9 @@ export const planMessages = {
     calculating: "Hisoblanmoqda…",
     fillRequired: "Ko‘rsatkichlarni ko‘rish uchun loyiha nomi, qiymati va kamida bitta mahsulotni kiriting.",
     advanced: "Qo‘shimcha sozlamalar",
-    quvvat: "Quvvatni ishga tushirish, % (1–10 yil)",
+    quvvat: (n: number) => `Quvvatni ishga tushirish, % (1–${n} yil)`,
+    horizonHint: (oy: number, n: number) =>
+      `Loyiha davri kredit muddatiga mos: ${oy} oy, ya’ni ${n} yil. Jadvallar va NPV shu davr uchun hisoblanadi.`,
     diskont: "Diskont stavkasi, %",
     reset: "Standartga qaytarish",
     useAi: "Matn bo‘limlarini AI bilan to‘ldirish",

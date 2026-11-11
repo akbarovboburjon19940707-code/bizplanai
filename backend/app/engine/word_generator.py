@@ -54,7 +54,7 @@ def generate_swot_and_market_analysis(ctx: dict) -> dict:
                 "opportunities": [
                     "Davlat tomonidan ishlab chiqarish korxonalariga berilayotgan soliq va bojxona imtiyozlari",
                     "Yirik sanoat korxonalari bilan kooperatsiya asosida yetkazib berish shartnomalari",
-                    "10 yillik investitsiya davrida quvvatni 100% ga yetkazish va eksport bozorlariga chiqish",
+                    "Investitsiya davrida quvvatni 100% ga yetkazish va eksport bozorlariga chiqish",
                     "Yangi turdosh mahsulotlar nomenklaturasini bosqichma-bosqich kengaytirish"
                 ],
                 "threats": [

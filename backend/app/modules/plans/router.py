@@ -74,11 +74,14 @@ async def get_plan(plan_id: str, user: CurrentUser, session: SessionDep):
 
 @router.get("/{plan_id}/download", response_model=DownloadOut)
 async def download(plan_id: str, user: CurrentUser, session: SessionDep,
-                   format: Literal["docx", "xlsx"] = "docx"):
+                   format: Literal["docx", "xlsx", "pdf"] = "docx"):
     plan = await _own_plan(session, user, plan_id)
     if plan.status != "done":
         raise AppError(409, "not_ready", "Hujjat hali tayyor emas")
-    key = plan.word_key if format == "docx" else plan.excel_key
-    name = f"{plan.title[:60]} - biznes reja.docx" if format == "docx" else f"{plan.title[:60]} - jadvallar.xlsx"
+    if format == "pdf" and not plan.pdf_key:
+        raise AppError(404, "pdf_unavailable", "Bu reja uchun PDF tayyorlanmagan. Word faylini yuklab oling.")
+    key = {"docx": plan.word_key, "xlsx": plan.excel_key, "pdf": plan.pdf_key}[format]
+    name = {"docx": "biznes reja.docx", "xlsx": "jadvallar.xlsx", "pdf": "biznes reja.pdf"}[format]
+    name = f"{plan.title[:60]} - {name}"
     ttl = get_settings().download_url_ttl_seconds
     return DownloadOut(url=await get_storage().signed_url(key, name, ttl), expires_in=ttl)

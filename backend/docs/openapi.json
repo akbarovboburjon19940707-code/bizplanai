@@ -820,7 +820,8 @@
             "schema": {
               "enum": [
                 "docx",
-                "xlsx"
+                "xlsx",
+                "pdf"
               ],
               "type": "string",
               "default": "docx",
@@ -3530,6 +3531,11 @@
               }
             ],
             "title": "Finished At"
+          },
+          "has_pdf": {
+            "type": "boolean",
+            "title": "Has Pdf",
+            "default": false
           }
         },
         "type": "object",

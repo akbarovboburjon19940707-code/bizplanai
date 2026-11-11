@@ -42,7 +42,7 @@ export function PlanStatus() {
     };
   }, [id, auth]);
 
-  const download = async (format: "docx" | "xlsx") => {
+  const download = async (format: "docx" | "xlsx" | "pdf") => {
     try {
       const { url } = await apiRequest<{ url: string }>(`/v1/plans/${encodeURIComponent(id ?? "")}/download?format=${format}`);
       const name = format === "xlsx" ? "jadvallar" : "biznes reja";
@@ -80,6 +80,11 @@ export function PlanStatus() {
                   <Button variant="outline" onClick={() => void download("xlsx")}>
                     {t.excel}
                   </Button>
+                  {plan.has_pdf ? (
+                    <Button variant="outline" onClick={() => void download("pdf")}>
+                      {t.pdf}
+                    </Button>
+                  ) : null}
                 </div>
               </>
             ) : null}

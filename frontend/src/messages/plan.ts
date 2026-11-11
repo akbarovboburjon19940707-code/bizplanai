@@ -132,6 +132,7 @@ export const planMessages = {
     failed: "Xatolik yuz berdi. Limit qaytarildi, qaytadan urinib ko‘ring.",
     word: "Word yuklab olish",
     excel: "Excel yuklab olish",
+    pdf: "PDF yuklab olish",
     missing: "Reja topilmadi",
     newPlan: "Yangi reja",
   },

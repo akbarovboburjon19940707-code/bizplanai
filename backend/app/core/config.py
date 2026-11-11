@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     download_url_ttl_seconds: int = 600
     max_receipt_bytes: int = 10 * 1024 * 1024
     max_plan_image_bytes: int = 5 * 1024 * 1024
+    # Word -> PDF (LibreOffice, worker'da). soffice topilmasa yoki o'chiq bo'lsa reja PDF'siz tayyor bo'ladi.
+    pdf_enabled: bool = True
+    pdf_timeout_seconds: float = 120.0
+    pdf_concurrency: int = 1  # bitta jarayonda bir vaqtda nechta soffice (har biri ~200 MB xotira)
     # Muqova rasmini avtomatik topish (Pexels: bepul, tijoriy foydalanishga ruxsat). Bo'sh bo'lsa o'chiq.
     pexels_api_key: str = ""
     pixabay_api_key: str = ""  # Pexels kaliti bo'lmasa (yoki topilmasa) shu ishlatiladi

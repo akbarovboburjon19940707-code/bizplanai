@@ -9,6 +9,7 @@ os.environ.update({
     "CLICK_SERVICE_ID": "11111", "CLICK_MERCHANT_ID": "22222", "CLICK_SECRET_KEY": "click-secret",
     "PAYME_MERCHANT_ID": "payme-merchant", "PAYME_SECRET_KEY": "payme-key",
     "MANUAL_CARD_NUMBER": "8600 0000 0000 0000", "AI_ENABLED": "false",
+    "PDF_ENABLED": "false",  # LibreOffice faqat tests/test_plan_pdf.py da (tez va muhitga bog'liq emas)
     "PEXELS_API_KEY": "", "PIXABAY_API_KEY": "",  # lokal .env dagi haqiqiy kalitlar testlarga ta'sir qilmasin
 })
 

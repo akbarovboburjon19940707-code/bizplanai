@@ -1055,6 +1055,11 @@ export interface components {
             created_at: string;
             /** Finished At */
             finished_at: string | null;
+            /**
+             * Has Pdf
+             * @default false
+             */
+            has_pdf: boolean;
         };
         /** PreviewOut */
         PreviewOut: {
@@ -1840,7 +1845,7 @@ export interface operations {
     download_v1_plans__plan_id__download_get: {
         parameters: {
             query?: {
-                format?: "docx" | "xlsx";
+                format?: "docx" | "xlsx" | "pdf";
             };
             header?: {
                 authorization?: string | null;

@@ -10,6 +10,7 @@ from app.ai.service import generate_sections
 from app.core.config import get_settings
 from app.core.security import utcnow
 from app.db.session import sessionmaker
+from app.engine.pdf import docx_to_pdf
 from app.engine.excel_generator import generate_excel_report
 from app.engine.financial_engine import calculate_financial_model
 from app.engine.word_generator import generate_word_report
@@ -21,12 +22,14 @@ from app.storage import get_storage
 log = logging.getLogger(__name__)
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+PDF = "application/pdf"
 
 
 def to_out(p: Plan) -> PlanOut:
     return PlanOut(id=p.id, title=p.title, activity_type=p.activity_type, status=p.status, error=p.error,
                    quota_source=p.quota_source, ai_requested=p.ai_requested, ai_used=p.ai_used,
-                   indicators=p.indicators_json, created_at=p.created_at, finished_at=p.finished_at)
+                   indicators=p.indicators_json, created_at=p.created_at, finished_at=p.finished_at,
+                   has_pdf=bool(p.pdf_key))
 
 
 async def create_plan(session: AsyncSession, user: User, data: PlanInput, use_ai: bool) -> Plan:
@@ -96,7 +99,12 @@ async def run_generation(plan_id: str) -> None:
                 base = f"plans/{plan.user_id}/{plan.id}"
                 await storage.put_file(f"{base}/biznes_reja.docx", word, DOCX)
                 await storage.put_file(f"{base}/jadvallar.xlsx", excel, XLSX)
+                # PDF ixtiyoriy: bo'lmasa reja Word + Excel bilan tayyor bo'ladi
+                pdf = await docx_to_pdf(word, workdir)
+                if pdf:
+                    await storage.put_file(f"{base}/biznes_reja.pdf", pdf, PDF)
             plan.word_key, plan.excel_key = f"{base}/biznes_reja.docx", f"{base}/jadvallar.xlsx"
+            plan.pdf_key = f"{base}/biznes_reja.pdf" if pdf else None
             plan.indicators_json = _jsonable(model["indicators"])
             plan.status, plan.finished_at = "done", utcnow()
             await session.commit()

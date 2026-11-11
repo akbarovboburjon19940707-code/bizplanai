@@ -100,7 +100,7 @@ Noma'lum maydon yuborilsa 422. Ma'lumotnomalar: `GET /v1/meta/activity-types`, `
 | `POST /v1/plans` | `{input: PlanInput, use_ai: true}` -> 202 `PlanOut` (`status: queued`) |
 | `GET /v1/plans?limit&offset` | Mening rejalarim |
 | `GET /v1/plans/{id}` | Holat: `queued`, `running`, `done`, `failed` |
-| `GET /v1/plans/{id}/download?format=docx` yoki `xlsx` | `{url, expires_in}`: 10 daqiqalik havola, `window.location.href = url` |
+| `GET /v1/plans/{id}/download?format=docx`, `xlsx` yoki `pdf` | `{url, expires_in}`: 10 daqiqalik havola, `window.location.href = url`. PDF ixtiyoriy: `PlanOut.has_pdf` false bo'lsa 404 `pdf_unavailable` |
 
 Oqim: `POST /v1/plans` -> har 2 soniyada `GET /v1/plans/{id}` (AI bilan 1 daqiqagacha cho'zilishi mumkin) ->
 `done` bo'lsa yuklash tugmalari, `failed` bo'lsa xabar (kvota avtomatik qaytariladi).

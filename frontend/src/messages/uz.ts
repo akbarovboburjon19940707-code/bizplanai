@@ -1,4 +1,5 @@
 import { adminMessages } from "./admin";
+import { assistantMessages } from "./assistant";
 import { accountMessages, authMessages } from "./auth";
 import { catalogMessages, paymentMessages, tariffMessages } from "./commerce";
 import { contactMessages } from "./contact";
@@ -60,6 +61,7 @@ export const uz = {
   plans: planMessages,
   authForms: authMessages,
   contact: contactMessages,
+  assistant: assistantMessages,
   account: accountMessages,
   catalog: catalogMessages,
   tariffs: tariffMessages,

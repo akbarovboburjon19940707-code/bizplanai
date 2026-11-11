@@ -54,11 +54,22 @@ async def get_or_create_telegram_user(session: AsyncSession, tg_user: dict) -> U
     return user
 
 
+async def send_chat_action(chat_id: str | int, action: str = "typing") -> None:
+    token = get_settings().telegram_bot_token
+    if not token:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            await client.post(f"https://api.telegram.org/bot{token}/sendChatAction", json={"chat_id": chat_id, "action": action})
+    except httpx.HTTPError as exc:
+        log.warning("telegram sendChatAction xatosi: %s", exc)
+
+
 async def send_message(chat_id: str | int, text: str, reply_markup: dict | None = None) -> None:
     token = get_settings().telegram_bot_token
     if not token:
         return
-    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML", "link_preview_options": {"is_disabled": True}}
     if reply_markup:
         payload["reply_markup"] = reply_markup
     try:

@@ -147,6 +147,14 @@ Narxni server hisoblaydi; frontend summani hech qachon yubormaydi.
 
 Token ixtiyoriy (bo'lsa murojaat foydalanuvchiga bog'lanadi). `website`: yashirin maydon, doim bo'sh yuboriladi (to'ldirilsa bot deb hisoblanadi, 201 qaytadi, saqlanmaydi). Cheklov: IP bo'yicha 10 daqiqada 5 ta, bitta raqamdan 60 soniyada 1 ta (429 `rate_limited`). Adminga Telegram xabari ketadi.
 
+## 6.2 Yordamchi (chat, 2026-11-12)
+
+| Metod va yo'l | Body | Javob |
+| --- | --- | --- |
+| `POST /v1/assistant/chat` | `{messages: [{role: user/assistant, content}]}` (oxirgi 10 ta, oxirgisi `user`, 1000 belgigacha) | `{reply, handoff, products: [{id, slug, title, price_som}]}` |
+
+Tarix brauzerda saqlanadi, serverda emas. Token ixtiyoriy. Cheklov: mehmon IP bo'yicha 10 daqiqada 15 ta va kuniga 60 ta, kirgan foydalanuvchi 10 daqiqada 40 ta (429 `rate_limited`). `handoff: true` bo'lsa "Aloqa" tugmasini ko'rsating. `reply` oddiy matn (HTML emas): matn sifatida chiqaring. AI o'chiq yoki byudjet tugagan bo'lsa ham 200 qaytadi (zaxira javob, `handoff: true`). Telegram botda oddiy matnli xabarlarga ham shu yordamchi javob beradi.
+
 ## 7. Admin (role = admin, 2FA majburiy)
 
 | Metod va yo'l | Tavsif |

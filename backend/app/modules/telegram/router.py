@@ -12,6 +12,7 @@ from app.core.errors import AppError
 from app.core.redis import get_redis
 from app.models import User
 from app.modules.auth import password_reset
+from app.modules.telegram.assistant import reply_in_chat
 from app.modules.telegram.service import send_message
 
 router = APIRouter(prefix="/v1/telegram", tags=["telegram"])
@@ -79,5 +80,8 @@ async def webhook(request: Request, session: SessionDep,
             await send_message(chat_id, RESET_REPLIES["expired"], _keyboard())
     elif text == "/start":
         await send_message(chat_id, f"👋 Salom, <b>{name}</b>!\n\nBizplanAI: bank talablariga mos biznes-reja "
-                                    "bir necha daqiqada. Quyidagi tugmani bosing 👇", _keyboard())
+                                    "bir necha daqiqada. Quyidagi tugmani bosing 👇\n\n"
+                                    "💬 Savolingiz bo'lsa (tariflar, to'lov, tayyor rejalar), shu yerga yozing.", _keyboard())
+    elif not text.startswith("/"):
+        await reply_in_chat(session, chat_id, text)
     return {"ok": True}

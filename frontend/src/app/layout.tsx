@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
+import { ChatWidget } from "@/features/assistant/chat-widget";
 import { AuthProvider } from "@/features/auth/auth-context";
 import { TelegramContextMarker } from "@/features/telegram/telegram-context-marker";
 import { SiteFooter } from "@/shared/ui/site-footer";
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <SiteHeader />
             <main className="flex-1">{children}</main>
             <SiteFooter />
+            <ChatWidget />
           </div>
         </AuthProvider>
       </body>

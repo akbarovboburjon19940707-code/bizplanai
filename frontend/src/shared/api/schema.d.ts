@@ -806,6 +806,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/assistant/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Chat */
+        post: operations["chat_v1_assistant_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -926,6 +943,30 @@ export interface components {
             icon: string;
             /** Count */
             count: number;
+        };
+        /** ChatIn */
+        ChatIn: {
+            /** Messages */
+            messages: components["schemas"]["ChatMessage"][];
+        };
+        /** ChatMessage */
+        ChatMessage: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
+        };
+        /** ChatOut */
+        ChatOut: {
+            /** Reply */
+            reply: string;
+            /** Handoff */
+            handoff: boolean;
+            /** Products */
+            products: components["schemas"]["ProductLink"][];
         };
         /** ContactDoneIn */
         ContactDoneIn: {
@@ -1270,6 +1311,17 @@ export interface components {
         PricingOut: {
             /** Plan Credit Price Som */
             plan_credit_price_som: number;
+        };
+        /** ProductLink */
+        ProductLink: {
+            /** Id */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Price Som */
+            price_som: number;
         };
         /** ProductOut */
         ProductOut: {
@@ -3045,6 +3097,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContactOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chat_v1_assistant_chat_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatOut"];
                 };
             };
             /** @description Validation Error */

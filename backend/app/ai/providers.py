@@ -13,22 +13,28 @@ class Completion:
     provider: str
 
 
+Message = dict[str, str]  # {"role": "user" | "assistant", "content": "..."}
+
+
 class Provider:
     name = "base"
 
-    async def complete(self, client: httpx.AsyncClient, system: str, prompt: str) -> Completion: ...
+    async def chat(self, client: httpx.AsyncClient, system: str, messages: list[Message],
+                   max_tokens: int = 2000, temperature: float = 0.7) -> Completion: ...
+
+    async def complete(self, client: httpx.AsyncClient, system: str, prompt: str) -> Completion:
+        return await self.chat(client, system, [{"role": "user", "content": prompt}])
 
 
 class OpenAICompatible(Provider):
     def __init__(self, name: str, base_url: str, api_key: str, model: str):
         self.name, self.base_url, self.api_key, self.model = name, base_url, api_key, model
 
-    async def complete(self, client, system, prompt):
+    async def chat(self, client, system, messages, max_tokens=2000, temperature=0.7):
         r = await client.post(f"{self.base_url}/chat/completions",
                               headers={"Authorization": f"Bearer {self.api_key}"},
-                              json={"model": self.model, "temperature": 0.7, "max_tokens": 2000,
-                                    "messages": [{"role": "system", "content": system},
-                                                 {"role": "user", "content": prompt}]})
+                              json={"model": self.model, "temperature": temperature, "max_tokens": max_tokens,
+                                    "messages": [{"role": "system", "content": system}, *messages]})
         r.raise_for_status()
         data = r.json()
         return Completion(data["choices"][0]["message"]["content"] or "",
@@ -41,13 +47,14 @@ class Gemini(Provider):
     def __init__(self, api_key: str, model: str):
         self.api_key, self.model = api_key, model
 
-    async def complete(self, client, system, prompt):
+    async def chat(self, client, system, messages, max_tokens=2000, temperature=0.7):
+        contents = [{"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": m["content"]}]}
+                    for m in messages]
         r = await client.post(
             f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent",
             headers={"x-goog-api-key": self.api_key},
-            json={"systemInstruction": {"parts": [{"text": system}]},
-                  "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-                  "generationConfig": {"temperature": 0.7, "maxOutputTokens": 2000}})
+            json={"systemInstruction": {"parts": [{"text": system}]}, "contents": contents,
+                  "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens}})
         r.raise_for_status()
         data = r.json()
         parts = data["candidates"][0]["content"]["parts"]
@@ -61,11 +68,11 @@ class Anthropic(Provider):
     def __init__(self, api_key: str, model: str):
         self.api_key, self.model = api_key, model
 
-    async def complete(self, client, system, prompt):
+    async def chat(self, client, system, messages, max_tokens=2000, temperature=0.7):
         r = await client.post("https://api.anthropic.com/v1/messages",
                               headers={"x-api-key": self.api_key, "anthropic-version": "2023-06-01"},
-                              json={"model": self.model, "max_tokens": 2000, "system": system,
-                                    "messages": [{"role": "user", "content": prompt}]})
+                              json={"model": self.model, "max_tokens": max_tokens, "temperature": temperature,
+                                    "system": system, "messages": messages})
         r.raise_for_status()
         data = r.json()
         usage = data.get("usage") or {}

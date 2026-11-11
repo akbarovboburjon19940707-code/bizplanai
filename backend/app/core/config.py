@@ -69,6 +69,11 @@ class Settings(BaseSettings):
     ai_enabled: bool = True
     ai_daily_token_budget: int = 2_000_000
     ai_timeout_seconds: float = 60.0
+    # Sayt va Telegram yordamchisi (app/assistant). O'zbek tilida kuchliroq modellar oldinda, Groq oxirida.
+    assistant_enabled: bool = True
+    assistant_providers: str = "openai,gemini,anthropic,deepseek,groq"
+    assistant_daily_token_budget: int = 300_000  # umumiy AI byudjetidan alohida, kun (UTC) bo'yicha
+    assistant_max_reply_tokens: int = 600
     groq_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"
     openai_api_key: str = ""

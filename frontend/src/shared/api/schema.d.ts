@@ -123,6 +123,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/password-reset/init": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Password Reset Init
+         * @description Raqam bazada bormi-yo'qligi bu yerda aytilmaydi (raqamlarni tekshirib chiqishning oldini olish):
+         *     tekshiruv botda, Telegram tasdiqlagan raqam bilan.
+         */
+        post: operations["password_reset_init_v1_auth_password_reset_init_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/password-reset/poll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Password Reset Poll */
+        get: operations["password_reset_poll_v1_auth_password_reset_poll_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/password-reset/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Password Reset Complete */
+        post: operations["password_reset_complete_v1_auth_password_reset_complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me": {
         parameters: {
             query?: never;
@@ -848,6 +903,36 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** PasswordResetCompleteIn */
+        PasswordResetCompleteIn: {
+            /** Token */
+            token: string;
+            /** New Password */
+            new_password: string;
+        };
+        /** PasswordResetCompleteOut */
+        PasswordResetCompleteOut: {
+            session?: components["schemas"]["TokenOut"] | null;
+        };
+        /** PasswordResetInitIn */
+        PasswordResetInitIn: {
+            /** Phone */
+            phone: string;
+        };
+        /** PasswordResetInitOut */
+        PasswordResetInitOut: {
+            /** Token */
+            token: string;
+            /** Bot Url */
+            bot_url: string;
+            /** Expires In */
+            expires_in: number;
+        };
+        /** PasswordResetPollOut */
+        PasswordResetPollOut: {
+            /** Status */
+            status: string;
+        };
         /** PaymentCreateIn */
         PaymentCreateIn: {
             /**
@@ -1520,6 +1605,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TelegramLoginPollOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    password_reset_init_v1_auth_password_reset_init_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetInitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordResetInitOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    password_reset_poll_v1_auth_password_reset_poll_get: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordResetPollOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    password_reset_complete_v1_auth_password_reset_complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetCompleteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordResetCompleteOut"];
                 };
             };
             /** @description Validation Error */

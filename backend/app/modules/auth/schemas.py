@@ -75,3 +75,32 @@ class TelegramLoginInitOut(BaseModel):
 class TelegramLoginPollOut(BaseModel):
     status: str  # pending | expired | authenticated
     session: TokenOut | None = None
+
+
+class PasswordResetInitIn(BaseModel):
+    phone: str
+
+    @field_validator("phone")
+    @classmethod
+    def _phone(cls, v: str) -> str:
+        return normalize_phone(v)
+
+
+class PasswordResetInitOut(BaseModel):
+    token: str
+    bot_url: str
+    expires_in: int
+
+
+class PasswordResetPollOut(BaseModel):
+    status: str  # pending | verified | mismatch | expired
+
+
+class PasswordResetCompleteIn(BaseModel):
+    token: str = Field(min_length=10, max_length=64)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class PasswordResetCompleteOut(BaseModel):
+    # Oddiy foydalanuvchi darhol kiradi; admin uchun sessiya berilmaydi (TOTP bilan oddiy kirish kerak)
+    session: TokenOut | None = None

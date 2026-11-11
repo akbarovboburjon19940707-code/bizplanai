@@ -55,6 +55,9 @@ Frontend `message` ni foydalanuvchiga ko'rsatadi, mantiqni `code` bo'yicha qurad
 | `POST /v1/auth/telegram/webapp` | `{init_data: Telegram.WebApp.initData}` | `TokenOut` |
 | `POST /v1/auth/telegram/login-init` | bo'sh | `{token, bot_url, expires_in}` |
 | `GET /v1/auth/telegram/login-poll?token=` | | `{status: pending/expired/authenticated, session?}` |
+| `POST /v1/auth/password-reset/init` | `{phone}` | `{token, bot_url, expires_in: 600}` (raqam bazada bo'lmasa ham 200) |
+| `GET /v1/auth/password-reset/poll?token=` | | `{status: pending/verified/mismatch/expired}` |
+| `POST /v1/auth/password-reset/complete` | `{token, new_password(8+)}` | `{session: TokenOut \| null}`; 400 `reset_invalid` |
 
 `TokenOut = {access_token, token_type, expires_in, user: {id, phone, email, first_name, last_name, telegram_username, role, plan_credits, has_password}}`
 
@@ -64,6 +67,7 @@ Telefon istalgan ko'rinishda yuborilishi mumkin (`90 123 45 67`, `+998...`); ser
 
 - **Telegram Mini App** (`/tg`): ochilganda `window.Telegram.WebApp.initData` bilan `/telegram/webapp` chaqiriladi.
 - **Bot orqali kirish** (oddiy brauzerda): `login-init`, `bot_url` ni yangi oynada ochish, har 2 soniyada `login-poll` (300 soniyagacha).
+- **Parolni tiklash** (`/parol-tiklash`, 2026-11-11): telefon > `password-reset/init` > `bot_url` ni ochish; botda "Raqamimni yuborish" (Telegram tasdiqlagan raqam hisobdagi raqam bilan solishtiriladi) > har 2 s `poll` > `verified` bo'lsa yangi parol > `complete`. `session` bo'lsa darhol kiradi; `null` (admin, TOTP) bo'lsa `/kirish`. `mismatch`: raqam mos emas, qaytadan boshlash. Barcha eski sessiyalar yopiladi, kirish bloki olinadi. Parolsiz (Telegram orqali ochilgan) hisoblar tiklanmaydi: ular Telegram orqali kiradi.
 
 ## 3. Foydalanuvchi
 

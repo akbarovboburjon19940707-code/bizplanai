@@ -1908,6 +1908,127 @@
       }
     },
     "/v1/admin/catalog/products": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Products",
+        "description": "Admin katalogi: yashirilgan (`is_active=false`) mahsulotlar ham ko'rinadi, shunda ularni qayta ochish mumkin.",
+        "operationId": "list_products_v1_admin_catalog_products_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Active"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminProductPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "admin"
@@ -1948,7 +2069,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProductOut"
+                  "$ref": "#/components/schemas/AdminProductOut"
                 }
               }
             }
@@ -2016,7 +2137,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProductOut"
+                  "$ref": "#/components/schemas/AdminProductOut"
                 }
               }
             }
@@ -2144,6 +2265,22 @@
             "type": "string",
             "title": "User Id"
           },
+          "user_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Phone"
+          },
+          "user_name": {
+            "type": "string",
+            "title": "User Name",
+            "default": ""
+          },
           "has_receipt": {
             "type": "boolean",
             "title": "Has Receipt"
@@ -2165,6 +2302,105 @@
           "has_receipt"
         ],
         "title": "AdminPaymentOut"
+      },
+      "AdminProductOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "category_key": {
+            "type": "string",
+            "title": "Category Key"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "price_som": {
+            "type": "integer",
+            "title": "Price Som"
+          },
+          "file_size": {
+            "type": "string",
+            "title": "File Size"
+          },
+          "preview_image": {
+            "type": "string",
+            "title": "Preview Image"
+          },
+          "views": {
+            "type": "integer",
+            "title": "Views"
+          },
+          "downloads": {
+            "type": "integer",
+            "title": "Downloads"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "file_key": {
+            "type": "string",
+            "title": "File Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "category_key",
+          "title",
+          "description",
+          "price_som",
+          "file_size",
+          "preview_image",
+          "views",
+          "downloads",
+          "is_active",
+          "file_key"
+        ],
+        "title": "AdminProductOut"
+      },
+      "AdminProductPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminProductOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "AdminProductPage"
       },
       "Body_upload_image_v1_plans_images_post": {
         "properties": {

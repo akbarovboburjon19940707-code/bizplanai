@@ -315,6 +315,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/catalog/products/{id_or_slug}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Product Image
+         * @description Katalog muqova rasmi: yopiq bucket'dan 1 soatlik imzolangan havolaga 302 (brauzer 30 daqiqa keshlaydi).
+         */
+        get: operations["product_image_v1_catalog_products__id_or_slug__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/products/{product_id}/view": {
         parameters: {
             query?: never;
@@ -578,7 +598,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Products
+         * @description Admin katalogi: yashirilgan (`is_active=false`) mahsulotlar ham ko'rinadi, shunda ularni qayta ochish mumkin.
+         */
+        get: operations["list_products_v1_admin_catalog_products_get"];
         put?: never;
         /** Add Product */
         post: operations["add_product_v1_admin_catalog_products_post"];
@@ -670,8 +694,53 @@ export interface components {
             paid_at: string | null;
             /** User Id */
             user_id: string;
+            /** User Phone */
+            user_phone?: string | null;
+            /**
+             * User Name
+             * @default
+             */
+            user_name: string;
             /** Has Receipt */
             has_receipt: boolean;
+        };
+        /** AdminProductOut */
+        AdminProductOut: {
+            /** Id */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Category Key */
+            category_key: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Price Som */
+            price_som: number;
+            /** File Size */
+            file_size: string;
+            /** Preview Image */
+            preview_image: string;
+            /** Views */
+            views: number;
+            /** Downloads */
+            downloads: number;
+            /** Is Active */
+            is_active: boolean;
+            /** File Key */
+            file_key: string;
+        };
+        /** AdminProductPage */
+        AdminProductPage: {
+            /** Items */
+            items: components["schemas"]["AdminProductOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
         };
         /** Body_upload_image_v1_plans_images_post */
         Body_upload_image_v1_plans_images_post: {
@@ -1816,6 +1885,37 @@ export interface operations {
             };
         };
     };
+    product_image_v1_catalog_products__id_or_slug__image_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id_or_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Imzolangan rasm havolasiga yo'naltirish */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     view_v1_catalog_products__product_id__view_post: {
         parameters: {
             query?: never;
@@ -2305,6 +2405,43 @@ export interface operations {
             };
         };
     };
+    list_products_v1_admin_catalog_products_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                category?: string | null;
+                active?: boolean | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProductPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     add_product_v1_admin_catalog_products_post: {
         parameters: {
             query?: never;
@@ -2326,7 +2463,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductOut"];
+                    "application/json": components["schemas"]["AdminProductOut"];
                 };
             };
             /** @description Validation Error */
@@ -2363,7 +2500,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductOut"];
+                    "application/json": components["schemas"]["AdminProductOut"];
                 };
             };
             /** @description Validation Error */

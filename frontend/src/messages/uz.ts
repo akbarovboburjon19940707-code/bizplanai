@@ -1,3 +1,4 @@
+import { adminMessages } from "./admin";
 import { accountMessages, authMessages } from "./auth";
 import { catalogMessages, paymentMessages, tariffMessages } from "./commerce";
 import { planMessages } from "./plan";
@@ -15,6 +16,7 @@ export const uz = {
     createPlan: "Reja yaratish",
     catalog: "Katalog",
     tariffs: "Tariflar",
+    admin: "Admin panel",
     menu: "Menyu",
   },
   auth: {
@@ -37,4 +39,5 @@ export const uz = {
   catalog: catalogMessages,
   tariffs: tariffMessages,
   payments: paymentMessages,
+  admin: adminMessages,
 } as const;

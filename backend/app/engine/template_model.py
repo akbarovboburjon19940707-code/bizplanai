@@ -163,8 +163,9 @@ def build_model(p: dict) -> dict:
         asosiy_oz = 0.0
     asosiy = kredit + asosiy_oz
 
-    # ── 4-ILOVA: amortizatsiya (foydali xizmat muddati 10 yil, teng; loyiha davri qisqa bo'lsa qoldiq qiymat qoladi) ──
-    amort = asosiy / 10
+    # ── 4-ILOVA: amortizatsiya: asosiy vositalar loyiha davrida (kredit muddati) teng ulushda to'liq
+    # amortizatsiya qilinadi (foydalanuvchi qarori, 2026-11-11; 10 yilda Excel'dagi 10% bilan bir xil) ──
+    amort = asosiy / n
 
     # ── 5-ILOVA: ish haqi va foydalanish xarajatlari ──
     direktor, rahbar_oylik = int(_num(p.get("direktor"), 1)), _num(p.get("rahbar_oylik"))
@@ -223,7 +224,8 @@ def build_model(p: dict) -> dict:
     full["admin"] = ("Ma'muriyat xodimlari ish haqi", admin_wage)
     full["admin_ijt"] = ("Ijtimoiy soliq (ma'muriyat)", admin_ijt)
     full["boshqa_admin"] = ("Boshqa ma'muriy xarajatlar (0,2%)", max_tushum * 0.002)
-    full["texnik"] = ("Asosiy vositalarga texnik xizmat va joriy ta'mirlash", amort * 0.01)
+    # Excel: amortizatsiyaning 1% i (10 yillik); amortizatsiya davri qisqarsa ham ta'mirlash xarajati o'zgarmaydi
+    full["texnik"] = ("Asosiy vositalarga texnik xizmat va joriy ta'mirlash", asosiy / N_YEARS * 0.01)
     full["marketing"] = ("Marketing xarajatlari (0,2%)", max_tushum * 0.002)
     full["kutilmagan"] = ("Boshqa ko'zda tutilmagan xarajatlar (0,2%)", max_tushum * 0.002)
     ijara = (_num(p.get("dokon_ijarasi")) + _num(p.get("joy_ijarasi"))) * 12 + _num(p.get("yer_ijarasi"))
@@ -350,9 +352,9 @@ def build_tables(m: dict) -> list[dict]:
                        ["Moliyaviy xarajatlar (sug'urta, kredit olish)", _r(fin_oz), 0, _r(fin_oz)],
                        ["JAMI birinchi investitsiya xarajatlari", _r(m["oz"]), _r(m["kredit"]), _r(m["loyiha_qiymati"])]]})
     cum = [m["amort"] * (i + 1) for i in range(n)]
-    t.append({"ilova": "4-ILOVA", "title": "AMORTIZATSIYA HISOBI (foydali xizmat muddati 10 yil, teng ulushda)",
+    t.append({"ilova": "4-ILOVA", "title": f"AMORTIZATSIYA HISOBI ({n} yil, teng ulushda)",
               "headers": ["Ko'rsatkich", "Amortizatsiya bazasi (so'm)", "Stavka", *yh],
-              "rows": [["Asosiy vositalar", _r(m["asosiy"]), "10.0%", *_yrs([m["amort"]] * n)],
+              "rows": [["Asosiy vositalar", _r(m["asosiy"]), f"{100 / n:.1f}%", *_yrs([m["amort"]] * n)],
                        ["Jami amortizatsiya", "", "", *_yrs([m["amort"]] * n)],
                        ["Yig'ilgan amortizatsiya", "", "", *_yrs(cum)]]})
     t.append({"ilova": "5-ILOVA", "title": "ISH HAQI XARAJATLARI",

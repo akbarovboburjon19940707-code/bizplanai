@@ -49,3 +49,14 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
 export function getCategories(): Promise<Category[]> {
   return CATALOG_SKIPPED ? Promise.resolve([]) : getJson<Category[]>("/v1/catalog/categories");
 }
+
+/** Eng ko'p yuklab olinganlar (API tartibi: downloads kamayish bo'yicha). */
+export async function getPopularProducts(n = 6): Promise<Product[]> {
+  return (await getAllProducts()).slice(0, n);
+}
+
+export type Tariff = { code: string; name: string; price_som: number; duration_days: number; daily_limit: number; monthly_limit: number; ai_enabled: boolean };
+
+export function getTariffs(): Promise<Tariff[]> {
+  return CATALOG_SKIPPED ? Promise.resolve([]) : getJson<Tariff[]>("/v1/tariffs");
+}

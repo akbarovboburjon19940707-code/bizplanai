@@ -15,12 +15,31 @@ import { passwordSchema, type PasswordValues } from "./schemas";
 
 const t = uz.account.password;
 const FIELDS = ["current_password", "new_password"] as const;
-const EMPTY: PasswordValues = { current_password: "", new_password: "", confirm: "" };
+const EMPTY: PasswordValues = {
+  current_password: "",
+  new_password: "",
+  confirm: "",
+};
 
-export function PasswordForm() {
-  const [message, setMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
+/** `hasPassword=false` (Telegram orqali ro'yxatdan o'tgan): joriy parol so'ralmaydi, birinchi parol o'rnatiladi. */
+export function PasswordForm({
+  hasPassword,
+  onChanged,
+}: {
+  hasPassword: boolean;
+  onChanged: () => void;
+}) {
+  const [message, setMessage] = useState<{
+    tone: "error" | "success";
+    text: string;
+  } | null>(null);
   const cooldown = useCooldown();
-  const form = useForm<PasswordValues>({ resolver: zodResolver(passwordSchema), defaultValues: EMPTY, mode: "onSubmit", reValidateMode: "onChange" });
+  const form = useForm<PasswordValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: EMPTY,
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+  });
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -28,15 +47,24 @@ export function PasswordForm() {
     try {
       await apiRequest<void>("/v1/me/password", {
         method: "POST",
-        body: JSON.stringify({ current_password: values.current_password || null, new_password: values.new_password }),
+        body: JSON.stringify({
+          current_password: values.current_password || null,
+          new_password: values.new_password,
+        }),
       });
       form.reset(EMPTY);
       setMessage({ tone: "success", text: t.done });
+      onChanged();
     } catch (error) {
       if (error instanceof ApiError && error.code === "wrong_password") {
-        return form.setError("current_password", { message: error.message }, { shouldFocus: true });
+        return form.setError(
+          "current_password",
+          { message: error.message },
+          { shouldFocus: true },
+        );
       }
-      if (error instanceof ApiError && error.code === "rate_limited") cooldown.start(10);
+      if (error instanceof ApiError && error.code === "rate_limited")
+        cooldown.start(10);
       const text = applyApiError(error, form.setError, FIELDS);
       if (text) setMessage({ tone: "error", text });
     }
@@ -44,25 +72,83 @@ export function PasswordForm() {
 
   return (
     <section className="rounded-card border border-border bg-white p-5 shadow-soft sm:p-6">
-      <h2 className="text-base font-bold text-ink">{t.title}</h2>
-      <form onSubmit={(e) => void onSubmit(e)} noValidate className="mt-4 flex flex-col gap-4">
-        {message ? <FormAlert tone={message.tone}>{message.text}</FormAlert> : null}
+      <h2 className="text-base font-bold text-ink">
+        {hasPassword ? t.title : t.titleSet}
+      </h2>
+      <form
+        onSubmit={(e) => void onSubmit(e)}
+        noValidate
+        className="mt-4 flex flex-col gap-4"
+      >
+        {message ? (
+          <FormAlert tone={message.tone}>{message.text}</FormAlert>
+        ) : null}
         {/* Parol menejerlari uchun: qaysi hisobning paroli ekani */}
-        <input type="text" name="username" autoComplete="username" hidden readOnly />
-        <FormField id="pw-current" label={t.current} hint={t.currentHint} error={errors.current_password?.message}>
-          <PasswordInput id="pw-current" autoComplete="current-password"
-            {...form.register("current_password")} {...fieldAria("pw-current", errors.current_password?.message, t.currentHint)} />
+        <input
+          type="text"
+          name="username"
+          autoComplete="username"
+          hidden
+          readOnly
+        />
+        {hasPassword ? (
+          <FormField
+            id="pw-current"
+            label={t.current}
+            error={errors.current_password?.message}
+          >
+            <PasswordInput
+              id="pw-current"
+              autoComplete="current-password"
+              {...form.register("current_password")}
+              {...fieldAria("pw-current", errors.current_password?.message)}
+            />
+          </FormField>
+        ) : (
+          <p className="text-sm text-muted">{t.setFirst}</p>
+        )}
+        <FormField
+          id="pw-new"
+          label={t.next}
+          hint={uz.authForms.passwordMin}
+          error={errors.new_password?.message}
+        >
+          <PasswordInput
+            id="pw-new"
+            autoComplete="new-password"
+            {...form.register("new_password")}
+            {...fieldAria(
+              "pw-new",
+              errors.new_password?.message,
+              uz.authForms.passwordMin,
+            )}
+          />
         </FormField>
-        <FormField id="pw-new" label={t.next} hint={uz.authForms.passwordMin} error={errors.new_password?.message}>
-          <PasswordInput id="pw-new" autoComplete="new-password"
-            {...form.register("new_password")} {...fieldAria("pw-new", errors.new_password?.message, uz.authForms.passwordMin)} />
+        <FormField
+          id="pw-confirm"
+          label={t.confirm}
+          error={errors.confirm?.message}
+        >
+          <PasswordInput
+            id="pw-confirm"
+            autoComplete="new-password"
+            {...form.register("confirm")}
+            {...fieldAria("pw-confirm", errors.confirm?.message)}
+          />
         </FormField>
-        <FormField id="pw-confirm" label={t.confirm} error={errors.confirm?.message}>
-          <PasswordInput id="pw-confirm" autoComplete="new-password"
-            {...form.register("confirm")} {...fieldAria("pw-confirm", errors.confirm?.message)} />
-        </FormField>
-        <Button type="submit" variant="outline" disabled={isSubmitting || cooldown.active} className="self-start">
-          {isSubmitting ? t.submitting : cooldown.active ? uz.authForms.retryIn(cooldown.left) : t.submit}
+        <Button
+          type="submit"
+          variant="outline"
+          disabled={isSubmitting || cooldown.active}
+          className="self-start"
+        >
+          {isSubmitting
+            ? t.submitting
+            : cooldown.active
+              ? uz.authForms.retryIn(cooldown.left)
+              : hasPassword
+                ? t.submit
+                : t.titleSet}
         </Button>
       </form>
     </section>

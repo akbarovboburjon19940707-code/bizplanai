@@ -21,7 +21,25 @@ router = APIRouter(prefix="/v1/admin", tags=["admin"])
 
 class AdminPaymentOut(PaymentOut):
     user_id: str
+    user_phone: str | None = None  # admin chekni kimdan kelganini ko'rishi uchun
+    user_name: str = ""
     has_receipt: bool
+
+
+class AdminProductOut(ProductOut):
+    is_active: bool
+    file_key: str
+
+
+class AdminProductPage(BaseModel):
+    items: list[AdminProductOut]
+    total: int
+    limit: int
+    offset: int
+
+
+def admin_product_out(p: CatalogProduct) -> AdminProductOut:
+    return AdminProductOut(**product_out(p).model_dump(), is_active=p.is_active, file_key=p.file_key)
 
 
 class NoteIn(BaseModel):
@@ -75,8 +93,15 @@ async def payments(_: AdminUser, session: SessionDep,
     stmt = select(Payment).order_by(Payment.created_at.desc()).limit(limit).offset(offset)
     if status:
         stmt = stmt.where(Payment.status == status)
-    return [AdminPaymentOut(**payment_out(p).model_dump(), user_id=p.user_id, has_receipt=bool(p.receipt_key))
-            for p in await session.scalars(stmt)]
+    rows = list(await session.scalars(stmt))
+    owners = {u.id: u for u in await session.scalars(select(User).where(User.id.in_({p.user_id for p in rows})))} if rows else {}
+    out = []
+    for p in rows:
+        u = owners.get(p.user_id)
+        name = " ".join(x for x in (u.first_name, u.last_name) if x) if u else ""
+        out.append(AdminPaymentOut(**payment_out(p).model_dump(), user_id=p.user_id, user_phone=u.phone if u else None,
+                                   user_name=name, has_receipt=bool(p.receipt_key)))
+    return out
 
 
 @router.get("/payments/{payment_id}/receipt", response_model=DownloadOut)
@@ -84,8 +109,9 @@ async def receipt(payment_id: str, _: AdminUser, session: SessionDep):
     p = await session.get(Payment, payment_id)
     if not p or not p.receipt_key:
         raise not_found("Chek topilmadi")
-    return DownloadOut(url=await get_storage().signed_url(p.receipt_key, p.receipt_key.rsplit("/", 1)[-1], 300),
-                       expires_in=300)
+    # inline: admin chekni brauzerda ko'radi (yuklab olinmaydi). Fayl turi yuklashda magic bytes bilan tekshirilgan.
+    url = await get_storage().signed_url(p.receipt_key, p.receipt_key.rsplit("/", 1)[-1], 300, inline=True)
+    return DownloadOut(url=url, expires_in=300)
 
 
 @router.post("/payments/{payment_id}/approve", response_model=PaymentOut)
@@ -122,7 +148,25 @@ async def users(_: AdminUser, session: SessionDep, q: str | None = Query(None, m
     return [UserOut.model_validate(u) for u in await session.scalars(stmt)]
 
 
-@router.post("/catalog/products", response_model=ProductOut, status_code=201)
+@router.get("/catalog/products", response_model=AdminProductPage)
+async def list_products(_: AdminUser, session: SessionDep, q: str | None = Query(None, max_length=100),
+                        category: str | None = None, active: bool | None = None,
+                        limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0, le=10_000)):
+    """Admin katalogi: yashirilgan (`is_active=false`) mahsulotlar ham ko'rinadi, shunda ularni qayta ochish mumkin."""
+    cond = []
+    if q:
+        like = f"%{q.strip()}%"
+        cond.append(or_(CatalogProduct.title.ilike(like), CatalogProduct.id.ilike(like), CatalogProduct.slug.ilike(like)))
+    if category:
+        cond.append(CatalogProduct.category_key == category)
+    if active is not None:
+        cond.append(CatalogProduct.is_active.is_(active))
+    total = await session.scalar(select(func.count()).select_from(CatalogProduct).where(*cond))
+    rows = await session.scalars(select(CatalogProduct).where(*cond).order_by(CatalogProduct.title).limit(limit).offset(offset))
+    return AdminProductPage(items=[admin_product_out(p) for p in rows], total=total or 0, limit=limit, offset=offset)
+
+
+@router.post("/catalog/products", response_model=AdminProductOut, status_code=201)
 async def add_product(data: ProductIn, admin: AdminUser, session: SessionDep):
     if not await session.get(CatalogCategory, data.category_key):
         raise AppError(400, "bad_category", "Kategoriya topilmadi")
@@ -132,19 +176,21 @@ async def add_product(data: ProductIn, admin: AdminUser, session: SessionDep):
     session.add(p)
     session.add(AuditLog(actor_id=admin.id, action="catalog.add", entity="product", entity_id=p.id))
     await session.commit()
-    return product_out(p)
+    return admin_product_out(p)
 
 
-@router.patch("/catalog/products/{product_id}", response_model=ProductOut)
+@router.patch("/catalog/products/{product_id}", response_model=AdminProductOut)
 async def patch_product(product_id: str, data: ProductPatch, admin: AdminUser, session: SessionDep):
     p = await session.get(CatalogProduct, product_id)
     if not p:
         raise not_found("Mahsulot topilmadi")
     changes = data.model_dump(exclude_unset=True)
+    if "category_key" in changes and not await session.get(CatalogCategory, changes["category_key"]):
+        raise AppError(400, "bad_category", "Kategoriya topilmadi")
     if "price_som" in changes:
         p.price_tiyin = changes.pop("price_som") * 100
     for k, v in changes.items():
         setattr(p, k, v)
     session.add(AuditLog(actor_id=admin.id, action="catalog.update", entity="product", entity_id=p.id, data=data.model_dump(exclude_unset=True)))
     await session.commit()
-    return product_out(p)
+    return admin_product_out(p)

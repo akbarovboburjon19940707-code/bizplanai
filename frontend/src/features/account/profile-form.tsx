@@ -26,10 +26,10 @@ export function ProfileForm({ user, onSaved }: { user: UserOut; onSaved: (user: 
   const onSubmit = form.handleSubmit(async (values) => {
     setMessage(null);
     try {
-      // API null qiymatni "o'zgartirmaslik" deb tushunadi: bo'sh email yuborilmaydi (CONTRACT_REQUESTS.md)
+      // Bo'sh email = o'chirish (API: "" -> null)
       const updated = await apiRequest<UserOut>("/v1/me", {
         method: "PATCH",
-        body: JSON.stringify({ first_name: values.first_name, last_name: values.last_name, email: values.email || null }),
+        body: JSON.stringify({ first_name: values.first_name, last_name: values.last_name, email: values.email }),
       });
       form.reset(toValues(updated));
       updateCurrentUser(updated);

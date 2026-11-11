@@ -121,6 +121,18 @@ async def view(product_id: str):
     await get_redis().hincrby("catalog:views", product_id[:120], 1)
 
 
+class OwnedOut(BaseModel):
+    product_ids: list[str]
+
+
+@router.get("/owned", response_model=OwnedOut)
+async def owned(user: CurrentUser, session: SessionDep):
+    """Foydalanuvchi sotib olgan katalog rejalari (sahifada darhol "Yuklab olish" ko'rsatish uchun)."""
+    rows = await session.scalars(select(Entitlement.product_id).where(
+        Entitlement.user_id == user.id, Entitlement.revoked_at.is_(None), Entitlement.product_id.is_not(None)).distinct())
+    return OwnedOut(product_ids=sorted(rows))
+
+
 @router.get("/products/{product_id}/download", response_model=DownloadOut)
 async def download(product_id: str, user: CurrentUser, session: SessionDep):
     p = await get_product(session, product_id)

@@ -8,12 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.core.config import get_settings
+from app.core.observability import init_sentry
 from app.core.errors import install_error_handlers
 from app.core.logging import setup_logging
 from app.core.redis import get_redis
 from app.db.session import dispose_engine, get_engine
 from app.modules.admin.router import router as admin_router
 from app.modules.auth.router import router as auth_router
+from app.modules.billing.router import pricing_router
 from app.modules.billing.router import router as tariffs_router
 from app.modules.catalog.router import router as catalog_router
 from app.modules.files.router import router as files_router
@@ -32,10 +34,7 @@ log = logging.getLogger("app")
 async def lifespan(_: FastAPI):
     s = get_settings()
     setup_logging(s.log_level)
-    if s.sentry_dsn:
-        import sentry_sdk
-
-        sentry_sdk.init(dsn=s.sentry_dsn, environment=s.app_env, traces_sample_rate=0.05)
+    init_sentry("api")
     yield
     await dispose_engine()
 
@@ -66,7 +65,7 @@ def create_app() -> FastAPI:
                                        "status": response.status_code, "duration_ms": ms})
         return response
 
-    for r in (auth_router, me_router, tariffs_router, plans_router, catalog_router, payments_router,
+    for r in (auth_router, me_router, tariffs_router, pricing_router, plans_router, catalog_router, payments_router,
               click_router, payme_router, admin_router, meta_router, telegram_router, files_router):
         app.include_router(r)
 

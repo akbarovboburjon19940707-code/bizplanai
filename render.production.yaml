@@ -83,6 +83,7 @@ services:
     domains: [bizplanai.uz, www.bizplanai.uz]
     envVars:
       - { key: NEXT_PUBLIC_API_URL, value: https://api.bizplanai.uz }
+      - { key: NEXT_PUBLIC_SITE_URL, value: https://bizplanai.uz }   # sitemap, canonical, OpenGraph
       - { key: NODE_VERSION, value: "20" }
       - { key: NEXT_TELEMETRY_DISABLED, value: "1" }
     routes:

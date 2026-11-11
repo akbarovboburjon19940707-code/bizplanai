@@ -29,11 +29,15 @@ function NavLink({ href, label, className }: { href: string; label: string; clas
 export function SiteHeader() {
   const { status, user, signOut } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleSignOut = async () => {
     await signOut();
     router.push("/");
   };
+
+  // Telegram Mini App o'z sarlavhasiga ega: sayt menyusi kerak emas
+  if (pathname?.startsWith("/tg")) return null;
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur">
@@ -50,6 +54,7 @@ export function SiteHeader() {
             <span className="h-9 w-24 animate-pulse rounded-control bg-slate-100" aria-label={uz.auth.loading} />
           ) : status === "authenticated" ? (
             <>
+              {user?.role === "admin" ? <NavLink href="/admin/" label={nav.admin} /> : null}
               <NavLink href="/kabinet/" label={user?.first_name || nav.account} className="max-w-[10rem] truncate" />
               <Button type="button" variant="outline" size="md" onClick={() => void handleSignOut()}>
                 {nav.signOut}

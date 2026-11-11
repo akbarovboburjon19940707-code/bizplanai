@@ -175,6 +175,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pricing */
+        get: operations["pricing_v1_pricing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/plans/preview": {
         parameters: {
             query?: never;
@@ -315,6 +332,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/catalog/products/{id_or_slug}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Product Image
+         * @description Katalog muqova rasmi: yopiq bucket'dan 1 soatlik imzolangan havolaga 302 (brauzer 30 daqiqa keshlaydi).
+         */
+        get: operations["product_image_v1_catalog_products__id_or_slug__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/products/{product_id}/view": {
         parameters: {
             query?: never;
@@ -326,6 +363,26 @@ export interface paths {
         put?: never;
         /** View */
         post: operations["view_v1_catalog_products__product_id__view_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/catalog/owned": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Owned
+         * @description Foydalanuvchi sotib olgan katalog rejalari (sahifada darhol "Yuklab olish" ko'rsatish uchun).
+         */
+        get: operations["owned_v1_catalog_owned_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -578,7 +635,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Products
+         * @description Admin katalogi: yashirilgan (`is_active=false`) mahsulotlar ham ko'rinadi, shunda ularni qayta ochish mumkin.
+         */
+        get: operations["list_products_v1_admin_catalog_products_get"];
         put?: never;
         /** Add Product */
         post: operations["add_product_v1_admin_catalog_products_post"];
@@ -670,8 +731,53 @@ export interface components {
             paid_at: string | null;
             /** User Id */
             user_id: string;
+            /** User Phone */
+            user_phone?: string | null;
+            /**
+             * User Name
+             * @default
+             */
+            user_name: string;
             /** Has Receipt */
             has_receipt: boolean;
+        };
+        /** AdminProductOut */
+        AdminProductOut: {
+            /** Id */
+            id: string;
+            /** Slug */
+            slug: string;
+            /** Category Key */
+            category_key: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Price Som */
+            price_som: number;
+            /** File Size */
+            file_size: string;
+            /** Preview Image */
+            preview_image: string;
+            /** Views */
+            views: number;
+            /** Downloads */
+            downloads: number;
+            /** Is Active */
+            is_active: boolean;
+            /** File Key */
+            file_key: string;
+        };
+        /** AdminProductPage */
+        AdminProductPage: {
+            /** Items */
+            items: components["schemas"]["AdminProductOut"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
         };
         /** Body_upload_image_v1_plans_images_post */
         Body_upload_image_v1_plans_images_post: {
@@ -729,6 +835,11 @@ export interface components {
         NoteIn: {
             /** Note */
             note?: string | null;
+        };
+        /** OwnedOut */
+        OwnedOut: {
+            /** Product Ids */
+            product_ids: string[];
         };
         /** PasswordIn */
         PasswordIn: {
@@ -958,6 +1069,11 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** PricingOut */
+        PricingOut: {
+            /** Plan Credit Price Som */
+            plan_credit_price_som: number;
+        };
         /** ProductOut */
         ProductOut: {
             /** Id */
@@ -1016,7 +1132,7 @@ export interface components {
             /** Last Name */
             last_name?: string | null;
             /** Email */
-            email?: string | null;
+            email?: string | "" | null;
         };
         /** RefreshIn */
         RefreshIn: {
@@ -1124,6 +1240,11 @@ export interface components {
             role: string;
             /** Plan Credits */
             plan_credits: number;
+            /**
+             * Has Password
+             * @default false
+             */
+            has_password: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -1526,6 +1647,26 @@ export interface operations {
             };
         };
     };
+    pricing_v1_pricing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingOut"];
+                };
+            };
+        };
+    };
     preview_v1_plans_preview_post: {
         parameters: {
             query?: never;
@@ -1816,6 +1957,37 @@ export interface operations {
             };
         };
     };
+    product_image_v1_catalog_products__id_or_slug__image_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id_or_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Imzolangan rasm havolasiga yo'naltirish */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     view_v1_catalog_products__product_id__view_post: {
         parameters: {
             query?: never;
@@ -1833,6 +2005,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    owned_v1_catalog_owned_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnedOut"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -2305,6 +2508,43 @@ export interface operations {
             };
         };
     };
+    list_products_v1_admin_catalog_products_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                category?: string | null;
+                active?: boolean | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminProductPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     add_product_v1_admin_catalog_products_post: {
         parameters: {
             query?: never;
@@ -2326,7 +2566,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductOut"];
+                    "application/json": components["schemas"]["AdminProductOut"];
                 };
             };
             /** @description Validation Error */
@@ -2363,7 +2603,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductOut"];
+                    "application/json": components["schemas"]["AdminProductOut"];
                 };
             };
             /** @description Validation Error */

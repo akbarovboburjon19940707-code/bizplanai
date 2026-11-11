@@ -47,7 +47,8 @@ class LocalStorage(Storage):
 
     async def signed_url(self, key, filename, ttl=None, inline=False):
         s = get_settings()
-        token = sign_payload({"key": key, "fn": filename}, ttl or s.download_url_ttl_seconds, "file")
+        payload = {"key": key, "fn": filename, **({"in": 1} if inline else {})}  # R2 dagi kabi inline/attachment
+        token = sign_payload(payload, ttl or s.download_url_ttl_seconds, "file")
         return f"{s.public_api_url.rstrip('/')}/v1/files/{token}"
 
 
@@ -86,8 +87,12 @@ class R2Storage(Storage):
         try:
             await asyncio.to_thread(self.client.head_object, Bucket=self.bucket, Key=key)
             return True
-        except ClientError:
-            return False
+        except ClientError as e:
+            # Faqat "yo'q" javobi False: kalit/ruxsat xatosi (403 va h.k.) yashirilmaydi, aks holda
+            # sozlama xatosi "hamma fayl yo'q" bo'lib ko'rinadi va katalog savdosi to'xtaydi
+            if e.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "NotFound"):
+                return False
+            raise
 
     async def get_bytes(self, key, max_bytes):
         from botocore.exceptions import ClientError

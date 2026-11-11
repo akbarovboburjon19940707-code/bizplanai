@@ -47,7 +47,8 @@ class LocalStorage(Storage):
 
     async def signed_url(self, key, filename, ttl=None, inline=False):
         s = get_settings()
-        token = sign_payload({"key": key, "fn": filename}, ttl or s.download_url_ttl_seconds, "file")
+        payload = {"key": key, "fn": filename, **({"in": 1} if inline else {})}  # R2 dagi kabi inline/attachment
+        token = sign_payload(payload, ttl or s.download_url_ttl_seconds, "file")
         return f"{s.public_api_url.rstrip('/')}/v1/files/{token}"
 
 

@@ -135,11 +135,12 @@ Narxni server hisoblaydi; frontend summani hech qachon yubormaydi.
 | Metod va yo'l | Tavsif |
 | --- | --- |
 | `GET /v1/admin/stats` | Asosiy raqamlar |
-| `GET /v1/admin/payments?status&limit&offset` | To'lovlar navbati |
+| `GET /v1/admin/payments?status&limit&offset` | To'lovlar navbati: `PaymentOut` + `user_id`, `user_phone`, `user_name`, `has_receipt` |
 | `GET /v1/admin/payments/{id}/receipt` | Chekni ko'rish uchun 5 daqiqalik havola |
 | `POST /v1/admin/payments/{id}/approve` va `/reject` | `{note?}` |
 | `GET /v1/admin/users?q` | Foydalanuvchilar |
-| `POST /v1/admin/catalog/products`, `PATCH /v1/admin/catalog/products/{id}` | Katalog boshqaruvi (`is_active: false` = yashirish) |
+| `GET /v1/admin/catalog/products?q&category&active&limit&offset` | `{items, total, limit, offset}`: yashirilganlar ham (`AdminProductOut` = `ProductOut` + `is_active`, `file_key`) |
+| `POST /v1/admin/catalog/products`, `PATCH /v1/admin/catalog/products/{id}` | Katalog boshqaruvi (`is_active: false` = yashirish). Javob `AdminProductOut`; noma'lum `category_key` -> 400 `bad_category` |
 
 ## 8. Frontend yaratishi shart bo'lgan sahifalar (backend shularga yo'naltiradi)
 

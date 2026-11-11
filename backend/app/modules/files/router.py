@@ -20,4 +20,4 @@ async def download(token: str):
     path = storage.path_for(payload["key"])
     if not os.path.isfile(path):
         raise AppError(404, "file_missing", "Fayl topilmadi")
-    return FileResponse(path, filename=payload["fn"])
+    return FileResponse(path, filename=payload["fn"], content_disposition_type="inline" if payload.get("in") else "attachment")

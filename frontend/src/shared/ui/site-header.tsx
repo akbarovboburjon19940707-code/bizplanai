@@ -50,6 +50,7 @@ export function SiteHeader() {
             <span className="h-9 w-24 animate-pulse rounded-control bg-slate-100" aria-label={uz.auth.loading} />
           ) : status === "authenticated" ? (
             <>
+              {user?.role === "admin" ? <NavLink href="/admin/" label={nav.admin} /> : null}
               <NavLink href="/kabinet/" label={user?.first_name || nav.account} className="max-w-[10rem] truncate" />
               <Button type="button" variant="outline" size="md" onClick={() => void handleSignOut()}>
                 {nav.signOut}

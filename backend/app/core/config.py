@@ -76,6 +76,10 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-5"
 
+    # Faqat staging: k6 bitta IP'dan yuradi, shu kalit bilan IP bo'yicha rate limit o'tkazib yuboriladi.
+    # Production'da berilmaydi (render.production.yaml da yo'q). Bo'sh = o'chiq; kamida 32 belgi.
+    loadtest_token: str = ""
+
     sentry_dsn: str = ""
     log_level: str = "INFO"
 
@@ -103,6 +107,8 @@ class Settings(BaseSettings):
                 problems.append("JOB_MODE=queue bo'lishi kerak")
             if self.storage_backend != "r2":
                 problems.append("STORAGE_BACKEND=r2 bo'lishi kerak")
+            if self.loadtest_token and len(self.loadtest_token) < 32:
+                problems.append("LOADTEST_TOKEN kamida 32 belgi bo'lishi kerak")
             if not self.cookie_secure:
                 problems.append("COOKIE_SECURE=true bo'lishi kerak")
             if problems:

@@ -76,3 +76,14 @@ def test_static_site_can_be_framed_by_telegram_only(name):
     assert "X-Frame-Options" not in headers
     directives = dict(d.strip().split(" ", 1) for d in headers["Content-Security-Policy"].split(";") if " " in d.strip())
     assert directives["frame-ancestors"].split() == ["'self'", "https://*.telegram.org"]
+
+
+def test_loadtest_token_exists_only_on_staging():
+    def keys(name):
+        bp = _load(name)
+        group = [e["key"] for g in bp.get("envVarGroups", []) for e in g["envVars"]]
+        services = [e.get("key") for svc in bp["services"] for e in svc.get("envVars", [])]
+        return set(group) | set(services)
+
+    assert "LOADTEST_TOKEN" in keys("render.staging.yaml")
+    assert "LOADTEST_TOKEN" not in keys("render.production.yaml"), "production'da rate limit chetlab o'tilmasin"

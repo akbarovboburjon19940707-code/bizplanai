@@ -2,6 +2,11 @@
 
 Maqsad: yangi sayt eski `bizplanai.uz` ga tegmasdan **staging**da ishlaydi, sinovdan o'tadi, keyin bir kunda o'tiladi.
 
+> **2026-11-12 holati:** o'tish bajarildi, production `bizplanai.uz` da. Staging **to'xtatilgan** (Render Hobby ish
+> maydonida 2 ta custom domen: ular `api.bizplanai.uz` va `bizplanai.uz` ga berildi). Staging qayta kerak bo'lsa: Render'da
+> servislarni Resume qiling va `render.staging.yaml` dagi `yangi`/`api-yangi` manzillarini `*.onrender.com` ga almashtiring
+> (turli onrender.com xostlari sabab staging'da refresh cookie ishlamaydi: sahifa yangilansa qayta kirish kerak).
+
 | Muhit | Blueprint | Frontend | API | To'lovlar | Telegram |
 | --- | --- | --- | --- | --- | --- |
 | Eski sayt | (o'zgarmaydi) | `bizplanai.uz` | o'zi | Click/Payme (asosiy) | asosiy bot |

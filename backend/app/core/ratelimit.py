@@ -10,8 +10,17 @@ from app.core.redis import get_redis
 
 
 def client_ip(request: Request) -> str:
-    # uvicorn --proxy-headers Render proksisidan haqiqiy IP ni request.client ga qo'yadi
-    return request.client.host if request.client else "unknown"
+    """Rate limit uchun mijoz IP si. Manba sozlamada (CLIENT_IP_SOURCE): mijoz o'zi yozib yubora oladigan qiymatga
+    ishonilmasligi kerak, aks holda har so'rovda boshqa "IP" bilan cheklovlar chetlab o'tiladi."""
+    source = get_settings().client_ip_source
+    fallback = request.client.host if request.client else "unknown"
+    if source.startswith("header:"):
+        value = request.headers.get(source[len("header:"):].strip(), "").split(",")[0].strip()
+        return value or fallback
+    if source == "xff_last":
+        hops = [h.strip() for h in request.headers.get("x-forwarded-for", "").split(",") if h.strip()]
+        return hops[-1] if hops else fallback
+    return fallback  # xff_first: uvicorn --proxy-headers natijasi
 
 
 def _is_loadtest(request: Request) -> bool:

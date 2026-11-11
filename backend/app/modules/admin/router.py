@@ -1,10 +1,11 @@
 from datetime import timedelta
 from typing import Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 
+from app.core.config import get_settings
 from app.core.deps import AdminUser, SessionDep
 from app.core.errors import AppError, not_found
 from app.core.security import utcnow
@@ -257,3 +258,15 @@ from app.modules.admin import catalog_files, grants  # noqa: E402  (bir xil /v1/
 
 router.include_router(catalog_files.router)
 router.include_router(grants.router)
+
+
+@router.get("/debug/request")
+async def debug_request(request: Request, _: AdminUser):
+    """IP sarlavhalarini ko'rish (faqat admin): production'da qaysi sarlavhaga ishonish mumkinligini aniqlash uchun.
+    Sarlavhani 2 xil qiymat bilan tekshiring: brauzer o'zi qo'sha olmaydigan va har doim sizning IP ingiz bo'lgani ishonchli."""
+    from app.core.ratelimit import client_ip
+
+    h = request.headers
+    return {"client_host": request.client.host if request.client else None, "computed": client_ip(request),
+            "source": get_settings().client_ip_source,
+            **{k: h.get(k) for k in ("x-forwarded-for", "true-client-ip", "cf-connecting-ip", "x-real-ip", "x-forwarded-proto")}}

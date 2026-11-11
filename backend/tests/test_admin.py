@@ -65,3 +65,24 @@ async def test_receipt_link_opens_inline_for_admin(client):
     r = await client.get(url.replace("http://test", ""))
     assert r.status_code == 200 and r.headers["content-disposition"].startswith("inline")
     assert r.headers["content-type"] == "image/png"
+
+
+async def test_client_ip_source_and_debug_endpoint(client, monkeypatch):
+    """X-Forwarded-For ning birinchi qiymatini mijoz o'zi yozadi: ishonchli manba sozlamada tanlanadi."""
+    from app.core.config import get_settings
+
+    h = await _admin_headers()
+    spoof = {"X-Forwarded-For": "6.6.6.6, 203.0.113.9", "True-Client-IP": "198.51.100.7"}
+    monkeypatch.setattr(get_settings(), "client_ip_source", "xff_last")
+    assert (await client.get("/v1/admin/debug/request", headers={**h, **spoof})).json()["computed"] == "203.0.113.9"
+    monkeypatch.setattr(get_settings(), "client_ip_source", "header:true-client-ip")
+    body = (await client.get("/v1/admin/debug/request", headers={**h, **spoof})).json()
+    assert body["computed"] == "198.51.100.7" and body["x-forwarded-for"] == "6.6.6.6, 203.0.113.9"
+    user = await register(client, phone="+998935554499")
+    assert (await client.get("/v1/admin/debug/request", headers=auth(user))).status_code == 403
+
+
+async def test_oversized_json_body_rejected(client):
+    big = {"loyiha_nomi": "x" * (1024 * 1024 + 10)}
+    r = await client.post("/v1/plans/preview", json=big)
+    assert r.status_code == 413 and r.json()["error"]["code"] == "payload_too_large"

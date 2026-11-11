@@ -194,6 +194,56 @@ async def import_subscriptions(session: AsyncSession, subs: list[dict], users: d
         report.add("subscription", old["id"], "created", f"{old['plan_name']} {ends.date()} gacha")
 
 
+class _OwnerIndex:
+    """Eski to'lov egasini topish: user_id, telefon (har qanday yozuvda), Telegram id/username, ism yoki to'liq ism.
+    Ism bo'yicha faqat yagona mos kelsa. Natija: (eski user id, "") yoki (None, sabab)."""
+
+    def __init__(self, old_users: list[dict]):
+        self.ids: set[str] = set()
+        self.exact: dict[str, set[str]] = {}  # telefon, tg id, username: yagona bo'lishi kutiladi
+        self.names: dict[str, set[str]] = {}
+        for u in old_users:
+            uid = str(u["id"])
+            self.ids.add(uid)
+            raw_phone = str(u.get("phone") or "")
+            for key in (self._phone(raw_phone), raw_phone if raw_phone.startswith("tg_") else None,
+                        f"tg:{u['telegram_id']}" if u.get("telegram_id") else None,
+                        f"@{_norm(u['telegram_username']).lstrip('@')}" if u.get("telegram_username") else None):
+                if key:
+                    self.exact.setdefault(key, set()).add(uid)
+            first, last = _norm(u.get("first_name")), _norm(u.get("last_name"))
+            for key in {first, f"{first} {last}".strip(), f"{last} {first}".strip()}:
+                if key:
+                    self.names.setdefault(key, set()).add(uid)
+
+    @staticmethod
+    def _phone(raw: str) -> str | None:
+        try:
+            return normalize_phone(raw) if raw and not raw.startswith("tg_") else None
+        except ValueError:
+            return None
+
+    def find(self, user_id: object, user_name: object) -> tuple[str | None, str]:
+        uid = str(user_id or "").strip()
+        if uid in self.ids:
+            return uid, ""
+        name = str(user_name or "").strip()
+        candidates = [self._phone(name), name if name.startswith("tg_") else None,
+                      f"tg:{uid}" if uid else None, f"tg:{name}" if name.isdigit() else None,
+                      f"@{_norm(name).lstrip('@')}" if name else None]
+        for key in candidates:
+            if key and len(self.exact.get(key, ())) == 1:
+                return next(iter(self.exact[key])), ""
+        matches = self.names.get(_norm(name), set())
+        if len(matches) == 1:
+            return next(iter(matches)), ""
+        if matches:
+            return None, f"egasi aniq emas ({len(matches)} ta bir xil ism)"
+        if not name and not uid:
+            return None, "egasi yozilmagan"
+        return None, "egasi topilmadi (eski bazada bunday foydalanuvchi yo'q)"
+
+
 def _is_paid(old: dict) -> bool:
     # Click/Payme: payment_status=success; karta: admin tasdiqlagan (admin_status=approved) - eski payment.py dagidek
     return old.get("payment_status") == "success" or old.get("admin_status") == "approved"
@@ -211,11 +261,7 @@ async def import_purchases(session: AsyncSession, payments: list[dict], old_user
     for p in await session.scalars(select(CatalogProduct)):
         products.setdefault(_norm(p.title), []).append(p.id)
         product_ids.add(p.id)
-    by_phone, by_name, old_ids = {}, {}, set()
-    for u in old_users:
-        old_ids.add(str(u["id"]))
-        by_phone[str(u.get("phone") or "")] = str(u["id"])
-        by_name.setdefault(_norm(u.get("first_name")), []).append(str(u["id"]))
+    owner = _OwnerIndex(old_users)
     owned = {(e.user_id, e.product_id) for e in await session.scalars(select(Entitlement))}
 
     for old in payments:
@@ -239,17 +285,11 @@ async def import_purchases(session: AsyncSession, payments: list[dict], old_user
             report.add("purchase", old["id"], "review", f"reja topilmadi: product_id={raw_pid!r}, nomi={title!r}")
             continue
 
-        old_uid = str(old.get("user_id") or "")
-        if old_uid not in old_ids:
-            name = str(old.get("user_name") or "")
-            if name in by_phone:
-                old_uid = by_phone[name]
-            elif len(by_name.get(_norm(name), [])) == 1:
-                old_uid = by_name[_norm(name)][0]
-            else:
-                matches = len(by_name.get(_norm(name), []))
-                report.add("purchase", old["id"], "review", f"egasi aniq emas: user_name={name!r} ({matches} ta mos)")
-                continue
+        old_uid, reason = owner.find(old.get("user_id"), old.get("user_name"))
+        if not old_uid:
+            report.add("purchase", old["id"], "review", f"{reason}: user_id={old.get('user_id')!r}, "
+                                                        f"user_name={old.get('user_name')!r}")
+            continue
         if kind == "maybe":
             report.add("purchase", old["id"], "review", f"product_id yo'q, nomi bo'yicha mos: {product_id}")
             continue

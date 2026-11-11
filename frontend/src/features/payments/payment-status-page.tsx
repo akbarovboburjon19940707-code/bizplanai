@@ -13,6 +13,7 @@ import { FormAlert } from "@/shared/ui/form-field";
 import { ManualCheckoutPanel } from "./manual-checkout";
 import { isManual, type PaymentOut } from "./types";
 import { usePayment, usePaymentId } from "./use-payment";
+import { openDownload } from "@/shared/lib/download";
 
 const t = uz.payments;
 type Status = Exclude<keyof typeof t.status, "title">;
@@ -34,7 +35,7 @@ function NextAction({ payment }: { payment: PaymentOut }) {
         const { url } = await apiRequest<{ url: string }>(
           `/v1/catalog/products/${encodeURIComponent(payment.target_id!)}/download`,
         );
-        window.location.href = url;
+        await openDownload(url, `${payment.title}.pdf`);
       } catch (e) {
         setError(e instanceof ApiError ? e.message : uz.authForms.genericError);
       }

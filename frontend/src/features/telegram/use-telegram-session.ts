@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { apiRequest, startSession } from "@/shared/api/client";
 import { ApiError } from "@/shared/api/errors";
 import type { components } from "@/shared/api/schema";
+import { markTelegramContext } from "@/shared/lib/download";
 import type { TelegramWebApp } from "./telegram-webapp";
 
 type TokenOut = components["schemas"]["TokenOut"];
@@ -21,6 +22,7 @@ export function useTelegramSession() {
     if (!app?.initData) return setState({ phase: "outside" }); // oddiy brauzerda ochilgan
     app.ready();
     app.expand();
+    markTelegramContext(); // keyingi sahifalarda ham yuklash Telegram usulida bo'lsin
     try {
       startSession(await apiRequest<TokenOut>("/v1/auth/telegram/webapp", {
         method: "POST",

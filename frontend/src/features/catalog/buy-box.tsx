@@ -12,6 +12,7 @@ import { formatSom } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import { FormAlert } from "@/shared/ui/form-field";
 import type { Product } from "./types";
+import { openDownload } from "@/shared/lib/download";
 
 const t = uz.catalog;
 
@@ -42,7 +43,7 @@ export function BuyBox({ product }: { product: Product }) {
     try {
       const { url } = await apiRequest<{ url: string }>(`/v1/catalog/products/${encodeURIComponent(product.id)}/download`);
       setOwned(true);
-      window.location.href = url;
+      await openDownload(url, `${product.title}.pdf`);
     } catch (e) {
       if (e instanceof ApiError && e.code === "not_purchased") setOwned(false);
       setError(e instanceof ApiError && e.message ? e.message : uz.authForms.genericError);

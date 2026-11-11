@@ -10,6 +10,7 @@ import { ApiError } from "@/shared/api/errors";
 import { formatSom } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import type { PlanOut } from "./schema";
+import { openDownload } from "@/shared/lib/download";
 
 const t = uz.plans.plan;
 
@@ -44,7 +45,8 @@ export function PlanStatus() {
   const download = async (format: "docx" | "xlsx") => {
     try {
       const { url } = await apiRequest<{ url: string }>(`/v1/plans/${encodeURIComponent(id ?? "")}/download?format=${format}`);
-      window.location.href = url;
+      const name = format === "xlsx" ? "jadvallar" : "biznes reja";
+      await openDownload(url, `${plan?.title ?? "Reja"} - ${name}.${format}`); // Telegram ichida ham ishlaydi
     } catch (e) {
       setError(e instanceof ApiError ? e.message : t.missing);
     }

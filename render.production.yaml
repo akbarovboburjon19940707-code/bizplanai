@@ -2,6 +2,8 @@
 # Render: New > Blueprint > repo > Blueprint path: render.production.yaml
 # Domenlar: bizplanai.uz, www.bizplanai.uz (frontend), api.bizplanai.uz (API). O'tish tartibi: docs/DEPLOY.md
 # Autoscaling (scaling:) faqat Render Professional workspace'da ishlaydi; aks holda numInstances ishlating.
+# Deploy: servislar `production` branch'ini kuzatadi va faqat CI yashil bo'lganda deploy qilinadi.
+# `main` ga push faqat staging'ga chiqadi; production'ga chiqarish: main > production (fast-forward), docs/DEPLOY.md 8-bo'lim.
 
 services:
   - type: web
@@ -11,6 +13,8 @@ services:
     dockerContext: ./backend
     region: frankfurt
     plan: standard
+    branch: production
+    autoDeployTrigger: checksPass
     healthCheckPath: /readyz
     preDeployCommand: sh /app/scripts/predeploy.sh
     buildFilter:
@@ -30,6 +34,12 @@ services:
       - { key: FRONTEND_URL, value: https://bizplanai.uz }
       - { key: PUBLIC_API_URL, value: https://api.bizplanai.uz }
       - { key: WEB_CONCURRENCY, value: "2" }
+      # Postgres ulanish byudjeti: basic-1gb da max_connections = 100 (RAM 8 GB dan kam bo'lgan har qanday tarifda shu).
+      # Eng ko'p jarayon: API 8 nusxa x 2 + worker 6 nusxa x 1 = 22; har biri POOL_SIZE + MAX_OVERFLOW = 4 ulanish
+      # => 88 <= 90 (10 tasi superuser, pre-deploy migratsiya va Shell uchun zaxira).
+      # Nusxa soni, WEB_CONCURRENCY yoki pool o'zgarsa tests/test_deploy_blueprints.py shu byudjetni tekshiradi.
+      - { key: DB_POOL_SIZE, value: "3" }
+      - { key: DB_MAX_OVERFLOW, value: "1" }
       - key: DATABASE_URL
         fromDatabase: { name: bizplan-db, property: connectionString }
       - key: REDIS_URL
@@ -43,6 +53,8 @@ services:
     dockerContext: ./backend
     region: frankfurt
     plan: standard
+    branch: production
+    autoDeployTrigger: checksPass
     dockerCommand: arq app.workers.settings.WorkerSettings
     buildFilter:
       paths: ["backend/**"]
@@ -62,6 +74,8 @@ services:
   - type: web
     name: bizplan-web
     runtime: static
+    branch: production
+    autoDeployTrigger: checksPass
     buildCommand: cd frontend && npm ci && npm run build   # rootDir ataylab yo'q
     staticPublishPath: ./frontend/out
     buildFilter:
@@ -74,13 +88,14 @@ services:
     routes:
       - { type: rewrite, source: /tolov/*, destination: /tolov/_/index.html }
     headers:
-      - { path: /*, name: X-Frame-Options, value: DENY }
+      # X-Frame-Options ataylab yo'q: u faqat DENY/SAMEORIGIN ni biladi. Iframe ruxsati CSP frame-ancestors da:
+      # Telegram Web (web.telegram.org) Mini App'ni iframe ichida ochadi, boshqa saytlar uchun taqiq saqlanadi.
       - { path: /*, name: X-Content-Type-Options, value: nosniff }
       - { path: /*, name: Referrer-Policy, value: strict-origin-when-cross-origin }
       - { path: /*, name: Strict-Transport-Security, value: "max-age=31536000; includeSubDomains" }
       - path: /*
         name: Content-Security-Policy
-        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://api.bizplanai.uz; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://api.bizplanai.uz; frame-ancestors 'self' https://*.telegram.org; base-uri 'self'; form-action 'self'"
 
 databases:
   - name: bizplan-db

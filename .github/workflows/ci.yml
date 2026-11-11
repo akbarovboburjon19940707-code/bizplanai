@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, production]   # production: Render `autoDeployTrigger: checksPass` shu tekshiruvlarni kutadi
   pull_request:
 
 permissions:

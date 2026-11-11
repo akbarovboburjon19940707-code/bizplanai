@@ -57,9 +57,11 @@ test("guest buys a plan by card: register, receipt, admin approval, owned on rel
   const approved = await api(`/v1/admin/payments/${paymentId}/approve`, { method: "POST", body: "{}" }, await adminToken());
   expect(approved.status).toBe(200);
   await expect(page.getByText("To‘lov qabul qilindi")).toBeVisible({ timeout: 30_000 });
-  const download = page.waitForResponse((r) => r.url().includes("/download"));
+  // CI rejaning namunaviy PDF'ini qo'yadi (fayli yo'q reja sotilmaydi): yuklash to'liq tugashini kutamiz,
+  // aks holda keyingi page.goto davom etayotgan yuklashni uzib, ERR_ABORTED beradi
+  const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "PDF’ni yuklab olish" }).click();
-  await download; // PDF fayli bo'lmasa API "Fayl hozircha mavjud emas" deydi: muhimi so'rov ketdi
+  expect((await download).suggestedFilename()).toMatch(/\.pdf$/);
 
   await page.goto(PRODUCT);
   await expect(page.getByText("Bu reja sizda bor.")).toBeVisible();

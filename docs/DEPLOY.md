@@ -147,18 +147,27 @@ yangi formatga o'tkaziladi. Eski Telegram hisoblari (telefon `tg_<id>`) telefons
 eski sayt ularga taxmin qilinadigan avtomatik parol qo'ygan. Ular Telegram orqali kiradi, xohlasa kabinetda parol
 o'rnatadi. Eski adminlar oddiy foydalanuvchi bo'ladi: adminni `create-admin` (TOTP) bilan qayta yarating.
 
+Manzilni Render Shell'ga joylashtirmang (joylashtirish belgilari va bufer chalkashligi xato beradi): eski baza
+**External Database URL** ini API servisining Environment'iga `LEGACY_DATABASE_URL` sifatida qo'shing, ko'chirish
+tugagach o'chiring.
+
 ```bash
 # 1) Quruq yurish: hech narsa yozilmaydi, hisobot chiqadi
-python -m app.cli import-legacy --source "$OLD_DATABASE_URL" --report /tmp/legacy.csv
+python -m app.cli import-legacy --report /tmp/legacy.csv
+grep ',review,' /tmp/legacy.csv | cut -d, -f4 | cut -d: -f1 | sort | uniq -c   # sabablar (ism/telefonsiz)
 # 2) Hisobotni ko'rib chiqing (review qatorlari), keyin yozing
-python -m app.cli import-legacy --source "$OLD_DATABASE_URL" --apply --report /tmp/legacy.csv
+python -m app.cli import-legacy --apply --report /tmp/legacy.csv
 ```
 
-- **Ustunlar.** Eski `models/` paketi repo'ga kirmagan, shuning uchun ustun nomlari eski koddan tiklangan:
-  - `users`: `id`, `phone`, `first_name`, ixtiyoriy `last_name`, `telegram_id`, `telegram_username`, `password_hash`, `role`, `is_active`, `created_at`;
-  - `subscriptions`: `id`, `user_id`, `plan_name`, `status`, `end_date`, ixtiyoriy `start_date`;
-  - `payments`: `id`, `user_name`, `payment_status`, `payment_type`, `loyiha_nomi`.
+**Staging sinovi (2026-11-11, jonli eski baza):** 17 foydalanuvchi (13 yangi, 4 mavjud), 10 obuna (1 faol pullik
+ko'chdi), 56 to'lov: 1 katalog xaridi ko'chdi, 10 tasi `review` ("egasi topilmadi": hisobsiz xarid, eski sayt
+ro'yxatdan o'tmasdan sotgan; PDF xarid paytida berilgan, ko'chirilmaydi). `--apply` staging'da muvaffaqiyatli.
 
+- **Ustunlar.** Jonli eski bazada `payments`: `id`, `user_id`, `user_name`, `project_name`, `product_id`,
+  `payment_status`, `admin_status` va boshqalar (eski variant `payment_type` + `loyiha_nomi` ham qo'llab-quvvatlanadi).
+  `users`: `id`, `phone`, `first_name`, ixtiyoriy `last_name`, `telegram_id`, `telegram_username`, `password_hash`,
+  `role`, `is_active`, `created_at`; `subscriptions`: `id`, `user_id`, `plan_name`, `status`, `end_date`, ixtiyoriy `start_date`.
   Kerakli ustun bo'lmasa, skript mavjud ustunlarni ko'rsatib to'xtaydi. Jadval nomi boshqa bo'lsa: `--users-table`, `--subscriptions-table`, `--payments-table`.
-- **Katalog xaridlari.** Eski sayt xaridni `user_name` (ism **yoki** telefon) va reja nomi bilan saqlagan. Ism bir nechta foydalanuvchiga mos kelsa yoki reja nomi katalogda topilmasa, xarid ko'chirilmaydi, `review` qatoriga yoziladi. Ularni admin qo'lda hal qiladi.
+- **Katalog xaridlari.** Reja `product_id` bo'yicha; to'langan = `payment_status=success` yoki `admin_status=approved`.
+  Egasi `user_id`, telefon (istalgan yozuvda), Telegram id/username yoki yagona ism bo'yicha. Aniqlanmasa `review`.
 - **Qayta ishga tushirish xavfsiz.** Obuna va huquqlar `lgs:` / `lgp:` belgilari bilan bir marta yoziladi.

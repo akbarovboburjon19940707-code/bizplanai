@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.core.config import get_settings
@@ -49,6 +50,17 @@ def create_app() -> FastAPI:
     app.add_middleware(CORSMiddleware, allow_origins=s.origins, allow_credentials=True,
                        allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
                        allow_headers=["Authorization", "Content-Type", "X-Request-ID"], max_age=600)
+
+    @app.middleware("http")
+    async def body_limit(request: Request, call_next):
+        # Katta JSON tanasi bilan xotirani to'ldirishning oldini olish (fayl yuklash multipart, o'z chegaralari bor)
+        length = request.headers.get("content-length")
+        ctype = request.headers.get("content-type", "")
+        if length and length.isdigit() and not ctype.startswith("multipart/") \
+                and int(length) > get_settings().max_json_body_bytes:
+            return JSONResponse({"error": {"code": "payload_too_large", "message": "So'rov hajmi juda katta"}},
+                                status_code=413)
+        return await call_next(request)
 
     @app.middleware("http")
     async def request_context(request: Request, call_next):

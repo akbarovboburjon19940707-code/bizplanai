@@ -76,6 +76,11 @@ class Settings(BaseSettings):
     assistant_max_reply_tokens: int = 600
     # Render > bizplan-web > Settings > Deploy Hook: admin katalogni o'zgartirgach "Saytni yangilash" shu orqali
     # (katalog sahifalari build vaqtida yaratiladi). Maxfiy URL: faqat env group'da.
+    # Mijoz IP manbai (rate limit uchun). "xff_first": uvicorn --forwarded-allow-ips='*' (X-Forwarded-For dagi birinchi
+    # qiymat; mijoz uni o'zi yozib yuborishi mumkin). Production sarlavhalari /v1/admin/debug/request da ko'rilgach
+    # ishonchli manba tanlanadi: "xff_last" (proksi qo'shgan oxirgi qiymat) yoki "header:<nom>" (masalan header:true-client-ip).
+    client_ip_source: str = "xff_first"
+    max_json_body_bytes: int = 1024 * 1024  # multipart bo'lmagan so'rov tanasi chegarasi (1 MB)
     # Kirish urinishlari IP bo'yicha daqiqasiga (production'da 20). E2E testlar bitta IP dan ko'p kiradi: CI'da oshiriladi.
     login_rate_per_minute: int = 20
     frontend_deploy_hook_url: str = ""

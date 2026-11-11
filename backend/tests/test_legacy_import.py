@@ -213,3 +213,22 @@ async def test_import_live_payments_schema(client, tmp_path):
     assert c["purchase.created"] == 2  # p1 (user_id), p2 (karta tasdiqlangan, yagona Vali)
     assert c["purchase.review"] == 3   # p5 (id yo'q), p6 (topilmadi), p7 (2 ta Aziz)
     assert c["user.created"] == 3
+
+
+def test_owner_matching_variants():
+    from app.legacy_import import _OwnerIndex
+
+    idx = _OwnerIndex([
+        {"id": "u1", "phone": "+998901112200", "first_name": "Aziz", "last_name": "Karimov"},
+        {"id": "u2", "phone": "tg_777", "first_name": "Aziz", "telegram_id": "777", "telegram_username": "aziz_tg"},
+        {"id": "u3", "phone": "935554433", "first_name": "Vali"},
+    ])
+    assert idx.find("u3", "") == ("u3", "")
+    assert idx.find(None, "90 111 22 00")[0] == "u1"           # telefon boshqa yozuvda
+    assert idx.find(None, "998935554433")[0] == "u3"
+    assert idx.find(None, "@Aziz_TG")[0] == "u2"                # Telegram username
+    assert idx.find("777", "")[0] == "u2"                       # user_id o'rnida Telegram id
+    assert idx.find(None, "aziz karimov")[0] == "u1"            # to'liq ism
+    assert idx.find(None, "Aziz") == (None, "egasi aniq emas (2 ta bir xil ism)")
+    assert idx.find(None, "Hech kim")[1].startswith("egasi topilmadi")
+    assert idx.find(None, "")[1] == "egasi yozilmagan"

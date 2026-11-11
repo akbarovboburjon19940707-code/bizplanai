@@ -315,6 +315,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/catalog/products/{id_or_slug}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Product Image
+         * @description Katalog muqova rasmi: yopiq bucket'dan 1 soatlik imzolangan havolaga 302 (brauzer 30 daqiqa keshlaydi).
+         */
+        get: operations["product_image_v1_catalog_products__id_or_slug__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/products/{product_id}/view": {
         parameters: {
             query?: never;
@@ -944,6 +964,11 @@ export interface components {
             created_at: string;
             /** Finished At */
             finished_at: string | null;
+            /**
+             * Has Pdf
+             * @default false
+             */
+            has_pdf: boolean;
         };
         /** PreviewOut */
         PreviewOut: {
@@ -1699,7 +1724,7 @@ export interface operations {
     download_v1_plans__plan_id__download_get: {
         parameters: {
             query?: {
-                format?: "docx" | "xlsx";
+                format?: "docx" | "xlsx" | "pdf";
             };
             header?: {
                 authorization?: string | null;
@@ -1803,6 +1828,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    product_image_v1_catalog_products__id_or_slug__image_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id_or_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Imzolangan rasm havolasiga yo'naltirish */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

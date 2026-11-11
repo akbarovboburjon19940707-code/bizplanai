@@ -110,6 +110,7 @@ class PlanOut(BaseModel):
     indicators: dict | None
     created_at: datetime
     finished_at: datetime | None
+    has_pdf: bool = False  # true: GET .../download?format=pdf ishlaydi
 
 
 class PreviewOut(BaseModel):

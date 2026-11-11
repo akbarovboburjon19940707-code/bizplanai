@@ -23,4 +23,5 @@ class Plan(TimestampMixin, Base):
     ai_used: Mapped[bool] = mapped_column(Boolean, default=False)
     word_key: Mapped[str | None] = mapped_column(String(255))
     excel_key: Mapped[str | None] = mapped_column(String(255))
+    pdf_key: Mapped[str | None] = mapped_column(String(255))  # ixtiyoriy: LibreOffice bo'lmasa None
     finished_at: Mapped[datetime | None] = mapped_column(DateTime)

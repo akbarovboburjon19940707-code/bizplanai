@@ -97,6 +97,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build (Render bilan bir xil Dockerfile)
         run: docker build -t bizplan-api:ci backend
+      - name: "PDF: image ichida LibreOffice Word shablonini PDF qiladi"
+        run: |
+          docker run --rm bizplan-api:ci sh -c 'cp app/engine/templates/biznes_reja.docx /tmp/t.docx && python -c "
+          import asyncio
+          from app.engine.pdf import docx_to_pdf
+          p = asyncio.run(docx_to_pdf(\"/tmp/t.docx\", \"/tmp\"))
+          assert p and open(p, \"rb\").read(4) == b\"%PDF\", p
+          print(\"PDF ok:\", p)
+          "'
       - name: Production guard ishlaydi (noto'g'ri sozlamada server ko'tarilmaydi)
         run: |
           if docker run --rm -e APP_ENV=production bizplan-api:ci python -c "from app.core.config import get_settings; get_settings()"; then

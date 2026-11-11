@@ -146,7 +146,7 @@ jobs:
       - name: "Backend: o'rnatish, migratsiya, seed, admin"
         working-directory: backend
         run: |
-          pip install -r requirements.txt
+          pip install -r requirements-dev.txt   # aiosqlite (SQLite drayveri) dev ro'yxatida
           alembic upgrade head
           python -m app.cli seed
           secret=$(python -m app.cli create-admin --phone "$E2E_ADMIN_PHONE" --password "$E2E_ADMIN_PASSWORD" | grep -o 'secret=[A-Z2-7]*' | cut -d= -f2)
@@ -172,7 +172,7 @@ jobs:
           npm run e2e
       - name: Loglar (xato bo'lsa)
         if: failure()
-        run: tail -n 100 "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log"
+        run: tail -n 100 "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/web.log" || true
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

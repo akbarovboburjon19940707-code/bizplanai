@@ -150,3 +150,18 @@ def test_short_horizon_metrics_use_only_those_years():
     # quvvat grafigi 10 qiymat bilan kelsa ham faqat 3 yili olinadi
     custom = build_model({**EXCEL_INPUT, "muddat": 36, "quvvat": [50, 60, 70, 80, 90, 100, 100, 100, 100, 100]})
     assert custom["cap"] == [0.5, 0.6, 0.7]
+
+
+def test_amortization_spread_over_loan_term():
+    """Asosiy vositalar kredit muddatida to'liq amortizatsiya qilinadi: 36 oy -> 3 yilga teng."""
+    short = build_model({**EXCEL_INPUT, "muddat": 36, "imtiyoz": 0})
+    long_ = build_model({**EXCEL_INPUT, "muddat": 120, "imtiyoz": 0})
+    assert short["amort"] == pytest.approx(short["asosiy"] / 3)
+    assert short["amort"] * 3 == pytest.approx(short["asosiy"])
+    assert long_["amort"] == pytest.approx(long_["asosiy"] / 10)  # Excel: 10%
+    # ta'mirlash xarajati amortizatsiya davriga bog'liq emas
+    assert short["full"]["texnik"][1] == pytest.approx(long_["full"]["texnik"][1])
+    res = calculate_financial_model({**EXCEL_INPUT, "muddat": 36, "imtiyoz": 0})
+    t4 = next(t for t in res["tables"] if t["ilova"] == "4-ILOVA")
+    assert t4["title"].endswith("(3 yil, teng ulushda)") and t4["rows"][0][2] == "33.3%"
+    assert t4["rows"][2][-1] == pytest.approx(round(short["asosiy"], 2), abs=0.05)  # 3-yil oxirida to'liq

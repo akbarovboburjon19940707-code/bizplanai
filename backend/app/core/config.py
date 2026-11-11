@@ -111,6 +111,12 @@ class Settings(BaseSettings):
                 problems.append("JOB_MODE=queue bo'lishi kerak")
             if self.storage_backend != "r2":
                 problems.append("STORAGE_BACKEND=r2 bo'lishi kerak")
+            missing_r2 = [name for name, value in (("R2_ACCOUNT_ID", self.r2_account_id),
+                                                   ("R2_ACCESS_KEY_ID", self.r2_access_key_id),
+                                                   ("R2_SECRET_ACCESS_KEY", self.r2_secret_access_key),
+                                                   ("R2_BUCKET", self.r2_bucket)) if not value]
+            if missing_r2:  # aks holda server ishlaydi, lekin har bir fayl so'rovi 500 beradi
+                problems.append("R2 sozlamalari yo'q: " + ", ".join(missing_r2))
             if self.loadtest_token and len(self.loadtest_token) < 32:
                 problems.append("LOADTEST_TOKEN kamida 32 belgi bo'lishi kerak")
             if not self.cookie_secure:

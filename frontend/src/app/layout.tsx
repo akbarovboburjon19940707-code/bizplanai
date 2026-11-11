@@ -3,14 +3,19 @@ import { Inter, Outfit } from "next/font/google";
 import { AuthProvider } from "@/features/auth/auth-context";
 import { SiteHeader } from "@/shared/ui/site-header";
 import { uz } from "@/messages/uz";
+import { SITE_URL } from "@/shared/lib/site";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-inter", display: "swap" });
 const outfit = Outfit({ subsets: ["latin", "latin-ext"], variable: "--font-outfit", display: "swap" });
 
 export const metadata: Metadata = {
-  title: uz.appName,
-  description: uz.tagline,
+  metadataBase: new URL(SITE_URL),
+  title: `${uz.appName}: ${uz.home.eyebrow.toLowerCase()}`,
+  description: uz.home.description,
+  openGraph: { type: "website", siteName: uz.appName, locale: "uz_UZ", title: uz.appName, description: uz.home.description },
+  twitter: { card: "summary" },
+  alternates: { canonical: "/" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

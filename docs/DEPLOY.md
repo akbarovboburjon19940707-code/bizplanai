@@ -81,7 +81,8 @@ python scripts/set_telegram_webhook.py https://api-yangi.bizplanai.uz           
 Frontend'da hali yo'q (o'tishdan oldin kerak): `/kirish`, `/royxat`, `/kabinet`, katalog va to'lov sahifalari (`frontend/AGENTS.md` 2, 4-bosqich).
 
 ## 7. O'tish kuni (production)
-1. Eski saytdagi foydalanuvchi, to'lov va obunalarni ko'chirish skripti (yoziladi; CLAUDE.md keyingi ishlar 4-band), avval staging'da sinab.
+1. Eski saytdan ko'chirish (`python -m app.cli import-legacy`, yangi API Shell'ida; batafsil pastda, 9-bo'lim).
+   Avval staging'da eski bazaning nusxasi bilan sinab ko'ring.
 2. `production` branch'ini yarating (sinovdan o'tgan `main` holatidan): `git push origin main:production`.
    Keyin Render > New > Blueprint > `render.production.yaml` (staging bilan bir xil sinovlar).
 3. Eski saytni faqat o'qish rejimiga o'tkazish (yangi to'lov qabul qilmasin), oxirgi ma'lumotlarni ko'chirish.
@@ -114,3 +115,30 @@ Migratsiya orqaga qaytmaydi: sxemani buzuvchi o'zgarishlarni ikki bosqichda chiq
 `DB_POOL_SIZE=3`, `DB_MAX_OVERFLOW=1` shu limitga moslangan: 22 jarayon x 4 = 88. Nusxa soni yoki `WEB_CONCURRENCY`
 o'zgarsa `backend/tests/test_deploy_blueprints.py` CI'da xato beradi. k6 testida pool yetmasa (loglarda
 `QueuePool limit ... reached`), pool'ni kattalashtirish o'rniga PgBouncer (transaction rejimi) qo'ying.
+
+## 9. Eski saytdan ma'lumot ko'chirish
+`backend/app/legacy_import.py`. Nimalar ko'chadi:
+- foydalanuvchilar (telefon bo'yicha; mavjudlari qayta yaratilmaydi);
+- faol pullik obunalar (`pro`, `enterprise`, muddati tugamaganlar);
+- sotib olingan katalog rejalari: faqat egasi va reja **aniq** bo'lsa.
+
+Eski parollar (Werkzeug xeshi) o'zgarishsiz ko'chadi: foydalanuvchi eski paroli bilan kiradi, kirish paytida xesh
+yangi formatga o'tkaziladi. Eski Telegram hisoblari (telefon `tg_<id>`) telefonsiz va **parolsiz** ko'chadi, chunki
+eski sayt ularga taxmin qilinadigan avtomatik parol qo'ygan. Ular Telegram orqali kiradi, xohlasa kabinetda parol
+o'rnatadi. Eski adminlar oddiy foydalanuvchi bo'ladi: adminni `create-admin` (TOTP) bilan qayta yarating.
+
+```bash
+# 1) Quruq yurish: hech narsa yozilmaydi, hisobot chiqadi
+python -m app.cli import-legacy --source "$OLD_DATABASE_URL" --report /tmp/legacy.csv
+# 2) Hisobotni ko'rib chiqing (review qatorlari), keyin yozing
+python -m app.cli import-legacy --source "$OLD_DATABASE_URL" --apply --report /tmp/legacy.csv
+```
+
+- **Ustunlar.** Eski `models/` paketi repo'ga kirmagan, shuning uchun ustun nomlari eski koddan tiklangan:
+  - `users`: `id`, `phone`, `first_name`, ixtiyoriy `last_name`, `telegram_id`, `telegram_username`, `password_hash`, `role`, `is_active`, `created_at`;
+  - `subscriptions`: `id`, `user_id`, `plan_name`, `status`, `end_date`, ixtiyoriy `start_date`;
+  - `payments`: `id`, `user_name`, `payment_status`, `payment_type`, `loyiha_nomi`.
+
+  Kerakli ustun bo'lmasa, skript mavjud ustunlarni ko'rsatib to'xtaydi. Jadval nomi boshqa bo'lsa: `--users-table`, `--subscriptions-table`, `--payments-table`.
+- **Katalog xaridlari.** Eski sayt xaridni `user_name` (ism **yoki** telefon) va reja nomi bilan saqlagan. Ism bir nechta foydalanuvchiga mos kelsa yoki reja nomi katalogda topilmasa, xarid ko'chirilmaydi, `review` qatoriga yoziladi. Ularni admin qo'lda hal qiladi.
+- **Qayta ishga tushirish xavfsiz.** Obuna va huquqlar `lgs:` / `lgp:` belgilari bilan bir marta yoziladi.

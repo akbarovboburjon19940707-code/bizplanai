@@ -1,6 +1,7 @@
 """Boshqaruv buyruqlari:
   python -m app.cli seed [--min-catalog-price 25000]
   python -m app.cli create-admin --phone +998901234567 --password '...'
+  python -m app.cli import-legacy --source postgresql://... [--apply] [--report hisobot.csv]
 """
 import argparse
 import asyncio
@@ -78,6 +79,23 @@ async def create_admin(phone: str, password: str) -> None:
     print(totp_uri(secret, phone))
 
 
+async def import_legacy(source_url: str, apply: bool, report_path: str | None, tables: dict[str, str]) -> None:
+    from app.legacy_import import read_source, run_import
+
+    source = await read_source(source_url, tables)
+    print(f"eski baza: {len(source['users'])} foydalanuvchi, {len(source['subscriptions'])} obuna, "
+          f"{len(source['payments'])} to'lov")
+    async with sessionmaker()() as s:
+        report = await run_import(s, source, apply=apply)
+    await dispose_engine()
+    for key, n in report.counts().items():
+        print(f"  {key}: {n}")
+    if report_path:
+        report.write_csv(report_path)
+        print(f"hisobot: {report_path}")
+    print("YOZILDI" if apply else "QURUQ YURISH: hech narsa yozilmadi (--apply bilan yozing)")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -86,9 +104,19 @@ def main() -> None:
     p_admin = sub.add_parser("create-admin")
     p_admin.add_argument("--phone", required=True)
     p_admin.add_argument("--password", required=True)
+    p_legacy = sub.add_parser("import-legacy")
+    p_legacy.add_argument("--source", required=True, help="eski saytning DATABASE_URL i")
+    p_legacy.add_argument("--apply", action="store_true", help="yozish (bo'lmasa faqat hisobot)")
+    p_legacy.add_argument("--report", help="CSV hisobot fayli")
+    p_legacy.add_argument("--users-table", default="users")
+    p_legacy.add_argument("--subscriptions-table", default="subscriptions")
+    p_legacy.add_argument("--payments-table", default="payments")
     args = parser.parse_args()
     if args.cmd == "seed":
         asyncio.run(seed(args.min_catalog_price))
+    elif args.cmd == "import-legacy":
+        tables = {"users": args.users_table, "subscriptions": args.subscriptions_table, "payments": args.payments_table}
+        asyncio.run(import_legacy(args.source, args.apply, args.report, tables))
     else:
         if len(args.password) < 12:
             raise SystemExit("Admin paroli kamida 12 belgi bo'lsin")

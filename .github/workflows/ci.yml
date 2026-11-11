@@ -85,6 +85,9 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: https://api.example.invalid
           NEXT_TELEMETRY_DISABLED: "1"
+          # CI'da API yo'q: katalog sahifalari o'rniga bitta zaxira sahifa. Render'da bu o'zgaruvchi YO'Q:
+          # u yerda build API'dan 269 ta sahifa yasaydi, API javob bermasa build to'xtaydi.
+          CATALOG_STATIC: skip
 
   docker:
     name: Backend Docker image

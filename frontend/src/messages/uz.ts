@@ -1,4 +1,5 @@
 import { accountMessages, authMessages } from "./auth";
+import { catalogMessages, paymentMessages, tariffMessages } from "./commerce";
 import { planMessages } from "./plan";
 
 export const uz = {
@@ -12,6 +13,8 @@ export const uz = {
     signOut: "Chiqish",
     account: "Kabinet",
     createPlan: "Reja yaratish",
+    catalog: "Katalog",
+    tariffs: "Tariflar",
     menu: "Menyu",
   },
   auth: {
@@ -31,4 +34,7 @@ export const uz = {
   plans: planMessages,
   authForms: authMessages,
   account: accountMessages,
+  catalog: catalogMessages,
+  tariffs: tariffMessages,
+  payments: paymentMessages,
 } as const;

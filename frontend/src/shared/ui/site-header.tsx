@@ -43,6 +43,8 @@ export function SiteHeader() {
           <span className="hidden text-lg font-bold tracking-tight text-ink sm:inline">{uz.appName}</span>
         </Link>
         <nav aria-label={nav.menu} className="flex items-center gap-1 sm:gap-2">
+          <NavLink href="/katalog/" label={nav.catalog} className="hidden md:inline-flex" />
+          <NavLink href="/tariflar/" label={nav.tariffs} className="hidden md:inline-flex" />
           <NavLink href="/dashboard/" label={nav.createPlan} className="hidden sm:inline-flex" />
           {status === "loading" ? (
             <span className="h-9 w-24 animate-pulse rounded-control bg-slate-100" aria-label={uz.auth.loading} />
@@ -63,6 +65,14 @@ export function SiteHeader() {
           )}
         </nav>
       </div>
+      {/* Kichik ekranlar: asosiy bo'limlar header ostida (md dan kattada yuqoridagi menyuda) */}
+      <nav aria-label={nav.menu} className="border-t border-slate-100 md:hidden">
+        <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-2 py-1">
+          <NavLink href="/katalog/" label={nav.catalog} />
+          <NavLink href="/tariflar/" label={nav.tariffs} />
+          <NavLink href="/dashboard/" label={nav.createPlan} className="sm:hidden" />
+        </div>
+      </nav>
     </header>
   );
 }

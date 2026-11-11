@@ -34,6 +34,16 @@ function setAuth(token: TokenOut) {
   publish(token.user);
 }
 
+/** Login, ro'yxat yoki Telegram javobidagi sessiyani faollashtiradi (token faqat xotirada). */
+export function startSession(token: TokenOut) {
+  setAuth(token);
+}
+
+/** Profil o'zgargach header va boshqa joylardagi foydalanuvchi ma'lumotini yangilaydi. */
+export function updateCurrentUser(user: UserOut) {
+  if (accessToken) publish(user);
+}
+
 function isAuthEndpoint(path: string) {
   return /^\/v1\/auth\/(login|register|refresh|telegram\/)/.test(path);
 }

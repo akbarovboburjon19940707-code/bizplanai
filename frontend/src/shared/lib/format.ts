@@ -18,3 +18,13 @@ export function parseNumber(raw: string): number | undefined {
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : undefined;
 }
+
+/** ISO sana -> "10.11.2026" (Toshkent vaqti). Noto'g'ri qiymatda "—". */
+export function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("ru-RU", {
+    timeZone: "Asia/Tashkent", day: "2-digit", month: "2-digit", year: "numeric",
+  }).format(date);
+}

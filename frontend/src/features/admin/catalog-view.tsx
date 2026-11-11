@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import type { Category } from "@/features/catalog/types";
 import { uz } from "@/messages/uz";
+import { apiRequest } from "@/shared/api/client";
+import { ApiError } from "@/shared/api/errors";
 import { useApi } from "@/shared/api/use-api";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui/button";
-import { inputClass } from "@/shared/ui/form-field";
+import { FormAlert, inputClass } from "@/shared/ui/form-field";
+import { AddProductDialog } from "./add-product-dialog";
 import { LoadError } from "./admin-shell";
 import { ProductRow } from "./product-row";
 import type { AdminProduct, AdminProductPage } from "./types";
@@ -23,6 +26,22 @@ export function CatalogAdminView() {
   const [page, setPage] = useState(0);
   const [items, setItems] = useState<AdminProduct[] | null>(null);
   const categories = useApi<Category[]>("/v1/catalog/categories");
+  const [adding, setAdding] = useState(false);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  const [rebuilding, setRebuilding] = useState(false);
+
+  const rebuild = async () => {
+    setRebuilding(true);
+    setNotice(null);
+    try {
+      await apiRequest("/v1/admin/site/rebuild", { method: "POST" });
+      setNotice({ ok: true, text: t.rebuilt });
+    } catch (e) {
+      setNotice({ ok: false, text: e instanceof ApiError && e.message ? e.message : uz.authForms.genericError });
+    } finally {
+      setRebuilding(false);
+    }
+  };
 
   useEffect(() => setPage(0), [search.query, filter]);
   const qs = new URLSearchParams({ limit: String(PAGE), offset: String(page * PAGE) });
@@ -51,7 +70,23 @@ export function CatalogAdminView() {
         </div>
         {list.data ? <span className="text-sm text-muted sm:ml-auto">{t.total(list.data.total)}</span> : null}
       </div>
-      <p className="text-xs text-muted">{t.redeployHint}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" onClick={() => setAdding(true)} disabled={!categories.data?.length}>+ {t.add}</Button>
+        <Button type="button" variant="outline" onClick={() => void rebuild()} disabled={rebuilding}>
+          {rebuilding ? t.rebuilding : t.rebuild}
+        </Button>
+        <p className="text-xs text-muted sm:ml-2 sm:max-w-md">{t.redeployHint}</p>
+      </div>
+      {notice ? <FormAlert tone={notice.ok ? "success" : "error"}>{notice.text}</FormAlert> : null}
+      <AddProductDialog
+        open={adding}
+        onClose={() => setAdding(false)}
+        categories={categories.data ?? []}
+        onCreated={(p) => {
+          setItems((cur) => [p, ...(cur ?? []).filter((x) => x.id !== p.id)]);
+          setNotice({ ok: true, text: t.added });
+        }}
+      />
       {list.error ? (
         <LoadError message={list.error.message} onRetry={list.reload} />
       ) : !items ? (
@@ -66,6 +101,10 @@ export function CatalogAdminView() {
               product={p}
               categoryLabel={labels.get(p.category_key) ?? p.category_key}
               onChange={(u) => setItems((cur) => cur?.map((x) => (x.id === u.id ? u : x)) ?? cur)}
+              onRemoved={(id) => {
+                setItems((cur) => cur?.filter((x) => x.id !== id) ?? cur);
+                setNotice({ ok: true, text: t.removed });
+              }}
             />
           ))}
         </ul>

@@ -30,6 +30,8 @@ from app.storage import set_storage  # noqa: E402
 async def fresh_state():
     set_redis(fakeredis.FakeAsyncRedis(decode_responses=True))
     set_storage(None)
+    import shutil  # lokal fayl saqlash ham har test uchun toza (bir test qo'ygan PDF boshqasiga ta'sir qilmasin)
+    shutil.rmtree(os.environ["LOCAL_STORAGE_DIR"], ignore_errors=True)
     engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

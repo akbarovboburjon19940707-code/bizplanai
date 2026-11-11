@@ -74,6 +74,13 @@ class Settings(BaseSettings):
     assistant_providers: str = "openai,gemini,anthropic,deepseek,groq"
     assistant_daily_token_budget: int = 300_000  # umumiy AI byudjetidan alohida, kun (UTC) bo'yicha
     assistant_max_reply_tokens: int = 600
+    # Render > bizplan-web > Settings > Deploy Hook: admin katalogni o'zgartirgach "Saytni yangilash" shu orqali
+    # (katalog sahifalari build vaqtida yaratiladi). Maxfiy URL: faqat env group'da.
+    # Kirish urinishlari IP bo'yicha daqiqasiga (production'da 20). E2E testlar bitta IP dan ko'p kiradi: CI'da oshiriladi.
+    login_rate_per_minute: int = 20
+    frontend_deploy_hook_url: str = ""
+    max_catalog_pdf_bytes: int = 50 * 1024 * 1024
+    max_catalog_image_bytes: int = 5 * 1024 * 1024
     groq_api_key: str = ""
     groq_model: str = "llama-3.3-70b-versatile"
     openai_api_key: str = ""

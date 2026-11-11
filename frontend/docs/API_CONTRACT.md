@@ -166,6 +166,15 @@ Tarix brauzerda saqlanadi, serverda emas. Token ixtiyoriy. Cheklov: mehmon IP bo
 | `GET /v1/admin/users?q` | Foydalanuvchilar |
 | `GET /v1/admin/catalog/products?q&category&active&limit&offset` | `{items, total, limit, offset}`: yashirilganlar ham (`AdminProductOut` = `ProductOut` + `is_active`, `file_key`) |
 | `POST /v1/admin/catalog/products`, `PATCH /v1/admin/catalog/products/{id}` | Katalog boshqaruvi (`is_active: false` = yashirish). Javob `AdminProductOut`; noma'lum `category_key` -> 400 `bad_category` |
+| `POST /v1/admin/catalog/products` (2026-11-12) | `id`, `slug`, `file_key` endi ixtiyoriy: server yaratadi (slug nomdan, lotin/kirill). Yangi reja **yashirin** (`is_active: false`) yaratiladi |
+| `PATCH .../{id}` `{is_active: true}` | PDF saqlashda bo'lmasa 409 `file_missing` |
+| `POST /v1/admin/catalog/products/{id}/file` | multipart `file` (PDF, `%PDF-`, 50 MB gacha) -> `AdminProductOut` (`file_size` yangilanadi) |
+| `POST /v1/admin/catalog/products/{id}/image` | multipart `file` (JPG/PNG/WEBP, 5 MB gacha) -> `AdminProductOut` |
+| `DELETE /v1/admin/catalog/products/{id}` | 204; sotilgan yoki to'lovi bor bo'lsa 409 `product_sold` (faqat yashirish) |
+| `POST /v1/admin/site/rebuild` | `{triggered}`: statik saytni qayta yig'ish (Render Deploy Hook); sozlanmagan 503, 2 daqiqada 1 marta |
+| `GET /v1/admin/users/{id}/billing` | `{user, subscriptions: [{id, tariff_code, tariff_name, starts_at, ends_at, status: active/expired/revoked, source: admin/payment/legacy}], grants, tariffs}` |
+| `POST /v1/admin/users/{id}/grant` | `{kind: "subscription", tariff_code, days?(1-366), note?}` yoki `{kind: "credits", count(1-20), note?}` -> billing. 0 so'mlik `provider: "admin"` to'lov sifatida yoziladi |
+| `POST /v1/admin/subscriptions/{id}/revoke` | `{note?}` -> billing. Admin bergan obuna to'lovi `cancelled`; haqiqiy to'lov yozuvi o'zgarmaydi |
 | `GET /v1/admin/messages?status=new/done&limit&offset` | Aloqa formasidan murojaatlar: `{id, name, phone, topic, message, status, admin_note, user_id, created_at}` |
 | `POST /v1/admin/messages/{id}/done` | `{note?}`: javob berildi deb belgilash |
 

@@ -47,13 +47,14 @@ class NoteIn(BaseModel):
 
 
 class ProductIn(BaseModel):
-    id: str = Field(min_length=2, max_length=120, pattern=r"^[A-Za-z0-9_\-]+$")
-    slug: str = Field(min_length=2, max_length=200, pattern=r"^[a-z0-9\-]+$")
+    # id, slug va file_key ixtiyoriy (2026-11-12): berilmasa server yaratadi (id "p" + hex, slug nomdan, PDF kaliti id dan)
+    id: str | None = Field(default=None, min_length=2, max_length=120, pattern=r"^[A-Za-z0-9_\-]+$")
+    slug: str | None = Field(default=None, min_length=2, max_length=200, pattern=r"^[a-z0-9\-]+$")
     category_key: str
     title: str = Field(min_length=2, max_length=255)
-    description: str = ""
+    description: str = Field(default="", max_length=5000)
     price_som: int = Field(gt=0, le=100_000_000)
-    file_key: str = Field(min_length=3, max_length=255)
+    file_key: str | None = Field(default=None, min_length=3, max_length=255, pattern=r"^catalog/pdfs/[A-Za-z0-9_\-]+\.pdf$")
     preview_image: str = ""
     file_size: str = ""
 
@@ -172,9 +173,18 @@ async def list_products(_: AdminUser, session: SessionDep, q: str | None = Query
 async def add_product(data: ProductIn, admin: AdminUser, session: SessionDep):
     if not await session.get(CatalogCategory, data.category_key):
         raise AppError(400, "bad_category", "Kategoriya topilmadi")
-    if await session.get(CatalogProduct, data.id):
+    from app.modules.admin.catalog_files import new_product_id, unique_slug
+
+    pid = data.id or new_product_id()
+    if await session.get(CatalogProduct, pid):
         raise AppError(409, "exists", "Bunday ID mavjud")
-    p = CatalogProduct(**data.model_dump(exclude={"price_som"}), price_tiyin=data.price_som * 100)
+    slug = data.slug or await unique_slug(session, data.title)
+    if await session.scalar(select(CatalogProduct.id).where(CatalogProduct.slug == slug)):
+        raise AppError(409, "slug_exists", "Bunday manzil (slug) mavjud")
+    values = data.model_dump(exclude={"price_som", "id", "slug", "file_key"})
+    # Fayl hali yuklanmagan: reja yashirin yaratiladi, PDF yuklangach admin faollashtiradi
+    p = CatalogProduct(**values, id=pid, slug=slug, file_key=data.file_key or f"catalog/pdfs/{pid}.pdf",
+                       price_tiyin=data.price_som * 100, is_active=False)
     session.add(p)
     session.add(AuditLog(actor_id=admin.id, action="catalog.add", entity="product", entity_id=p.id))
     await session.commit()
@@ -189,6 +199,8 @@ async def patch_product(product_id: str, data: ProductPatch, admin: AdminUser, s
     changes = data.model_dump(exclude_unset=True)
     if "category_key" in changes and not await session.get(CatalogCategory, changes["category_key"]):
         raise AppError(400, "bad_category", "Kategoriya topilmadi")
+    if changes.get("is_active") and not p.is_active and not await get_storage().exists(p.file_key):
+        raise AppError(409, "file_missing", "Avval rejaning PDF faylini yuklang, keyin ko'rsatish mumkin.")
     if "price_som" in changes:
         p.price_tiyin = changes.pop("price_som") * 100
     for k, v in changes.items():
@@ -239,3 +251,9 @@ async def message_done(message_id: str, data: ContactDoneIn, admin: AdminUser, s
     session.add(AuditLog(actor_id=admin.id, action="contact.done", entity="contact", entity_id=m.id))
     await session.commit()
     return AdminContactOut.of(m)
+
+
+from app.modules.admin import catalog_files, grants  # noqa: E402  (bir xil /v1/admin prefiksi, AdminUser himoyasi)
+
+router.include_router(catalog_files.router)
+router.include_router(grants.router)

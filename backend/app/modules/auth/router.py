@@ -35,7 +35,8 @@ async def register(data: RegisterIn, request: Request, response: Response, sessi
     return await service.issue_session(session, response, request, user)
 
 
-@router.post("/login", response_model=TokenOut, dependencies=[Depends(rate_limit("login", 20, 60))])
+@router.post("/login", response_model=TokenOut,
+             dependencies=[Depends(rate_limit("login", get_settings().login_rate_per_minute, 60))])
 async def login(data: LoginIn, request: Request, response: Response, session: SessionDep):
     # Bitta raqamga parol tanlab ko'rishdan himoya (IP dan qat'i nazar): faqat noto'g'ri urinishlar sanaladi,
     # oxirgi xatodan 15 daqiqa o'tguncha blok; to'g'ri kirish hisoblagichni tozalaydi.

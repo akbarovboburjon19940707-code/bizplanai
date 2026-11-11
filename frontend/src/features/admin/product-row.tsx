@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { uz } from "@/messages/uz";
 import { apiRequest } from "@/shared/api/client";
 import { ApiError } from "@/shared/api/errors";
@@ -8,17 +8,22 @@ import { cn } from "@/shared/lib/cn";
 import { formatNumber, parseNumber } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import { inputClass } from "@/shared/ui/form-field";
+import { uploadProductFile } from "./add-product-dialog";
 import type { AdminProduct } from "./types";
 
 const t = uz.admin.catalog;
 const MAX_PRICE = 100_000_000; // backend chegarasi (ProductPatch.price_som)
 
-/** Bitta mahsulot: narxni tahrirlash va yashirish/ko'rsatish (PATCH /v1/admin/catalog/products/{id}). */
-export function ProductRow({ product, categoryLabel, onChange }: {
+/** Bitta mahsulot: narx, yashirish/ko'rsatish, PDF va rasm yuklash, o'chirish (sotilgan reja o'chirilmaydi). */
+export function ProductRow({ product, categoryLabel, onChange, onRemoved }: {
   product: AdminProduct;
   categoryLabel: string;
   onChange: (p: AdminProduct) => void;
+  onRemoved: (id: string) => void;
 }) {
+  const pdfRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLInputElement>(null);
+  const [confirming, setConfirming] = useState(false);
   const [price, setPrice] = useState(formatNumber(product.price_som));
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
@@ -44,6 +49,33 @@ export function ProductRow({ product, categoryLabel, onChange }: {
     }
   };
 
+  const run = async (action: () => Promise<AdminProduct | void>, okText: string) => {
+    setBusy(true);
+    setStatus(null);
+    try {
+      const updated = await action();
+      if (updated) onChange(updated);
+      setStatus({ ok: true, text: okText });
+    } catch (e) {
+      setStatus({ ok: false, text: e instanceof ApiError && e.message ? e.message : uz.authForms.genericError });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async () => {
+    setConfirming(false);
+    setBusy(true);
+    setStatus(null);
+    try {
+      await apiRequest(`/v1/admin/catalog/products/${encodeURIComponent(product.id)}`, { method: "DELETE" });
+      onRemoved(product.id);
+    } catch (e) {
+      setStatus({ ok: false, text: e instanceof ApiError && e.message ? e.message : uz.authForms.genericError });
+      setBusy(false);
+    }
+  };
+
   const inputId = `price-${product.id}`;
   return (
     <li className={cn("flex flex-col gap-3 p-4 md:flex-row md:items-center", !product.is_active && "bg-slate-50")}>
@@ -52,7 +84,10 @@ export function ProductRow({ product, categoryLabel, onChange }: {
           <span className="truncate">{product.title}</span>
           {!product.is_active ? <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-700">{t.hiddenBadge}</span> : null}
         </p>
-        <p className="truncate text-xs text-muted">{categoryLabel} · <span className="font-mono">{product.id}</span></p>
+        <p className="truncate text-xs text-muted">
+          {categoryLabel} · <span className="font-mono">{product.id}</span>
+          {product.file_size ? ` · PDF ${product.file_size}` : ""}
+        </p>
         {status ? <p className={cn("mt-1 text-xs font-medium", status.ok ? "text-emerald-700" : "text-red-600")} role="status">{status.text}</p> : null}
       </div>
       <form
@@ -75,6 +110,29 @@ export function ProductRow({ product, categoryLabel, onChange }: {
         <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void patch({ is_active: !product.is_active })}>
           {product.is_active ? t.hide : t.show}
         </Button>
+        <input ref={pdfRef} type="file" accept="application/pdf,.pdf" className="hidden" aria-label={`${t.uploadPdf}: ${product.title}`}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) void run(() => uploadProductFile(product.id, "file", f), t.uploaded);
+          }} />
+        <input ref={imgRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" aria-label={`${t.uploadImage}: ${product.title}`}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) void run(() => uploadProductFile(product.id, "image", f), t.uploaded);
+          }} />
+        <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => pdfRef.current?.click()}>{t.uploadPdf}</Button>
+        <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => imgRef.current?.click()}>{t.uploadImage}</Button>
+        {confirming ? (
+          <span className="flex items-center gap-1.5" role="group" aria-label={t.confirmRemove}>
+            <span className="text-xs font-semibold text-red-700">{t.confirmRemove}</span>
+            <Button type="button" size="sm" variant="outline" className="border-red-300 text-red-700" onClick={() => void remove()}>{t.confirmYes}</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setConfirming(false)}>{t.cancel}</Button>
+          </span>
+        ) : (
+          <Button type="button" size="sm" variant="ghost" className="text-red-700" disabled={busy} onClick={() => setConfirming(true)}>{t.remove}</Button>
+        )}
         {product.is_active ? (
           <a href={`/katalog/${product.slug}/`} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-brand hover:underline">{t.open}</a>
         ) : null}

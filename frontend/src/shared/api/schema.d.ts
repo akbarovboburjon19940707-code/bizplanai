@@ -714,7 +714,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Product */
+        delete: operations["delete_product_v1_admin_catalog_products__product_id__delete"];
         options?: never;
         head?: never;
         /** Patch Product */
@@ -749,6 +750,111 @@ export interface paths {
         put?: never;
         /** Message Done */
         post: operations["message_done_v1_admin_messages__message_id__done_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/catalog/products/{product_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Pdf */
+        post: operations["upload_pdf_v1_admin_catalog_products__product_id__file_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/catalog/products/{product_id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Image */
+        post: operations["upload_image_v1_admin_catalog_products__product_id__image_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/site/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rebuild Site
+         * @description Katalog sahifalari statik: o'zgarishlar saytda ko'rinishi uchun bizplan-web qayta yig'iladi (Render Deploy Hook).
+         */
+        post: operations["rebuild_site_v1_admin_site_rebuild_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users/{user_id}/billing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** User Billing */
+        get: operations["user_billing_v1_admin_users__user_id__billing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users/{user_id}/grant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Grant */
+        post: operations["grant_v1_admin_users__user_id__grant_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/subscriptions/{subscription_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke Subscription */
+        post: operations["revoke_subscription_v1_admin_subscriptions__subscription_id__revoke_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -848,6 +954,21 @@ export interface components {
             /** Created At */
             created_at: string;
         };
+        /** AdminGrantOut */
+        AdminGrantOut: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string;
+            /** Status */
+            status: string;
+            /** Note */
+            note: string;
+            /** Created At */
+            created_at: string;
+        };
         /** AdminPaymentOut */
         AdminPaymentOut: {
             /** Id */
@@ -923,8 +1044,35 @@ export interface components {
             /** Offset */
             offset: number;
         };
+        /** AdminSubscriptionOut */
+        AdminSubscriptionOut: {
+            /** Id */
+            id: string;
+            /** Tariff Code */
+            tariff_code: string;
+            /** Tariff Name */
+            tariff_name: string;
+            /** Starts At */
+            starts_at: string;
+            /** Ends At */
+            ends_at: string;
+            /** Status */
+            status: string;
+            /** Source */
+            source: string;
+        };
+        /** Body_upload_image_v1_admin_catalog_products__product_id__image_post */
+        Body_upload_image_v1_admin_catalog_products__product_id__image_post: {
+            /** File */
+            file: string;
+        };
         /** Body_upload_image_v1_plans_images_post */
         Body_upload_image_v1_plans_images_post: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_pdf_v1_admin_catalog_products__product_id__file_post */
+        Body_upload_pdf_v1_admin_catalog_products__product_id__file_post: {
             /** File */
             file: string;
         };
@@ -1002,6 +1150,21 @@ export interface components {
             id: string;
             /** Status */
             status: string;
+        };
+        /** CreditsGrantIn */
+        CreditsGrantIn: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "credits";
+            /** Count */
+            count: number;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
         };
         /** DownloadOut */
         DownloadOut: {
@@ -1383,6 +1546,11 @@ export interface components {
             /** Email */
             email?: string | "" | null;
         };
+        /** RebuildOut */
+        RebuildOut: {
+            /** Triggered */
+            triggered: boolean;
+        };
         /** RefreshIn */
         RefreshIn: {
             /** Refresh Token */
@@ -1399,6 +1567,31 @@ export interface components {
              * @default
              */
             first_name: string;
+        };
+        /** RevokeIn */
+        RevokeIn: {
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** SubscriptionGrantIn */
+        SubscriptionGrantIn: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "subscription";
+            /** Tariff Code */
+            tariff_code: string;
+            /** Days */
+            days?: number | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
         };
         /** SubscriptionOut */
         SubscriptionOut: {
@@ -1420,6 +1613,15 @@ export interface components {
             monthly_used: number;
             /** Ai Enabled */
             ai_enabled: boolean;
+        };
+        /** TariffChoice */
+        TariffChoice: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Duration Days */
+            duration_days: number;
         };
         /** TariffOut */
         TariffOut: {
@@ -1471,6 +1673,16 @@ export interface components {
             expires_in: number;
             user: components["schemas"]["UserOut"];
         };
+        /** UserBillingOut */
+        UserBillingOut: {
+            user: components["schemas"]["UserOut"];
+            /** Subscriptions */
+            subscriptions: components["schemas"]["AdminSubscriptionOut"][];
+            /** Grants */
+            grants: components["schemas"]["AdminGrantOut"][];
+            /** Tariffs */
+            tariffs: components["schemas"]["TariffChoice"][];
+        };
         /** UserOut */
         UserOut: {
             /** Id */
@@ -1511,9 +1723,9 @@ export interface components {
         /** ProductIn */
         app__modules__admin__router__ProductIn: {
             /** Id */
-            id: string;
+            id?: string | null;
             /** Slug */
-            slug: string;
+            slug?: string | null;
             /** Category Key */
             category_key: string;
             /** Title */
@@ -1526,7 +1738,7 @@ export interface components {
             /** Price Som */
             price_som: number;
             /** File Key */
-            file_key: string;
+            file_key?: string | null;
             /**
              * Preview Image
              * @default
@@ -2926,6 +3138,37 @@ export interface operations {
             };
         };
     };
+    delete_product_v1_admin_catalog_products__product_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     patch_product_v1_admin_catalog_products__product_id__patch: {
         parameters: {
             query?: never;
@@ -3022,6 +3265,218 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminContactOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_pdf_v1_admin_catalog_products__product_id__file_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_pdf_v1_admin_catalog_products__product_id__file_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_image_v1_admin_catalog_products__product_id__image_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_image_v1_admin_catalog_products__product_id__image_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rebuild_site_v1_admin_site_rebuild_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RebuildOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    user_billing_v1_admin_users__user_id__billing_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserBillingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    grant_v1_admin_users__user_id__grant_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscriptionGrantIn"] | components["schemas"]["CreditsGrantIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserBillingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_subscription_v1_admin_subscriptions__subscription_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserBillingOut"];
                 };
             };
             /** @description Validation Error */

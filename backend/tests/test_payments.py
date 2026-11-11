@@ -223,7 +223,8 @@ async def test_payme_sandbox_scenarios(client):
     async def new_payment():
         r = await client.post("/v1/payments", json={"kind": "plan_credit", "provider": "payme"}, headers=auth(token))
         p = r.json()["payment"]
-        assert "l=uz" in base64.b64decode(r.json()["checkout"]["url"].rsplit("/", 1)[1]).decode()
+        params = base64.b64decode(r.json()["checkout"]["url"].rsplit("/", 1)[1]).decode()
+        assert "l=uz" in params and "ac.product_id=1" in params  # kassa maydonlari eski sayt bilan bir xil
         return p["id"], p["amount_som"] * 100
 
     def rpc(method, params, headers=PAYME_AUTH):

@@ -112,3 +112,18 @@ def test_default_text_color_matches_body(tmp_path):
         styles = z.read("word/styles.xml").decode()
     default = re.search(r"<w:rPrDefault>.*?</w:rPrDefault>", styles, re.S).group(0)
     assert '<w:color w:val="000000"/>' in default
+
+
+def test_short_loan_term_documents_have_only_those_years(tmp_path):
+    from openpyxl import load_workbook
+
+    from app.engine.excel_generator import generate_excel_report
+
+    model, path = render(tmp_path, muddat=36, imtiyoz=0)
+    text = all_xml_text(path)
+    assert "3-yil" in text and "4-yil" not in text and "10-yil" not in text
+    xlsx = tmp_path / "reja.xlsx"
+    generate_excel_report(model, str(xlsx))
+    wb = load_workbook(xlsx)
+    cells = {str(c.value) for ws in wb.worksheets for row in ws.iter_rows() for c in row if c.value is not None}
+    assert "3-yil" in cells and "4-yil" not in cells

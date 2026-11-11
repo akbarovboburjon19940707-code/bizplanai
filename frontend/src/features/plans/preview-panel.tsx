@@ -14,8 +14,8 @@ function num(v: unknown): number | null {
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
-function years(v: number | null) {
-  return v && v > 0 ? `${v.toFixed(1)} ${t.years}` : "10+ yil";
+function years(v: number | null, horizon: number) {
+  return v && v > 0 ? `${v.toFixed(1)} ${t.years}` : `${horizon}+ ${t.years}`;
 }
 
 export function IndicatorCards({ state }: { state: PreviewState }) {
@@ -25,14 +25,15 @@ export function IndicatorCards({ state }: { state: PreviewState }) {
   const data = "data" in state ? state.data : null;
   const ind = (data?.indicators ?? {}) as Record<string, unknown>;
   const npv = num(ind.npv);
+  const horizon = num(ind.loyiha_yillari) ?? 10;
   const irr = num(ind.irr);
   const bep = num(ind.zararsizlik_nuqtasi);
   const dscr = num(ind.dscr_min);
   const items = [
-    { label: t.npv, value: formatSom(npv), tone: npv !== null && npv < 0 ? "bad" : "good" },
+    { label: t.npv(horizon), value: formatSom(npv), tone: npv !== null && npv < 0 ? "bad" : "good" },
     { label: t.irr, value: irr ? `${irr.toFixed(1)}%` : "—" },
-    { label: t.payback, value: years(num(ind.payback)) },
-    { label: t.dpp, value: years(num(ind.dpp)) },
+    { label: t.payback, value: years(num(ind.payback), horizon) },
+    { label: t.dpp, value: years(num(ind.dpp), horizon) },
     { label: t.pi, value: num(ind.pi)?.toFixed(2) ?? "—" },
     { label: t.dscr, value: dscr !== null ? dscr.toFixed(2) : "—", tone: dscr !== null && dscr < 1.2 ? "bad" : undefined },
     { label: t.breakeven, value: bep !== null ? `${bep.toFixed(1)}%` : "—" },

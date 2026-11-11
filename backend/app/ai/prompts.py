@@ -37,6 +37,6 @@ def build_prompt(topic: str, ctx: dict, ind: dict) -> str:
         f"Loyiha qiymati {_money(ind.get('loyiha_qiymati'))}, o'z mablag'i {_money(ind.get('oz_mablag'))}, "
         f"kredit {_money(ind.get('kredit'))} ({ctx.get('foiz') or '—'}% yillik, {ctx.get('muddat') or '—'} oy).\n"
         f"NPV {_money(ind.get('npv'))}, IRR {ind.get('irr', '—')}%, qoplash muddati {ind.get('payback', '—')} yil, "
-        f"10 yillik sof foyda {_money(ind.get('jami_sof_foyda'))}.\n\n"
+        f"{ind.get('loyiha_yillari') or 10} yillik sof foyda {_money(ind.get('jami_sof_foyda'))}.\n\n"
         f"Shu loyiha uchun quyidagini yoriting: {topic}."
     )

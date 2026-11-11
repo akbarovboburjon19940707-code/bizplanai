@@ -11,7 +11,7 @@ export const telegramMessages = {
   subtitle: "Bank talablariga mos biznes-reja bir necha daqiqada",
   actions: {
     create: "Reja yaratish",
-    createHint: "Word va Excel, 10 yillik hisob",
+    createHint: "Word va Excel, kredit muddatiga mos hisob",
     catalog: "Tayyor rejalar",
     tariffs: "Tariflar",
     account: "Kabinet",

@@ -16,7 +16,7 @@ FAOLIYAT_NOMLARI = {
 }
 
 def calculate_financial_model(payload: dict) -> dict:
-    """10 yillik model: hisob-kitob "Asosiy shablon npv 10 yillik.xls" asosida (template_model.py)."""
+    """Moliyaviy model (davr = kredit muddati, 1-10 yil): hisob-kitob "Asosiy shablon npv 10 yillik.xls" asosida (template_model.py)."""
     faoliyat_turi = (payload.get("faoliyat_turi") or "ishlab_chiqarish").strip()
     faoliyat_nomi = FAOLIYAT_NOMLARI.get(faoliyat_turi, "Ishlab chiqarish")
     m = build_model(payload)
@@ -52,6 +52,7 @@ def calculate_financial_model(payload: dict) -> dict:
         "kredit_turi": s("kredit_turi", "differensial"),
         "loyiha_nomi": s("loyiha_nomi"),
         "loyiha_qiymati": m["loyiha_qiymati"],
+        "loyiha_yillari": m["n_years"],
         "mahsulot": ", ".join(pr["nomi"] for pr in products) or s("loyiha_nomi"),
         "manzil": s("manzil"),
         "muddat": m["muddat"],
@@ -84,6 +85,7 @@ def calculate_financial_model(payload: dict) -> dict:
         "jami_sof_foyda": round(sum(y["sof"] for y in m["years"]), 2),
         "kredit": m["kredit"],
         "loyiha_qiymati": m["loyiha_qiymati"],
+        "loyiha_yillari": m["n_years"],
         "npv": round(m["npv"], 2),
         "oz_mablag": m["oz"],
         "payback": payback,

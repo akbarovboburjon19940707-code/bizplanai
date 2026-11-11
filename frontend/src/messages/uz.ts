@@ -29,7 +29,7 @@ export const uz = {
     eyebrow: "Bank talablariga mos biznes-reja",
     title: "G‘oyadan bankka topshiriladigan biznes-rejagacha",
     description:
-      "Loyihangiz ma’lumotlarini kiriting: 10 yillik moliyaviy model, NPV, IRR va qoplash muddati hisoblanadi, Word va Excel hujjatlar tayyor bo‘ladi.",
+      "Loyihangiz ma’lumotlarini kiriting: kredit muddatiga mos (10 yilgacha) moliyaviy model, NPV, IRR va qoplash muddati hisoblanadi, Word va Excel hujjatlar tayyor bo‘ladi.",
     primaryAction: "Reja yaratish",
     secondaryAction: "Tayyor rejalar",
     phaseLabel: "Ro‘yxatdan o‘tmasdan ham ko‘rsatkichlarni hisoblab ko‘ring",
@@ -41,7 +41,7 @@ export const uz = {
     ],
     featuresTitle: "Nega BizplanAI",
     features: [
-      { title: "Bank shabloni", text: "Hisob-kitob bank amaliyotidagi 10 yillik NPV shabloni asosida." },
+      { title: "Bank shabloni", text: "Hisob-kitob bank amaliyotidagi NPV shabloni asosida, davr kredit muddatiga moslanadi." },
       { title: "Jonli hisob", text: "Har o‘zgarishda ko‘rsatkichlar darhol qayta hisoblanadi." },
       { title: "AI matn", text: "Tarifga qarab loyiha tavsifi va bozor tahlili AI yordamida yoziladi." },
       { title: "Telegram", text: "Bot va Mini App orqali telefondan ham ishlaydi." },

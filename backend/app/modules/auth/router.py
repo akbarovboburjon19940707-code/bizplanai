@@ -9,7 +9,7 @@ from app.core.deps import SessionDep
 from app.core.errors import AppError
 from app.core.ratelimit import rate_limit
 from app.core.redis import get_redis
-from app.core.security import hash_password, verify_password, verify_totp
+from app.core.security import hash_password, needs_rehash, verify_password, verify_totp
 from app.models import User
 from app.modules.auth import service
 from app.modules.auth.schemas import (LoginIn, RefreshIn, RegisterIn, TelegramLoginInitOut,
@@ -57,6 +57,8 @@ async def login(data: LoginIn, request: Request, response: Response, session: Se
         if not verify_totp(user.totp_secret, data.totp_code):
             raise await fail(401, "totp_invalid", "Kod noto'g'ri yoki eskirgan")
     await r.delete(key)
+    if needs_rehash(user.password_hash):  # eski saytdan ko'chirilgan xesh: yangi formatga o'tkazamiz
+        user.password_hash = hash_password(data.password)
     return await service.issue_session(session, response, request, user)
 
 

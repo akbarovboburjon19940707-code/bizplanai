@@ -25,9 +25,42 @@ def hash_password(password: str) -> str:
     return f"scrypt${_SCRYPT_N}${_SCRYPT_R}${_SCRYPT_P}${base64.b64encode(salt).decode()}${base64.b64encode(dk).decode()}"
 
 
-def verify_password(password: str, stored: str | None) -> bool:
-    if not stored or not stored.startswith("scrypt$"):
+_LEGACY_PBKDF2_HASHES = {"sha1", "sha256", "sha512"}
+
+
+def _verify_werkzeug(password: str, stored: str) -> bool:
+    """Eski sayt (Flask/Werkzeug generate_password_hash) xeshlari: "scrypt:n:r:p$salt$hex" va
+    "pbkdf2:<hash>:<iterations>$salt$hex". Faqat tekshirish uchun; kirishda yangi formatga o'tkaziladi."""
+    try:
+        method, salt, hexhash = stored.split("$", 2)
+        kind, *args = method.split(":")
+        pw, salt_b = password.encode(), salt.encode()
+        if kind == "scrypt":
+            n, r, p = (int(x) for x in args) if args else (2**15, 8, 1)
+            dk = hashlib.scrypt(pw, salt=salt_b, n=n, r=r, p=p, maxmem=132 * n * r * p, dklen=len(hexhash) // 2)
+        elif kind == "pbkdf2":
+            name = args[0] if args else "sha256"
+            iterations = int(args[1]) if len(args) > 1 else 600_000
+            if name not in _LEGACY_PBKDF2_HASHES:
+                return False
+            dk = hashlib.pbkdf2_hmac(name, pw, salt_b, iterations)
+        else:
+            return False
+        return hmac.compare_digest(dk.hex(), hexhash)
+    except (ValueError, TypeError):
         return False
+
+
+def needs_rehash(stored: str | None) -> bool:
+    """Eski (Werkzeug) formatdagi xesh: muvaffaqiyatli kirishdan keyin yangisiga almashtiriladi."""
+    return bool(stored) and not stored.startswith("scrypt$")
+
+
+def verify_password(password: str, stored: str | None) -> bool:
+    if not stored:
+        return False
+    if not stored.startswith("scrypt$"):
+        return _verify_werkzeug(password, stored)
     try:
         _, n, r, p, salt_b64, dk_b64 = stored.split("$")
         dk = hashlib.scrypt(password.encode(), salt=base64.b64decode(salt_b64), n=int(n), r=int(r), p=int(p), dklen=32)

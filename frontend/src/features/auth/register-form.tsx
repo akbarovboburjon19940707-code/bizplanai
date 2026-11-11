@@ -28,7 +28,8 @@ export function RegisterForm({ loginHref }: { loginHref: string }) {
   const form = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { first_name: "", phone: "", password: "", password_confirm: "" },
-    mode: "onTouched",
+    mode: "onSubmit",
+    reValidateMode: "onChange", // blur xatosi sahifani siljitib, klikni "yutib" yubormasin
   });
   const { errors, isSubmitting } = form.formState;
 

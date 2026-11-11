@@ -27,7 +27,8 @@ export function LoginForm() {
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { phone: "", password: "", totp_code: "" },
-    mode: "onTouched",
+    mode: "onSubmit",
+    reValidateMode: "onChange", // blur xatosi sahifani siljitib, klikni "yutib" yubormasin
   });
   const { errors, isSubmitting } = form.formState;
 

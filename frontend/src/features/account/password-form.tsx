@@ -20,7 +20,7 @@ const EMPTY: PasswordValues = { current_password: "", new_password: "", confirm:
 export function PasswordForm() {
   const [message, setMessage] = useState<{ tone: "error" | "success"; text: string } | null>(null);
   const cooldown = useCooldown();
-  const form = useForm<PasswordValues>({ resolver: zodResolver(passwordSchema), defaultValues: EMPTY, mode: "onTouched" });
+  const form = useForm<PasswordValues>({ resolver: zodResolver(passwordSchema), defaultValues: EMPTY, mode: "onSubmit", reValidateMode: "onChange" });
   const { errors, isSubmitting } = form.formState;
 
   const onSubmit = form.handleSubmit(async (values) => {

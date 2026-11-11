@@ -6,6 +6,17 @@ from app.core.config import Settings, get_settings
 TOKEN = "k6-" + "x" * 40
 
 
+@pytest.fixture(autouse=True)
+def frozen_clock(monkeypatch):
+    """Rate limit daqiqalik oynada sanaydi: test oyna chegarasiga to'g'ri kelsa hisob nolga tushib, test tasodifan
+    yiqilardi (CI, 2026-11-11). Vaqt test davomida bitta oynada ushlab turiladi."""
+    from types import SimpleNamespace
+
+    import app.core.ratelimit as rl
+
+    monkeypatch.setattr(rl, "time", SimpleNamespace(time=lambda: 1_800_000_000.0))  # faqat ratelimit moduli
+
+
 @pytest.fixture
 def loadtest_token(monkeypatch):
     def set_token(value: str):

@@ -96,6 +96,22 @@ Frontend'da hali yo'q (o'tishdan oldin kerak): `/kirish`, `/royxat`, `/kabinet`,
 6. Asosiy bot: `python scripts/set_telegram_webhook.py https://api.bizplanai.uz` (production API Shell'ida).
 7. Kuzatish: Render loglari, Sentry, birinchi haqiqiy to'lovni qo'lda tekshirish.
 
+### 7.1 To'lovlarni ulash (Click servisi bitta: 100949; Payme kassasi bitta: uzbizness)
+Ikkalasida ham callback manzili bitta, shuning uchun staging'da jonli sinov yo'q: ulash shu kuni.
+1. **Oldindan**: eski sayt (Render) > Environment dan qiymatlarni oling va production env group'iga yozing:
+   `CLICK_MERCHANT_ID`, `CLICK_MERCHANT_USER_ID` (o'zgarmaydi), `CLICK_SERVICE_ID=100949`, Payme kassa ID > `PAYME_MERCHANT_ID`,
+   `PAYME_CHECKOUT_URL=https://checkout.paycom.uz`. Kabinetlardagi hozirgi Prepare/Complete va Payme endpoint manzillarini
+   yozib qo'ying (orqaga qaytish uchun).
+2. **Kalitlarni yangilash** (eski kalitlar ZIP'larda bo'lgan): Click kabinetda yangi Secret key, Payme kassada yangi kalit.
+   Yangilarini faqat production'ga yozing: `CLICK_SECRET_KEY`, `PAYME_SECRET_KEY`. Eski sayt bundan keyin to'lov qabul qilmaydi,
+   shuning uchun bu qadam 3-qadam (faqat o'qish) dan keyin.
+3. Click kabinet > Services > ✏️: Prepare/Complete manzillari (yuqoridagi 5-band). Payme kassa: endpoint, hisob maydoni `order_id`.
+4. **Tekshiruv**: `/v1/payments/methods` > `click` va `payme` `true`. Har biridan bitta haqiqiy to'lov (masalan, katalog rejasi
+   yoki kredit), kabinetda "Successfully"/"Оплачен", saytda huquq berilgani. Kerak bo'lsa kabinetdan qaytarish (Payme
+   bekor qilish `CancelTransaction` orqali huquqni avtomatik qaytarib oladi).
+5. Eski saytda o'tishdan oldin boshlangan, to'lanmagan buyurtmalar endi yopiladi (callback yangi API'ga keladi va
+   ularni tanimaydi: Click -5, Payme -31050). Shuning uchun 3-band (faqat o'qish) to'lovlarni ulashdan oldin.
+
 **Orqaga qaytish:** DNS yozuvlarini va Click/Payme/Telegram manzillarini eski qiymatlarga qaytarish (eski servis o'chirilmaydi,
 kamida 2 hafta zaxira sifatida turadi).
 

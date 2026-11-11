@@ -16,7 +16,7 @@ test("landing shows API data in static HTML, with SEO tags", async ({ page, requ
 
 test("sitemap lists every catalog plan; robots hides private pages", async ({ request }) => {
   const sitemap = await (await request.get("/sitemap.xml")).text();
-  expect(sitemap.match(/<url>/g)?.length).toBe(4 + 269);
+  expect(sitemap.match(/<url>/g)?.length).toBe(5 + 269);
   const robots = await (await request.get("/robots.txt")).text();
   for (const path of ["/admin/", "/kabinet/", "/tolov/", "/tg/"]) expect(robots).toContain(`Disallow: ${path}`);
 });

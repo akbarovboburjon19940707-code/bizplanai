@@ -58,7 +58,7 @@ test("regular users get a 404 view; admins review receipts, approve and reject",
 
   const adminNav = page.getByRole("navigation", { name: "Admin panel" });
   await adminNav.getByRole("link", { name: "Statistika" }).click();
-  await expect(page.locator("p.text-2xl")).toHaveCount(8);
+  await expect(page.locator("p.text-2xl")).toHaveCount(9); // 9-karta: yangi murojaatlar
 
   await adminNav.getByRole("link", { name: "Foydalanuvchilar" }).click();
   await page.getByPlaceholder(/Telefon, ism/).fill(customer.phone);

@@ -139,17 +139,27 @@ Narxni server hisoblaydi; frontend summani hech qachon yubormaydi.
 - `checkout.type == "redirect"`: `window.location.href = checkout.url` (Click/Payme). To'lovdan keyin foydalanuvchi **`/tolov/{payment_id}`** ga qaytadi; sahifa har 3 soniyada `GET /v1/payments/{id}` ni so'raydi.
 - `checkout.type == "manual"`: karta raqami, summa, ko'rsatma va chek yuklash formasi.
 
+## 6.1 Aloqa formasi (2026-11-12)
+
+| Metod va yo'l | Body | Javob |
+| --- | --- | --- |
+| `POST /v1/contact` | `{name(2-100), phone, topic: plan/payment/catalog/partnership/other, message(10-2000), website: ""}` | 201 `{id, status}` |
+
+Token ixtiyoriy (bo'lsa murojaat foydalanuvchiga bog'lanadi). `website`: yashirin maydon, doim bo'sh yuboriladi (to'ldirilsa bot deb hisoblanadi, 201 qaytadi, saqlanmaydi). Cheklov: IP bo'yicha 10 daqiqada 5 ta, bitta raqamdan 60 soniyada 1 ta (429 `rate_limited`). Adminga Telegram xabari ketadi.
+
 ## 7. Admin (role = admin, 2FA majburiy)
 
 | Metod va yo'l | Tavsif |
 | --- | --- |
-| `GET /v1/admin/stats` | Asosiy raqamlar |
+| `GET /v1/admin/stats` | Asosiy raqamlar (`messages_new`: javob kutayotgan murojaatlar, 2026-11-12) |
 | `GET /v1/admin/payments?status&limit&offset` | To'lovlar navbati: `PaymentOut` + `user_id`, `user_phone`, `user_name`, `has_receipt` |
 | `GET /v1/admin/payments/{id}/receipt` | Chekni ko'rish uchun 5 daqiqalik havola |
 | `POST /v1/admin/payments/{id}/approve` va `/reject` | `{note?}` |
 | `GET /v1/admin/users?q` | Foydalanuvchilar |
 | `GET /v1/admin/catalog/products?q&category&active&limit&offset` | `{items, total, limit, offset}`: yashirilganlar ham (`AdminProductOut` = `ProductOut` + `is_active`, `file_key`) |
 | `POST /v1/admin/catalog/products`, `PATCH /v1/admin/catalog/products/{id}` | Katalog boshqaruvi (`is_active: false` = yashirish). Javob `AdminProductOut`; noma'lum `category_key` -> 400 `bad_category` |
+| `GET /v1/admin/messages?status=new/done&limit&offset` | Aloqa formasidan murojaatlar: `{id, name, phone, topic, message, status, admin_note, user_id, created_at}` |
+| `POST /v1/admin/messages/{id}/done` | `{note?}`: javob berildi deb belgilash |
 
 ## 8. Frontend yaratishi shart bo'lgan sahifalar (backend shularga yo'naltiradi)
 

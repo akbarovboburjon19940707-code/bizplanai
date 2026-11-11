@@ -8,7 +8,7 @@ from sqlalchemy import func, or_, select
 from app.core.deps import AdminUser, SessionDep
 from app.core.errors import AppError, not_found
 from app.core.security import utcnow
-from app.models import AuditLog, CatalogCategory, CatalogProduct, Payment, Plan, Subscription, User
+from app.models import AuditLog, CatalogCategory, CatalogProduct, ContactMessage, Payment, Plan, Subscription, User
 from app.modules.auth.schemas import UserOut
 from app.modules.catalog.router import ProductOut, product_out
 from app.modules.payments.schemas import PaymentOut, payment_out
@@ -83,6 +83,8 @@ async def stats(_: AdminUser, session: SessionDep):
         "revenue_som": int(paid_sum or 0) // 100,
         "active_subscriptions": await session.scalar(select(func.count()).select_from(Subscription).where(
             Subscription.status == "active", Subscription.ends_at > utcnow())),
+        "messages_new": await session.scalar(select(func.count()).select_from(ContactMessage).where(
+            ContactMessage.status == "new")),
     }
 
 
@@ -194,3 +196,46 @@ async def patch_product(product_id: str, data: ProductPatch, admin: AdminUser, s
     session.add(AuditLog(actor_id=admin.id, action="catalog.update", entity="product", entity_id=p.id, data=data.model_dump(exclude_unset=True)))
     await session.commit()
     return admin_product_out(p)
+
+
+# ── Aloqa formasidan kelgan murojaatlar ──
+
+class AdminContactOut(BaseModel):
+    id: str
+    name: str
+    phone: str
+    topic: str
+    message: str
+    status: str
+    admin_note: str
+    user_id: str | None
+    created_at: str
+
+    @classmethod
+    def of(cls, m: ContactMessage) -> "AdminContactOut":
+        return cls(id=m.id, name=m.name, phone=m.phone, topic=m.topic, message=m.message, status=m.status,
+                   admin_note=m.admin_note, user_id=m.user_id, created_at=m.created_at.isoformat() + "Z")
+
+
+class ContactDoneIn(BaseModel):
+    note: str = Field(default="", max_length=500)
+
+
+@router.get("/messages", response_model=list[AdminContactOut])
+async def messages(_: AdminUser, session: SessionDep, status: Literal["new", "done"] | None = None,
+                   limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)):
+    stmt = select(ContactMessage).order_by(ContactMessage.created_at.desc()).limit(limit).offset(offset)
+    if status:
+        stmt = stmt.where(ContactMessage.status == status)
+    return [AdminContactOut.of(m) for m in await session.scalars(stmt)]
+
+
+@router.post("/messages/{message_id}/done", response_model=AdminContactOut)
+async def message_done(message_id: str, data: ContactDoneIn, admin: AdminUser, session: SessionDep):
+    m = await session.get(ContactMessage, message_id)
+    if not m:
+        raise not_found("Murojaat topilmadi")
+    m.status, m.admin_note = "done", data.note.strip()
+    session.add(AuditLog(actor_id=admin.id, action="contact.done", entity="contact", entity_id=m.id))
+    await session.commit()
+    return AdminContactOut.of(m)

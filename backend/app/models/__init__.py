@@ -4,3 +4,4 @@ from app.models.plan import Plan  # noqa: F401
 from app.models.catalog import CatalogCategory, CatalogProduct  # noqa: F401
 from app.models.payment import ClickTransaction, Payment, PaymentEvent, PaymeTransaction  # noqa: F401
 from app.models.audit import AuditLog  # noqa: F401
+from app.models.contact import ContactMessage  # noqa: F401

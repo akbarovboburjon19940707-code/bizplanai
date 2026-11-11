@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { AuthProvider } from "@/features/auth/auth-context";
 import { TelegramContextMarker } from "@/features/telegram/telegram-context-marker";
+import { SiteFooter } from "@/shared/ui/site-footer";
 import { SiteHeader } from "@/shared/ui/site-header";
 import { uz } from "@/messages/uz";
 import { SITE_URL } from "@/shared/lib/site";
@@ -28,9 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <div className="flex min-h-screen flex-col">
             <SiteHeader />
             <main className="flex-1">{children}</main>
-            <footer className="border-t border-slate-200 bg-white">
-              <div className="mx-auto max-w-7xl px-4 py-6 text-sm text-muted sm:px-6 lg:px-8">{uz.footer}</div>
-            </footer>
+            <SiteFooter />
           </div>
         </AuthProvider>
       </body>

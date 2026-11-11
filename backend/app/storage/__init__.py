@@ -14,6 +14,7 @@ class Storage:
     async def exists(self, key: str) -> bool: ...
     async def get_bytes(self, key: str, max_bytes: int) -> bytes | None: ...
     async def signed_url(self, key: str, filename: str, ttl: int | None = None, inline: bool = False) -> str: ...
+    async def delete(self, key: str) -> None: ...
 
 
 class LocalStorage(Storage):
@@ -38,6 +39,12 @@ class LocalStorage(Storage):
 
     async def exists(self, key):
         return os.path.isfile(self.path_for(key))
+
+    async def delete(self, key):
+        try:
+            os.remove(self.path_for(key))
+        except FileNotFoundError:
+            pass
 
     async def get_bytes(self, key, max_bytes):
         path = self.path_for(key)
@@ -80,6 +87,9 @@ class R2Storage(Storage):
 
     async def put_bytes(self, key, data, content_type):
         await asyncio.to_thread(self.client.put_object, Bucket=self.bucket, Key=key, Body=data, ContentType=content_type)
+
+    async def delete(self, key):
+        await asyncio.to_thread(self.client.delete_object, Bucket=self.bucket, Key=key)  # yo'q kalit ham xato emas
 
     async def exists(self, key):
         from botocore.exceptions import ClientError

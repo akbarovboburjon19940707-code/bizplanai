@@ -8,6 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { inputClass } from "@/shared/ui/form-field";
 import { LoadError } from "./admin-shell";
 import type { AdminUserRow } from "./types";
+import { UserBillingDialog } from "./user-billing-dialog";
 import { useDebouncedSearch } from "./use-debounced-search";
 
 const t = uz.admin.users;
@@ -19,6 +20,8 @@ export function UsersView() {
   const qs = new URLSearchParams({ limit: String(limit) });
   if (search.query) qs.set("q", search.query);
   const list = useApi<AdminUserRow[]>(`/v1/admin/users?${qs.toString()}`);
+  const [managing, setManaging] = useState<AdminUserRow | null>(null);
+  const [credits, setCredits] = useState<Record<string, number>>({});
 
   return (
     <div className="flex flex-col gap-4">
@@ -43,6 +46,7 @@ export function UsersView() {
                 <th scope="col" className="px-4 py-3">{t.telegram}</th>
                 <th scope="col" className="px-4 py-3">{t.role}</th>
                 <th scope="col" className="px-4 py-3 text-right">{t.credits}</th>
+                <th scope="col" className="px-4 py-3"><span className="sr-only">{t.manage}</span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -54,13 +58,18 @@ export function UsersView() {
                   <td className="px-4 py-3">
                     {u.role === "admin" ? <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700">{t.admin}</span> : t.user}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums">{u.plan_credits}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{credits[u.id] ?? u.plan_credits}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Button type="button" size="sm" variant="outline" onClick={() => setManaging(u)}>{t.manage}</Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+      <UserBillingDialog user={managing} onClose={() => setManaging(null)}
+        onChanged={(n) => managing && setCredits((c) => ({ ...c, [managing.id]: n }))} />
       {list.data && list.data.length >= limit ? (
         <Button variant="outline" className="self-center" onClick={() => setLimit((l) => l + PAGE)}>{uz.admin.more}</Button>
       ) : null}

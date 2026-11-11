@@ -132,6 +132,10 @@ jobs:
       MANUAL_CARD_NUMBER: "8600 1234 5678 9012"
       MANUAL_CARD_HOLDER: TEST HOLDER
       AI_ENABLED: "false"
+      # Test kaliti (maxfiy emas): API orqali yaratiladigan e2e foydalanuvchilari IP rate limit'ga urilmasin
+      LOADTEST_TOKEN: e2e-only-loadtest-token-0123456789abcdef
+      E2E_LOADTEST_TOKEN: e2e-only-loadtest-token-0123456789abcdef
+      LOGIN_RATE_PER_MINUTE: "200"  # testlar bitta IP dan; production'da 20 (sozlama standarti)
       # Frontend build va testlar
       NEXT_PUBLIC_API_URL: http://localhost:8000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000

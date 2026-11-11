@@ -2350,6 +2350,55 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Delete Product",
+        "operationId": "delete_product_v1_admin_catalog_products__product_id__delete",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/admin/messages": {
@@ -2499,6 +2548,397 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AdminContactOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/catalog/products/{product_id}/file": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Upload Pdf",
+        "operationId": "upload_pdf_v1_admin_catalog_products__product_id__file_post",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_pdf_v1_admin_catalog_products__product_id__file_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/catalog/products/{product_id}/image": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Upload Image",
+        "operationId": "upload_image_v1_admin_catalog_products__product_id__image_post",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Product Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_image_v1_admin_catalog_products__product_id__image_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/site/rebuild": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Rebuild Site",
+        "description": "Katalog sahifalari statik: o'zgarishlar saytda ko'rinishi uchun bizplan-web qayta yig'iladi (Render Deploy Hook).",
+        "operationId": "rebuild_site_v1_admin_site_rebuild_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RebuildOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/users/{user_id}/billing": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "User Billing",
+        "operationId": "user_billing_v1_admin_users__user_id__billing_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserBillingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/users/{user_id}/grant": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Grant",
+        "operationId": "grant_v1_admin_users__user_id__grant_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/SubscriptionGrantIn"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CreditsGrantIn"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "kind",
+                  "mapping": {
+                    "subscription": "#/components/schemas/SubscriptionGrantIn",
+                    "credits": "#/components/schemas/CreditsGrantIn"
+                  }
+                },
+                "title": "Data"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserBillingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/subscriptions/{subscription_id}/revoke": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Revoke Subscription",
+        "operationId": "revoke_subscription_v1_admin_subscriptions__subscription_id__revoke_post",
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subscription Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserBillingOut"
                 }
               }
             }
@@ -2735,6 +3175,44 @@
         ],
         "title": "AdminContactOut"
       },
+      "AdminGrantOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "status",
+          "note",
+          "created_at"
+        ],
+        "title": "AdminGrantOut"
+      },
       "AdminPaymentOut": {
         "properties": {
           "id": {
@@ -2941,6 +3419,63 @@
         ],
         "title": "AdminProductPage"
       },
+      "AdminSubscriptionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tariff_code": {
+            "type": "string",
+            "title": "Tariff Code"
+          },
+          "tariff_name": {
+            "type": "string",
+            "title": "Tariff Name"
+          },
+          "starts_at": {
+            "type": "string",
+            "title": "Starts At"
+          },
+          "ends_at": {
+            "type": "string",
+            "title": "Ends At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tariff_code",
+          "tariff_name",
+          "starts_at",
+          "ends_at",
+          "status",
+          "source"
+        ],
+        "title": "AdminSubscriptionOut"
+      },
+      "Body_upload_image_v1_admin_catalog_products__product_id__image_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_image_v1_admin_catalog_products__product_id__image_post"
+      },
       "Body_upload_image_v1_plans_images_post": {
         "properties": {
           "file": {
@@ -2954,6 +3489,20 @@
           "file"
         ],
         "title": "Body_upload_image_v1_plans_images_post"
+      },
+      "Body_upload_pdf_v1_admin_catalog_products__product_id__file_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_pdf_v1_admin_catalog_products__product_id__file_post"
       },
       "Body_upload_receipt_v1_payments__payment_id__receipt_post": {
         "properties": {
@@ -3139,6 +3688,33 @@
           "status"
         ],
         "title": "ContactOut"
+      },
+      "CreditsGrantIn": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "credits",
+            "title": "Kind"
+          },
+          "count": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Count"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "count"
+        ],
+        "title": "CreditsGrantIn"
       },
       "DownloadOut": {
         "properties": {
@@ -4540,6 +5116,19 @@
         "type": "object",
         "title": "ProfileIn"
       },
+      "RebuildOut": {
+        "properties": {
+          "triggered": {
+            "type": "boolean",
+            "title": "Triggered"
+          }
+        },
+        "type": "object",
+        "required": [
+          "triggered"
+        ],
+        "title": "RebuildOut"
+      },
       "RefreshIn": {
         "properties": {
           "refresh_token": {
@@ -4582,6 +5171,58 @@
           "password"
         ],
         "title": "RegisterIn"
+      },
+      "RevokeIn": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "RevokeIn"
+      },
+      "SubscriptionGrantIn": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "subscription",
+            "title": "Kind"
+          },
+          "tariff_code": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Tariff Code"
+          },
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 366.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "tariff_code"
+        ],
+        "title": "SubscriptionGrantIn"
       },
       "SubscriptionOut": {
         "properties": {
@@ -4642,6 +5283,29 @@
           "ai_enabled"
         ],
         "title": "SubscriptionOut"
+      },
+      "TariffChoice": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "duration_days": {
+            "type": "integer",
+            "title": "Duration Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "duration_days"
+        ],
+        "title": "TariffChoice"
       },
       "TariffOut": {
         "properties": {
@@ -4774,6 +5438,42 @@
         ],
         "title": "TokenOut"
       },
+      "UserBillingOut": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          },
+          "subscriptions": {
+            "items": {
+              "$ref": "#/components/schemas/AdminSubscriptionOut"
+            },
+            "type": "array",
+            "title": "Subscriptions"
+          },
+          "grants": {
+            "items": {
+              "$ref": "#/components/schemas/AdminGrantOut"
+            },
+            "type": "array",
+            "title": "Grants"
+          },
+          "tariffs": {
+            "items": {
+              "$ref": "#/components/schemas/TariffChoice"
+            },
+            "type": "array",
+            "title": "Tariffs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "subscriptions",
+          "grants",
+          "tariffs"
+        ],
+        "title": "UserBillingOut"
+      },
       "UserOut": {
         "properties": {
           "id": {
@@ -4891,17 +5591,31 @@
       "app__modules__admin__router__ProductIn": {
         "properties": {
           "id": {
-            "type": "string",
-            "maxLength": 120,
-            "minLength": 2,
-            "pattern": "^[A-Za-z0-9_\\-]+$",
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 2,
+                "pattern": "^[A-Za-z0-9_\\-]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Id"
           },
           "slug": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 2,
-            "pattern": "^[a-z0-9\\-]+$",
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 2,
+                "pattern": "^[a-z0-9\\-]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Slug"
           },
           "category_key": {
@@ -4916,6 +5630,7 @@
           },
           "description": {
             "type": "string",
+            "maxLength": 5000,
             "title": "Description",
             "default": ""
           },
@@ -4926,9 +5641,17 @@
             "title": "Price Som"
           },
           "file_key": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 3,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 3,
+                "pattern": "^catalog/pdfs/[A-Za-z0-9_\\-]+\\.pdf$"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "File Key"
           },
           "preview_image": {
@@ -4944,12 +5667,9 @@
         },
         "type": "object",
         "required": [
-          "id",
-          "slug",
           "category_key",
           "title",
-          "price_som",
-          "file_key"
+          "price_som"
         ],
         "title": "ProductIn"
       },

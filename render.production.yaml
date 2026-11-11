@@ -131,3 +131,4 @@ envVarGroups:
 #   PIXABAY_API_KEY
 #   PEXELS_API_KEY
 #   SENTRY_DSN
+#   FRONTEND_DEPLOY_HOOK_URL   (Render > web servisi > Settings > Deploy Hook: admin "Saytni yangilash")

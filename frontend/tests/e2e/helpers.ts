@@ -39,9 +39,13 @@ export async function api<T = unknown>(path: string, init: RequestInit = {}, tok
 export async function registerViaApi(firstName = "E2E"): Promise<{ phone: string; password: string; token: string }> {
   const phone = newPhone();
   const password = "e2e-pass-12345";
+  // API orqali tayyorlanadigan foydalanuvchilar IP chekloviga (daqiqasiga 10) urilmasin: backend LOADTEST_TOKEN bilan
+  // ishga tushgan bo'lsa (CI) shu kalit yuboriladi. Brauzerdagi ro'yxatdan o'tish testlari cheklov bilan qoladi.
+  const token = process.env.E2E_LOADTEST_TOKEN;
   const r = await api<{ access_token: string }>("/v1/auth/register", {
     method: "POST",
     body: JSON.stringify({ phone: `+998${phone}`, password, first_name: firstName }),
+    headers: token ? { "X-Loadtest-Token": token } : {},
   });
   if (r.status !== 201) throw new Error(`register ${r.status}`);
   return { phone, password, token: r.body.access_token };

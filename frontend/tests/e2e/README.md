@@ -5,7 +5,8 @@ CI'da `.github/workflows/ci.yml` dagi `e2e` job aynan shu qadamlarni bajaradi.
 
 ## Lokal ishga tushirish
 1. Backend (`backend/` ichida), CI'dagi env bilan (SQLite, `JOB_MODE=inline`, `STORAGE_BACKEND=local`,
-   `TELEGRAM_BOT_TOKEN=123456:TEST`, `TELEGRAM_WEBHOOK_SECRET=e2e+secret/=`, `MANUAL_CARD_NUMBER=...`):
+   `TELEGRAM_BOT_TOKEN=123456:TEST`, `TELEGRAM_WEBHOOK_SECRET=e2e+secret/=`, `MANUAL_CARD_NUMBER=...`,
+   `LOADTEST_TOKEN=<32+ belgi>`; testlarga xuddi shu qiymat `E2E_LOADTEST_TOKEN` sifatida):
    ```bash
    alembic upgrade head && python -m app.cli seed
    # xarid testi uchun "qoy-sotib-olish-biznes-rejasi" rejasining PDF'i kerak (fayli yo'q reja sotilmaydi):

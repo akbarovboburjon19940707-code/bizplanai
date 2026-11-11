@@ -37,6 +37,10 @@ async def test_admin_catalog_lists_hidden_products_and_can_restore_them(client):
 
     only_hidden = (await client.get("/v1/admin/catalog/products", params={"active": False}, headers=h)).json()
     assert [p["id"] for p in only_hidden["items"]] == [pid]
+    no_file = await client.patch(f"/v1/admin/catalog/products/{pid}", json={"is_active": True}, headers=h)
+    assert no_file.status_code == 409 and no_file.json()["error"]["code"] == "file_missing"  # faylsiz sotuv yo'q
+    from tests.conftest import put_catalog_pdf
+    await put_catalog_pdf(pid)
     restored = await client.patch(f"/v1/admin/catalog/products/{pid}", json={"is_active": True}, headers=h)
     assert restored.json()["is_active"] is True
     assert (await client.get(f"/v1/catalog/products/{pid}")).json()["price_som"] == 33000

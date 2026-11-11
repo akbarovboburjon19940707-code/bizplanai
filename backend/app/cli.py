@@ -37,6 +37,14 @@ async def seed(min_price_som: int) -> None:
                 s.add(CatalogCategory(key=c["key"], label=c["label"], icon=c.get("icon", ""), sort=i))
         await s.flush()
         label_to_key = {c["label"]: c["key"] for c in catalog.get("categories", [])}
+
+        def category_key(label: str | None) -> str:
+            # "Transport / Lizing" kabi kengaytirilgan nomlar asosiy kategoriyaga ("Transport") tushadi
+            raw = (label or "").strip()
+            key = label_to_key.get(raw) or label_to_key.get(raw.split("/")[0].strip())
+            if not key:
+                raise ValueError(f"catalog.json: noma'lum kategoriya {raw!r}")
+            return key
         added = 0
         for p in catalog.get("all_products", []):
             if await s.get(CatalogProduct, str(p["id"])) is not None:
@@ -44,7 +52,7 @@ async def seed(min_price_som: int) -> None:
             price = max(int(p.get("price") or 0), min_price_som)
             s.add(CatalogProduct(
                 id=str(p["id"]), slug=p.get("slug") or str(p["id"]),
-                category_key=label_to_key.get(p.get("category"), catalog["categories"][0]["key"]),
+                category_key=category_key(p.get("category")),
                 title=p["title"], description=p.get("description", ""), price_tiyin=price * 100,
                 file_key=f"catalog/pdfs/{p['id']}{p.get('file_extension') or '.pdf'}",
                 file_size=p.get("file_size_formatted", ""), preview_image=p.get("preview_image", ""),

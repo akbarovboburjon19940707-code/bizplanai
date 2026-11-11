@@ -11,13 +11,16 @@ Foydalanuvchi bilan o'zbek tilida (lotin) gaplash. Kod, o'zgaruvchi va commit xa
 - **Gemini**: mustaqil tahlil va takliflar (kodga to'g'ridan-to'g'ri tegmaydi).
 - Backend va frontend faqat `backend/docs/API_CONTRACT.md` + `backend/docs/openapi.json` orqali bog'lanadi.
 
-## Holat (2026-11-10)
+## Holat (2026-11-12): production jonli
 | Qism | Holat |
 | --- | --- |
-| Backend | **Tayyor**: FastAPI, 36 endpoint, 14 jadval, Alembic (0002: `refresh_tokens.replaced_by`). 27 test (SQLite 25), `ruff` toza. 2026-11-10: Click ikkinchi tranzaksiya xatosi to'langan obunani bekor qilardi (tuzatildi); refresh 30 s grace oynasi (bir vaqtdagi tablar). Bu ikkisi Postgres'da hali sinalmagan |
-| Frontend | **1-bosqich** (Codex) va **3-bosqichning `/dashboard` + `/reja` qismi** (Claude, 2026-11-10): 5 bosqichli forma (RHF + Zod), 6 tagacha mahsulot, tovar narxi/ulushi, aylanma kapital, quvvat va diskont, jonli preview (500 ms debounce), sessionStorage qoralama, reja yaratish va holat. Haqiqiy backend bilan brauzerda sinalgan. Hali yo'q: 2-bosqich (`/kirish`, `/royxat`, `/kabinet`), unit/e2e testlar |
-| Deploy | Blueprint'lar: `render.staging.yaml` (yangi.bizplanai.uz, eski sayt bilan parallel), `render.production.yaml` (o'tish kuni). Yo'riqnoma: `docs/DEPLOY.md`. CI: `.github/workflows/ci.yml` (Postgres 16 testlari ham). GitHub repo va Render hali yaratilmagan |
-| Yuklama testi | `backend/loadtest/k6.js` yozilgan, **hali ishga tushirilmagan** (staging kerak) |
+| Production | **bizplanai.uz** (Render, `render.production.yaml`, `production` branch, faqat CI yashil bo'lsa deploy). 2026-11-11 eski saytdan o'tildi: bazadan import, domen, Click/Payme callback'lari, asosiy bot. O'lcham: API/worker starter x1, Postgres basic-256mb, Redis starter (kattalashtirish: blueprint izohi) |
+| Chiqarish tartibi | Ish branch > PR > `main` (CI) > Claude `main -> production` PR yaratadi > foydalanuvchi birlashtiradi. Claude production'ga o'zi push qilmaydi (ruxsat yo'q) |
+| Staging | **To'xtatilgan (suspend) 2026-11-12**: domenlar production'ga berildi (Render Hobby: 2 ta custom domen). Qayta kerak bo'lsa: Render'da Resume, domensiz onrender.com manzillari bilan (`render.staging.yaml` URL'larini almashtirish kerak) |
+| Backend | FastAPI, Alembic 0006 gacha (0005 `contact_messages`, 0006 tarif narx/limitlari). ~158 test (SQLite va Postgres 16), `ruff` toza |
+| Frontend | Barcha bosqichlar tayyor: forma, kabinet, katalog, to'lov, admin (to'lovlar, foydalanuvchilar + tarif berish, katalog qo'shish/o'chirish/PDF, murojaatlar), aloqa, parolni tiklash (Telegram), yordamchi chat, Mini App. 27 ta e2e (Playwright) |
+| Biznes qoidalari | Bepul: faqat ekranda hisob-kitob (hujjat to'lov bilan). Bitta reja 50 000; Standart 200 000 so'm (3/kun, 10/oy); Premium 500 000 (10/kun, 100/oy). Loyiha davri = kredit muddati (yil), amortizatsiya shu davrda |
+| Yuklama testi | Kerak bo'lganda (reklama oldidan): `backend/loadtest/README.md` |
 
 ## Tuzilma
 ```

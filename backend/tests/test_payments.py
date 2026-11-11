@@ -276,3 +276,17 @@ async def test_payme_sandbox_scenarios(client):
         assert (await s.get(Payment, pid2)).status != "paid"
     me = (await client.get("/v1/me", headers=auth(token))).json()
     assert me["user"]["plan_credits"] == 0
+
+
+async def test_admin_cli_qr_and_unlock(client, capsys):
+    from app.cli import create_admin, unlock_login
+    from app.core.redis import get_redis
+
+    await create_admin("+998901112233", "juda-kuchli-parol-123")
+    out = capsys.readouterr().out
+    assert "▄" in out or "█" in out  # QR kod chizilgan
+    assert "secret=" in out
+    await get_redis().set("login_fail:+998901112233", 10)
+    await unlock_login("+998901112233")
+    assert "olib tashlandi" in capsys.readouterr().out
+    assert await get_redis().get("login_fail:+998901112233") is None

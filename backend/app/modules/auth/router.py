@@ -2,18 +2,19 @@ import json
 import secrets
 
 from fastapi import APIRouter, Cookie, Depends, Request, Response
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.config import get_settings
 from app.core.deps import SessionDep
 from app.core.errors import AppError
 from app.core.ratelimit import rate_limit
 from app.core.redis import get_redis
-from app.core.security import hash_password, needs_rehash, verify_password, verify_totp
-from app.models import User
-from app.modules.auth import service
-from app.modules.auth.schemas import (LoginIn, RefreshIn, RegisterIn, TelegramLoginInitOut,
-                                      TelegramLoginPollOut, TelegramWebAppIn, TokenOut)
+from app.core.security import hash_password, needs_rehash, utcnow, verify_password, verify_totp
+from app.models import RefreshToken, User
+from app.modules.auth import password_reset, service
+from app.modules.auth.schemas import (LoginIn, PasswordResetCompleteIn, PasswordResetCompleteOut, PasswordResetInitIn,
+                                      PasswordResetInitOut, PasswordResetPollOut, RefreshIn, RegisterIn,
+                                      TelegramLoginInitOut, TelegramLoginPollOut, TelegramWebAppIn, TokenOut)
 from app.modules.telegram.service import get_or_create_telegram_user, validate_init_data
 
 LOGIN_MAX_FAILS = 10
@@ -113,3 +114,46 @@ async def telegram_login_poll(token: str, request: Request, response: Response, 
         return TelegramLoginPollOut(status="expired")
     user = await get_or_create_telegram_user(session, state["tg_user"])
     return TelegramLoginPollOut(status="authenticated", session=await service.issue_session(session, response, request, user))
+
+
+# ── Parolni tiklash (Telegram orqali; password_reset.py) ──
+
+@router.post("/password-reset/init", response_model=PasswordResetInitOut,
+             dependencies=[Depends(rate_limit("pwreset_init", 5, 60))])
+async def password_reset_init(data: PasswordResetInitIn):
+    """Raqam bazada bormi-yo'qligi bu yerda aytilmaydi (raqamlarni tekshirib chiqishning oldini olish):
+    tekshiruv botda, Telegram tasdiqlagan raqam bilan."""
+    s = get_settings()
+    if not s.telegram_bot_token or not s.telegram_bot_name:
+        raise AppError(503, "telegram_not_configured", "Parolni tiklash hozircha ishlamaydi. Admin bilan bog'laning.")
+    token = await password_reset.create(data.phone)
+    return PasswordResetInitOut(token=token, bot_url=f"https://t.me/{s.telegram_bot_name}?start=reset_{token}",
+                                expires_in=password_reset.RESET_TTL)
+
+
+@router.get("/password-reset/poll", response_model=PasswordResetPollOut,
+            dependencies=[Depends(rate_limit("pwreset_poll", 120, 60))])
+async def password_reset_poll(token: str):
+    state = await password_reset.get(token)
+    return PasswordResetPollOut(status=state["status"] if state else "expired")
+
+
+@router.post("/password-reset/complete", response_model=PasswordResetCompleteOut,
+             dependencies=[Depends(rate_limit("pwreset_done", 10, 60))])
+async def password_reset_complete(data: PasswordResetCompleteIn, request: Request, response: Response,
+                                  session: SessionDep):
+    state = await password_reset.consume(data.token)
+    if not state:
+        raise AppError(400, "reset_invalid", "Tiklash havolasi eskirgan yoki tasdiqlanmagan. Qaytadan boshlang.")
+    user = await session.get(User, state["user_id"])
+    if not user or not user.is_active or user.phone != state["phone"]:
+        raise AppError(400, "reset_invalid", "Tiklash havolasi eskirgan yoki tasdiqlanmagan. Qaytadan boshlang.")
+    user.password_hash = hash_password(data.new_password)
+    # Eski parol bilan ochilgan barcha sessiyalar yopiladi, kirish bloki olib tashlanadi
+    await session.execute(update(RefreshToken).where(RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None))
+                          .values(revoked_at=utcnow()))
+    await get_redis().delete(f"login_fail:{user.phone}")
+    if user.role == "admin" or user.totp_secret:
+        await session.commit()
+        return PasswordResetCompleteOut(session=None)
+    return PasswordResetCompleteOut(session=await service.issue_session(session, response, request, user))

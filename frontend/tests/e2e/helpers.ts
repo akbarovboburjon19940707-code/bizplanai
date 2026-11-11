@@ -66,6 +66,16 @@ export async function sendBotStart(text: string, from: { id: number; first_name:
   });
 }
 
+/** Botga istalgan xabar (masalan, kontakt): webhook orqali. */
+export async function sendBotMessage(message: Record<string, unknown>) {
+  const header = createHash("sha256").update(WEBHOOK_SECRET).digest("hex");
+  return fetch(`${API}/v1/telegram/webhook`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Telegram-Bot-Api-Secret-Token": header },
+    body: JSON.stringify({ message }),
+  });
+}
+
 /** Telegram'ning rasmiy algoritmi bilan imzolangan Mini App initData. */
 export function signedInitData(user: Record<string, unknown>, tamper = false): string {
   const fields: Record<string, string> = { auth_date: String(Math.floor(Date.now() / 1000)), query_id: "AAE2E", user: JSON.stringify(user) };

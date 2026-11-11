@@ -25,3 +25,14 @@ export const registerSchema = z
   })
   .refine((v) => v.password === v.password_confirm, { path: ["password_confirm"], message: t.passwordMismatch });
 export type RegisterValues = z.infer<typeof registerSchema>;
+
+export const resetPhoneSchema = z.object({ phone });
+export type ResetPhoneValues = z.infer<typeof resetPhoneSchema>;
+
+export const newPasswordSchema = z
+  .object({
+    password: z.string().min(8, t.passwordMin).max(128),
+    password_confirm: z.string(),
+  })
+  .refine((v) => v.password === v.password_confirm, { path: ["password_confirm"], message: t.passwordMismatch });
+export type NewPasswordValues = z.infer<typeof newPasswordSchema>;

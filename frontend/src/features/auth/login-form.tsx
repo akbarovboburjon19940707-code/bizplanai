@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { uz } from "@/messages/uz";
@@ -86,6 +87,9 @@ export function LoginForm() {
           {...fieldAria("login-password", errors.password?.message)}
         />
       </FormField>
+      <Link href="/parol-tiklash/" className="-mt-2 self-end text-sm font-semibold text-brand hover:underline">
+        {t.login.forgot}
+      </Link>
       {needTotp ? (
         <FormField id="login-totp" label={t.login.totp} hint={t.login.totpHint} error={errors.totp_code?.message}>
           <input

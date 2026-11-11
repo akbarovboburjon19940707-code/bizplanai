@@ -15,7 +15,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: `${uz.appName}: ${uz.home.eyebrow.toLowerCase()}`,
   description: uz.home.description,
-  openGraph: { type: "website", siteName: uz.appName, locale: "uz_UZ", title: uz.appName, description: uz.home.description },
+  openGraph: { type: "website", siteName: uz.appName, locale: "uz_UZ", title: uz.appName, description: uz.home.description,
+    images: [{ url: "/logo-512.png", width: 512, height: 512, alt: uz.appName }] },
   twitter: { card: "summary" },
   // canonical ataylab bu yerda yo'q: layout'dagi qiymat har sahifaga meros bo'lib, hammasini "/" nusxasi qilardi
 };

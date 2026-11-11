@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { AuthProvider } from "@/features/auth/auth-context";
+import { TelegramContextMarker } from "@/features/telegram/telegram-context-marker";
 import { SiteHeader } from "@/shared/ui/site-header";
 import { uz } from "@/messages/uz";
 import { SITE_URL } from "@/shared/lib/site";
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="uz">
       <body className={`${inter.variable} ${outfit.variable} min-h-screen antialiased`}>
         <AuthProvider>
+          <TelegramContextMarker />
           <div className="flex min-h-screen flex-col">
             <SiteHeader />
             <main className="flex-1">{children}</main>

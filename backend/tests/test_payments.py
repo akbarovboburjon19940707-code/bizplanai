@@ -209,3 +209,69 @@ async def test_catalog_plan_without_file_cannot_be_bought(client):
     await put_catalog_pdf(pid)
     r = await client.post("/v1/payments", json={"kind": "catalog", "target_id": pid, "provider": "manual"}, headers=auth(token))
     assert r.status_code == 201
+
+
+async def test_payme_sandbox_scenarios(client):
+    """Payme sandbox (test kassa) tekshiradigan holatlar: xato kodlari, bekor qilish, muddat, javob shakli."""
+    from sqlalchemy import update
+
+    from app.db.session import sessionmaker
+    from app.models import Payment, PaymeTransaction
+
+    token = await register(client)
+
+    async def new_payment():
+        r = await client.post("/v1/payments", json={"kind": "plan_credit", "provider": "payme"}, headers=auth(token))
+        p = r.json()["payment"]
+        assert "l=uz" in base64.b64decode(r.json()["checkout"]["url"].rsplit("/", 1)[1]).decode()
+        return p["id"], p["amount_som"] * 100
+
+    def rpc(method, params, headers=PAYME_AUTH):
+        return client.post("/v1/payments/payme", json={"id": 7, "method": method, "params": params}, headers=headers)
+
+    pid, amount = await new_payment()
+    wrong = {"Authorization": "Basic " + base64.b64encode(b"Paycom:xato").decode()}
+    err = (await rpc("CheckPerformTransaction", {"amount": amount, "account": {"order_id": pid}}, wrong)).json()["error"]
+    assert err["code"] == -32504 and set(err["message"]) == {"uz", "ru", "en"} and err["message"]["ru"] != err["message"]["uz"]
+    err = (await rpc("CheckPerformTransaction", {"amount": amount, "account": {"order_id": "yoq"}})).json()["error"]
+    assert err["code"] == -31050 and err["data"] == "order_id"
+    assert (await rpc("PerformTransaction", {"id": "yoq"})).json()["error"]["code"] == -31003
+    assert (await rpc("CancelTransaction", {"id": "yoq", "reason": 1})).json()["error"]["code"] == -31003
+    assert (await rpc("CheckTransaction", {"id": "yoq"})).json()["error"]["code"] == -31003
+    assert (await rpc("ChangePassword", {})).json()["error"]["code"] == -32601
+    bad = await client.post("/v1/payments/payme", content=b"{not json", headers={**PAYME_AUTH, "content-type": "application/json"})
+    assert bad.json()["error"]["code"] == -32700
+
+    # Yaratilgan (to'lanmagan) tranzaksiyani bekor qilish: state -1, buyurtma yopiladi
+    now = int(time.time() * 1000)
+    created = (await rpc("CreateTransaction", {"id": "sb1", "time": now, "amount": amount, "account": {"order_id": pid}})).json()
+    assert created["result"]["state"] == 1
+    again = (await rpc("CreateTransaction", {"id": "sb1", "time": now, "amount": amount, "account": {"order_id": pid}})).json()
+    assert again["result"]["transaction"] == created["result"]["transaction"]  # takroriy so'rov: o'sha javob
+    check = (await rpc("CheckTransaction", {"id": "sb1"})).json()["result"]
+    assert check["perform_time"] == 0 and check["cancel_time"] == 0 and check["reason"] is None and check["state"] == 1
+    c1 = (await rpc("CancelTransaction", {"id": "sb1", "reason": 3})).json()["result"]
+    assert c1["state"] == -1 and c1["cancel_time"] > 0
+    c2 = (await rpc("CancelTransaction", {"id": "sb1", "reason": 3})).json()["result"]
+    assert c2 == c1  # idempotent
+    assert (await rpc("PerformTransaction", {"id": "sb1"})).json()["error"]["code"] == -31008
+    assert (await rpc("CheckTransaction", {"id": "sb1"})).json()["result"]["reason"] == 3
+    closed = (await rpc("CheckPerformTransaction", {"amount": amount, "account": {"order_id": pid}})).json()["error"]
+    assert -31099 <= closed["code"] <= -31050
+    me = (await client.get("/v1/me", headers=auth(token))).json()
+    assert me["user"]["plan_credits"] == 0
+
+    # 12 soatdan keyin bajarish: -31008, reason 4, huquq berilmaydi
+    pid2, amount2 = await new_payment()
+    (await rpc("CreateTransaction", {"id": "sb2", "time": now, "amount": amount2, "account": {"order_id": pid2}})).json()
+    async with sessionmaker()() as s:
+        await s.execute(update(PaymeTransaction).where(PaymeTransaction.payme_id == "sb2")
+                        .values(create_time=now - 43_200_001))
+        await s.commit()
+    assert (await rpc("PerformTransaction", {"id": "sb2"})).json()["error"]["code"] == -31008
+    st = (await rpc("CheckTransaction", {"id": "sb2"})).json()["result"]
+    assert st["state"] == -1 and st["reason"] == 4
+    async with sessionmaker()() as s:
+        assert (await s.get(Payment, pid2)).status != "paid"
+    me = (await client.get("/v1/me", headers=auth(token))).json()
+    assert me["user"]["plan_credits"] == 0

@@ -13,3 +13,5 @@ __pycache__/
 .venv/
 *.zip
 *.tsbuildinfo
+playwright-report/
+test-results/

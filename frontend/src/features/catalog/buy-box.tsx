@@ -7,6 +7,7 @@ import { useBuy } from "@/features/payments/use-buy";
 import { uz } from "@/messages/uz";
 import { apiRequest } from "@/shared/api/client";
 import { ApiError } from "@/shared/api/errors";
+import { useApi } from "@/shared/api/use-api";
 import { formatSom } from "@/shared/lib/format";
 import { Button } from "@/shared/ui/button";
 import { FormAlert } from "@/shared/ui/form-field";
@@ -15,13 +16,15 @@ import type { Product } from "./types";
 const t = uz.catalog;
 
 /**
- * Narx, "Sotib olish" va yuklab olish. API "sotib olinganmi" degan maydon bermaydi (CONTRACT_REQUESTS.md),
- * shuning uchun egalik `already_owned` (to'lov yaratishda) yoki muvaffaqiyatli yuklab olishdan bilinadi.
+ * Narx, "Sotib olish" va yuklab olish. Egalik kirgan foydalanuvchi uchun GET /v1/catalog/owned dan;
+ * zaxira sifatida to'lov yaratishdagi `409 already_owned` ham hisobga olinadi.
  */
 export function BuyBox({ product }: { product: Product }) {
   const { status } = useAuth();
   const buy = useBuy();
-  const [owned, setOwned] = useState(false);
+  const ownedList = useApi<{ product_ids: string[] }>(status === "authenticated" ? "/v1/catalog/owned" : null);
+  const [ownedByError, setOwned] = useState(false);
+  const owned = ownedByError || (ownedList.data?.product_ids.includes(product.id) ?? false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,14 +62,9 @@ export function BuyBox({ product }: { product: Product }) {
         </>
       ) : (
         <>
-          <Button size="lg" onClick={buy.start} disabled={!buy.ready}>
+          <Button size="lg" onClick={buy.start} disabled={!buy.ready || (status === "authenticated" && ownedList.loading)}>
             {status === "guest" ? t.loginToBuy : t.buy}
           </Button>
-          {status === "authenticated" ? (
-            <button type="button" onClick={() => void download()} disabled={busy} className="text-sm font-semibold text-brand hover:underline disabled:opacity-60">
-              {busy ? t.downloading : t.alreadyBought}
-            </button>
-          ) : null}
         </>
       )}
       <PaymentDialog

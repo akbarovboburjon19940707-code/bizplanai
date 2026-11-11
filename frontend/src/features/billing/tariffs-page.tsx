@@ -14,6 +14,7 @@ import { Button } from "@/shared/ui/button";
 
 type Tariff = components["schemas"]["TariffOut"];
 type MeOut = components["schemas"]["MeOut"];
+type Pricing = components["schemas"]["PricingOut"];
 const t = uz.tariffs;
 
 function Feature({ ok, children }: { ok: boolean; children: string }) {
@@ -72,7 +73,9 @@ export function TariffsPage() {
   const { status } = useAuth();
   const me = useApi<MeOut>(status === "authenticated" ? "/v1/me" : null);
   const buy = useBuy();
-  const [chosen, setChosen] = useState<Tariff | null>(null);
+  const pricing = useApi<Pricing>("/v1/pricing");
+  // Tanlangan mahsulot: tarif obunasi yoki bitta reja (plan_credit)
+  const [chosen, setChosen] = useState<{ kind: "subscription" | "plan_credit"; targetId?: string; title: string } | null>(null);
   const list = [...(tariffs.data ?? [])].sort((a, b) => a.price_som - b.price_som);
   const featuredCode = list.filter((x) => x.price_som > 0)[0]?.code;
 
@@ -100,16 +103,38 @@ export function TariffsPage() {
               current={me.data?.subscription.tariff_code === tariff.code}
               featured={tariff.code === featuredCode}
               onChoose={() => {
-                setChosen(tariff);
+                setChosen({ kind: "subscription", targetId: tariff.code, title: tariff.name });
                 buy.start();
               }}
             />
           ))}
         </div>
       )}
+      {pricing.data ? (
+        <div className="mx-auto mt-8 flex max-w-3xl flex-col gap-4 rounded-card border border-border bg-white p-6 shadow-soft sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <h2 className="text-lg font-bold text-ink">{t.single.title}</h2>
+            <p className="mt-1 text-sm text-muted">{t.single.text}</p>
+          </div>
+          <p className="flex items-baseline gap-1 sm:text-right">
+            <span className="font-[var(--font-outfit)] text-2xl font-bold tabular-nums text-ink">{formatNumber(pricing.data.plan_credit_price_som)}</span>
+            <span className="text-sm text-muted">so‘m {t.single.perPlan}</span>
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setChosen({ kind: "plan_credit", title: t.single.title });
+              buy.start();
+            }}
+          >
+            {t.single.buy}
+          </Button>
+        </div>
+      ) : null}
       <p className="mt-8 text-center text-sm text-muted">{t.quotaHint}</p>
       {chosen ? (
-        <PaymentDialog open={buy.open} onClose={buy.close} kind="subscription" targetId={chosen.code} title={chosen.name} />
+        <PaymentDialog open={buy.open} onClose={buy.close} kind={chosen.kind} targetId={chosen.targetId} title={chosen.title} />
       ) : null}
     </section>
   );

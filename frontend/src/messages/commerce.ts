@@ -26,7 +26,6 @@ export const catalogMessages = {
   download: "PDF’ni yuklab olish",
   downloading: "Tayyorlanmoqda…",
   owned: "Bu reja sizda bor.",
-  alreadyBought: "Avval sotib olganmisiz? PDF’ni yuklab oling",
   loginToBuy: "Sotib olish uchun kiring",
   includes: "Rejada nimalar bor",
   includesList: [
@@ -55,6 +54,12 @@ export const tariffMessages = {
   start: "Bepul boshlash",
   loadError: "Tariflarni yuklab bo‘lmadi.",
   quotaHint: "Kunlik yoki oylik limit tugagan bo‘lsa, yuqoriroq tarifga o‘ting.",
+  single: {
+    title: "Bitta reja",
+    perPlan: "/ 1 reja",
+    text: "Obunasiz, bir martalik: limitdan tashqari bitta biznes-reja (AI matn bilan). Muddati cheklanmagan.",
+    buy: "Sotib olish",
+  },
 } as const;
 
 export const paymentMessages = {

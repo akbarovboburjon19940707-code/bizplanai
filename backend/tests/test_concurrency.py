@@ -15,7 +15,7 @@ async def test_quota_holds_under_parallel_requests(client, monkeypatch):
     async def no_generation(plan_id):  # faqat kvota mantiqini tekshiramiz
         return None
     monkeypatch.setattr(svc, "run_generation", no_generation)
-    token = await register(client)
+    token = await register(client, credits=3)  # kredit kamayishi ham atomik: 10 parallel so'rovdan faqat 3 tasi
     results = await asyncio.gather(*[client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))
                                      for _ in range(10)])
     codes = sorted(r.status_code for r in results)

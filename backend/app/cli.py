@@ -19,11 +19,12 @@ from app.modules.auth.schemas import normalize_phone
 
 DATA = os.path.join(os.path.dirname(__file__), "..", "data")
 
-# Hozirgi saytdagi narx va limitlar (PLAN_META). Biznes qarori bilan o'zgartiriladi.
+# Narx va limitlar (foydalanuvchi qarori, 2026-11-12): bepul tarifda Word/Excel yo'q (faqat ekrandagi hisob-kitob),
+# Standart 200 000 so'm, oyiga 10 ta; Premium oyiga 100 ta. Mavjud bazada migratsiya 0006 yangilaydi (seed mavjud qatorni o'zgartirmaydi).
 TARIFFS = [
-    dict(code="basic", name="Bepul", price_tiyin=0, duration_days=0, daily_limit=3, monthly_limit=10, ai_enabled=False, sort=0),
-    dict(code="pro", name="Standart", price_tiyin=50_000_00, duration_days=30, daily_limit=15, monthly_limit=50, ai_enabled=True, sort=1),
-    dict(code="enterprise", name="Premium", price_tiyin=500_000_00, duration_days=30, daily_limit=50, monthly_limit=500, ai_enabled=True, sort=2),
+    dict(code="basic", name="Bepul", price_tiyin=0, duration_days=0, daily_limit=0, monthly_limit=0, ai_enabled=False, sort=0),
+    dict(code="pro", name="Standart", price_tiyin=200_000_00, duration_days=30, daily_limit=3, monthly_limit=10, ai_enabled=True, sort=1),
+    dict(code="enterprise", name="Premium", price_tiyin=500_000_00, duration_days=30, daily_limit=10, monthly_limit=100, ai_enabled=True, sort=2),
 ]
 
 

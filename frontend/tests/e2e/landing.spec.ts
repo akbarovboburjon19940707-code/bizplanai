@@ -5,7 +5,7 @@ test("landing shows API data in static HTML, with SEO tags", async ({ page, requ
   await page.goto("/");
   await expect(page.locator("article")).toHaveCount(6);
   await expect(page.getByText("3 bosqichda tayyor")).toBeVisible();
-  await expect(page.getByText("Kuniga 3 ta reja").first()).toBeVisible();
+  await expect(page.getByText("Hisob-kitoblarni bepul ko‘ring").first()).toBeVisible(); // bepul: faqat hisob-kitob
   const html = await (await request.get(baseURL!)).text();
   expect(html).toContain("Mashhur tayyor rejalar");
   expect(html).toMatch(/property="og:title"/);

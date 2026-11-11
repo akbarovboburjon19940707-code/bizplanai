@@ -51,9 +51,11 @@ export const tariffMessages = {
   word: "Word va Excel hujjatlar",
   current: "Joriy tarif",
   choose: "Tanlash",
-  start: "Bepul boshlash",
+  start: "Bepul hisoblash",
+  freePreview: "Hisob-kitoblar ekranda: NPV, IRR, jadvallar",
+  freeNoDocs: "Word va Excel hujjatlar (to‘lov bilan)",
   loadError: "Tariflarni yuklab bo‘lmadi.",
-  quotaHint: "Kunlik yoki oylik limit tugagan bo‘lsa, yuqoriroq tarifga o‘ting.",
+  quotaHint: "Hisob-kitoblarni ekranda bepul ko‘rasiz. Word va Excel hujjat uchun bitta reja sotib oling yoki tarif tanlang.",
   single: {
     title: "Bitta reja",
     perPlan: "/ 1 reja",

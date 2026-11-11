@@ -15,10 +15,17 @@ async def test_preview_rejects_unknown_fields(client):
 
 async def test_generate_download_and_quota(client):
     token = await register(client)
+    # bepul tarif: hisob-kitob ekranda (preview), hujjat uchun to'lov kerak
+    free = await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))
+    assert free.status_code == 429 and free.json()["error"]["code"] == "quota_exceeded"
+    assert free.json()["error"]["details"]["reason"] == "payment_required"
+    assert (await client.post("/v1/plans/preview", json=PLAN_INPUT)).status_code == 200
+
+    token = await register(client, phone="+998901112234", credits=1)
     r = await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))
     assert r.status_code == 202, r.text
     plan = r.json()
-    assert plan["status"] == "done" and plan["quota_source"] == "free" and plan["ai_requested"] is False
+    assert plan["status"] == "done" and plan["quota_source"] == "credit"
 
     d = await client.get(f"/v1/plans/{plan['id']}/download", params={"format": "docx"}, headers=auth(token))
     assert d.status_code == 200
@@ -27,18 +34,14 @@ async def test_generate_download_and_quota(client):
     x = await client.get(f"/v1/plans/{plan['id']}/download", params={"format": "xlsx"}, headers=auth(token))
     assert (await client.get(x.json()["url"].replace("http://test", ""))).content[:2] == b"PK"
 
-    # bepul tarif: kuniga 3 ta
-    for _ in range(2):
-        assert (await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))).status_code == 202
-    over = await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))
+    over = await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))  # kredit tugadi
     assert over.status_code == 429 and over.json()["error"]["code"] == "quota_exceeded"
-
-    me = (await client.get("/v1/me", headers=auth(token))).json()["subscription"]
-    assert me["daily_used"] == 3
+    me = (await client.get("/v1/me", headers=auth(token))).json()
+    assert me["user"]["plan_credits"] == 0 and me["subscription"]["monthly_limit"] == 0
 
 
 async def test_other_user_cannot_access_plan(client):
-    t1 = await register(client, phone="+998900000001")
+    t1 = await register(client, phone="+998900000001", credits=1)
     t2 = await register(client, phone="+998900000002")
     plan = (await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(t1))).json()
     assert (await client.get(f"/v1/plans/{plan['id']}", headers=auth(t2))).status_code == 404
@@ -56,8 +59,8 @@ async def test_failed_generation_refunds_quota(client, monkeypatch):
     def boom(*a, **k):
         raise RuntimeError("disk to'ldi")
     monkeypatch.setattr(svc, "_render_files", boom)
-    token = await register(client)
+    token = await register(client, credits=1)
     plan = (await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))).json()
     assert plan["status"] == "failed"
-    me = (await client.get("/v1/me", headers=auth(token))).json()["subscription"]
-    assert me["daily_used"] == 0
+    me = (await client.get("/v1/me", headers=auth(token))).json()
+    assert me["user"]["plan_credits"] == 1  # xato bo'lsa kredit qaytariladi

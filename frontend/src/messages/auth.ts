@@ -92,6 +92,8 @@ export const accountMessages = {
     aiOff: "tarifda yo‘q",
     credits: "Qo‘shimcha rejalar (kredit)",
     exhausted: "Limit tugadi. Ertaga yangilanadi yoki tarifni oshiring.",
+    freeNoDocs: "Bepul tarifda hisob-kitoblar ekranda ko‘rinadi. Word va Excel hujjat uchun bitta reja sotib oling yoki tarif tanlang.",
+    toTariffs: "Tariflar va narxlar",
   },
   profile: {
     title: "Profil",

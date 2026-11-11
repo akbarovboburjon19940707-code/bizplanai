@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { uz } from "@/messages/uz";
 import type { components } from "@/shared/api/schema";
 import { cn } from "@/shared/lib/cn";
@@ -30,7 +31,8 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
 }
 
 export function SubscriptionCard({ subscription: s, credits }: { subscription: Subscription; credits: number }) {
-  const exhausted = (s.daily_used >= s.daily_limit || s.monthly_used >= s.monthly_limit) && credits <= 0;
+  const noDocs = s.monthly_limit <= 0; // bepul tarif: hujjat faqat kredit (bitta reja) yoki pullik tarif bilan
+  const exhausted = !noDocs && (s.daily_used >= s.daily_limit || s.monthly_used >= s.monthly_limit) && credits <= 0;
   return (
     <section className="rounded-card border border-border bg-white p-5 shadow-soft sm:p-6" aria-labelledby="sub-title">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -45,10 +47,17 @@ export function SubscriptionCard({ subscription: s, credits }: { subscription: S
           {s.status === "active" && s.ends_at ? ` · ${t.activeUntil(formatDate(s.ends_at))}` : ""}
         </span>
       </div>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <UsageBar label={t.daily} used={s.daily_used} limit={s.daily_limit} />
-        <UsageBar label={t.monthly} used={s.monthly_used} limit={s.monthly_limit} />
-      </div>
+      {noDocs ? (
+        <p className="mt-4 rounded-control bg-blue-50 px-3 py-2.5 text-sm text-blue-900">
+          {t.freeNoDocs}{" "}
+          <Link href="/tariflar/" className="font-semibold underline">{t.toTariffs}</Link>
+        </p>
+      ) : (
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <UsageBar label={t.daily} used={s.daily_used} limit={s.daily_limit} />
+          <UsageBar label={t.monthly} used={s.monthly_used} limit={s.monthly_limit} />
+        </div>
+      )}
       <dl className="mt-5 grid gap-2 text-sm sm:grid-cols-2">
         <div className="flex justify-between gap-2 rounded-control bg-canvas px-3 py-2">
           <dt className="text-muted">{t.ai}</dt>

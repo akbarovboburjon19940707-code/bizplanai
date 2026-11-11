@@ -16,7 +16,7 @@ async def test_register_login_me(client):
     body = r.json()
     assert body["user"]["phone"] == "+998901112233"
     assert body["subscription"]["tariff_code"] == "basic"
-    assert body["subscription"]["daily_limit"] == 3
+    assert body["subscription"]["daily_limit"] == 0  # bepul: faqat ekrandagi hisob-kitob
 
     r = await client.post("/v1/auth/register", json={"phone": "+998901112233", "password": "boshqa12345"})
     assert r.status_code == 409 and r.json()["error"]["code"] == "phone_taken"

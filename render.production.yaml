@@ -1,7 +1,9 @@
 # Render Blueprint: YANGI saytning PRODUCTION muhiti (o'tish kunida, staging sinovlaridan keyin).
 # Render: New > Blueprint > repo > Blueprint path: render.production.yaml
 # Domenlar: bizplanai.uz, www.bizplanai.uz (frontend), api.bizplanai.uz (API). O'tish tartibi: docs/DEPLOY.md
-# Autoscaling (scaling:) faqat Render Professional workspace'da ishlaydi; aks holda numInstances ishlating.
+# O'lcham (foydalanuvchi qarori, 2026-11-11): "arzon start" - API va worker 1 tadan (starter), kichik Redis va Postgres.
+# Kattalashtirish: plan: standard va scaling: {minInstances, maxInstances, targetCPUPercent} (Render Professional kerak),
+# DB_POOL_SIZE byudjetini tests/test_deploy_blueprints.py tekshiradi.
 # Deploy: servislar `production` branch'ini kuzatadi va faqat CI yashil bo'lganda deploy qilinadi.
 # `main` ga push faqat staging'ga chiqadi; production'ga chiqarish: main > production (fast-forward), docs/DEPLOY.md 8-bo'lim.
 
@@ -12,7 +14,8 @@ services:
     dockerfilePath: ./backend/Dockerfile   # repo ildiziga nisbatan (rootDir ataylab yo'q)
     dockerContext: ./backend
     region: frankfurt
-    plan: standard
+    plan: starter
+    numInstances: 1
     branch: production
     autoDeployTrigger: checksPass
     healthCheckPath: /readyz
@@ -20,10 +23,6 @@ services:
     buildFilter:
       paths: ["backend/**"]
     domains: [api.bizplanai.uz]
-    scaling:
-      minInstances: 2
-      maxInstances: 8
-      targetCPUPercent: 60
     envVars: &prod_env
       - { key: APP_ENV, value: production }
       - { key: JOB_MODE, value: queue }
@@ -34,9 +33,8 @@ services:
       - { key: FRONTEND_URL, value: https://bizplanai.uz }
       - { key: PUBLIC_API_URL, value: https://api.bizplanai.uz }
       - { key: WEB_CONCURRENCY, value: "2" }
-      # Postgres ulanish byudjeti: basic-1gb da max_connections = 100 (RAM 8 GB dan kam bo'lgan har qanday tarifda shu).
-      # Eng ko'p jarayon: API 8 nusxa x 2 + worker 6 nusxa x 1 = 22; har biri POOL_SIZE + MAX_OVERFLOW = 4 ulanish
-      # => 88 <= 90 (10 tasi superuser, pre-deploy migratsiya va Shell uchun zaxira).
+      # Postgres ulanish byudjeti: max_connections = 100 (RAM 8 GB dan kam bo'lgan har qanday tarifda shu).
+      # Pool 3+1 ataylab kichik: kattalashtirilganda (API 8 x 2 + worker 6 x 1 = 22 jarayon) ham 88 <= 90 bo'ladi.
       # Nusxa soni, WEB_CONCURRENCY yoki pool o'zgarsa tests/test_deploy_blueprints.py shu byudjetni tekshiradi.
       - { key: DB_POOL_SIZE, value: "3" }
       - { key: DB_MAX_OVERFLOW, value: "1" }
@@ -52,22 +50,19 @@ services:
     dockerfilePath: ./backend/Dockerfile   # repo ildiziga nisbatan (rootDir ataylab yo'q)
     dockerContext: ./backend
     region: frankfurt
-    plan: standard
+    plan: starter
+    numInstances: 1
     branch: production
     autoDeployTrigger: checksPass
     dockerCommand: arq app.workers.settings.WorkerSettings
     buildFilter:
       paths: ["backend/**"]
-    scaling:
-      minInstances: 2
-      maxInstances: 6
-      targetCPUPercent: 70
     envVars: *prod_env
 
   - type: keyvalue
     name: bizplan-kv
     region: frankfurt
-    plan: standard
+    plan: starter
     maxmemoryPolicy: noeviction   # navbat va kvota kalitlari o'chib ketmasligi kerak
     ipAllowList: []               # faqat Render ichki tarmog'i
 
@@ -80,7 +75,8 @@ services:
     staticPublishPath: ./frontend/out
     buildFilter:
       paths: ["frontend/**"]
-    domains: [bizplanai.uz, www.bizplanai.uz]
+    # bizplanai.uz va www bu yerda YO'Q: ular eski sayt servisiga ulangan, Render bitta domenni ikki servisga bermaydi.
+    # O'tish paytida qo'lda: eski servisdan o'chirish > shu servisga qo'shish (docs/DEPLOY.md 7-bo'lim).
     envVars:
       - { key: NEXT_PUBLIC_API_URL, value: https://api.bizplanai.uz }
       - { key: NEXT_PUBLIC_SITE_URL, value: https://bizplanai.uz }   # sitemap, canonical, OpenGraph
@@ -101,7 +97,7 @@ services:
 databases:
   - name: bizplan-db
     region: frankfurt
-    plan: basic-1gb
+    plan: basic-256mb
     postgresMajorVersion: "16"
     ipAllowList: []
 

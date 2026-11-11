@@ -66,7 +66,9 @@ def async_url(url: str) -> str:
     """Eski saytdagi URL ko'rinishlari (postgres://, postgresql://, postgresql+psycopg2://, sqlite:///) -> async drayver."""
     scheme, sep, rest = url.partition("://")
     if not sep:
-        raise SystemExit(f"Noto'g'ri baza manzili: {url!r}")
+        # manzil parol bo'lishi mumkin: to'liq ko'rsatilmaydi
+        raise SystemExit(f"Noto'g'ri baza manzili (boshlanishi: {url[:10]!r}...). "
+                         "U postgres:// yoki postgresql:// bilan boshlanishi kerak.")
     base = scheme.split("+", 1)[0]
     if base in ("postgres", "postgresql"):
         # Render'ning tashqi manzili "?sslmode=require" bilan keladi; asyncpg "ssl=" ni tushunadi

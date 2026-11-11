@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description: uz.home.description,
   openGraph: { type: "website", siteName: uz.appName, locale: "uz_UZ", title: uz.appName, description: uz.home.description },
   twitter: { card: "summary" },
-  alternates: { canonical: "/" },
+  // canonical ataylab bu yerda yo'q: layout'dagi qiymat har sahifaga meros bo'lib, hammasini "/" nusxasi qilardi
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getPopularProducts, getTariffs } from "@/features/catalog/build-data";
 import { HeroArt } from "@/features/marketing/hero-art";
 import { Features, FinalCta, Popular, Steps, TariffStrip } from "@/features/marketing/sections";
 import { uz } from "@/messages/uz";
 import { Button } from "@/shared/ui/button";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 // Build vaqtida API'dan: mashhur rejalar va tariflar statik HTML'ga yoziladi (SEO, tez yuklanish)
 export default async function HomePage() {

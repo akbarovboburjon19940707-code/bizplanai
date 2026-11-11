@@ -24,8 +24,10 @@ from app.modules.auth.schemas import normalize_phone
 REQUIRED = {
     "users": {"id", "phone", "first_name"},
     "subscriptions": {"id", "user_id", "plan_name", "status", "end_date"},
-    "payments": {"id", "user_name", "payment_status", "payment_type", "loyiha_nomi"},
+    # Eski saytning ikki varianti: (a) payment_type + loyiha_nomi; (b) jonli baza: product_id + project_name + user_id.
+    "payments": {"id", "user_name", "payment_status"},
 }
+PAYMENT_NAME_COLUMNS = ("loyiha_nomi", "project_name")
 PAID_TARIFFS = {"pro", "enterprise"}
 
 
@@ -116,6 +118,8 @@ async def read_source(url: str, tables: dict[str, str]) -> dict[str, list[dict]]
             for logical, name in tables.items():
                 table: Table = meta.tables[name]
                 missing = REQUIRED[logical] - set(table.c.keys())
+                if logical == "payments" and not set(PAYMENT_NAME_COLUMNS) & set(table.c.keys()):
+                    missing = missing | {"loyiha_nomi|project_name"}
                 if missing:
                     raise SystemExit(f"Eski '{name}' jadvalida ustunlar yo'q: {sorted(missing)}. Mavjud: {sorted(table.c.keys())}")
                 data[logical] = [dict(r._mapping) for r in await conn.execute(select(table))]
@@ -190,44 +194,75 @@ async def import_subscriptions(session: AsyncSession, subs: list[dict], users: d
         report.add("subscription", old["id"], "created", f"{old['plan_name']} {ends.date()} gacha")
 
 
+def _is_paid(old: dict) -> bool:
+    # Click/Payme: payment_status=success; karta: admin tasdiqlagan (admin_status=approved) - eski payment.py dagidek
+    return old.get("payment_status") == "success" or old.get("admin_status") == "approved"
+
+
 async def import_purchases(session: AsyncSession, payments: list[dict], old_users: list[dict], users: dict[str, str],
                            report: Report) -> None:
-    """Eski katalog xaridlari user_name (ism YOKI telefon) va reja nomi bilan saqlangan: faqat aniq mosini ko'chiramiz."""
+    """Katalog xaridlari -> Entitlement. Faqat to'langan va aniq mos keladiganlari ko'chadi.
+
+    Reja: `product_id` (jonli bazada) katalog id si bilan; bo'lmasa `payment_type == "catalog"` va nomi bo'yicha.
+    Egasi: `user_id` (bo'lsa) yoki `user_name` (telefon yoki yagona ism). Shubhali holat: hisobotda "review".
+    Obuna va bitta reja to'lovlari ko'chirilmaydi (obunalar subscriptions jadvalidan olinadi)."""
     products: dict[str, list[str]] = {}
+    product_ids: set[str] = set()
     for p in await session.scalars(select(CatalogProduct)):
         products.setdefault(_norm(p.title), []).append(p.id)
-    by_phone, by_name = {}, {}
+        product_ids.add(p.id)
+    by_phone, by_name, old_ids = {}, {}, set()
     for u in old_users:
+        old_ids.add(str(u["id"]))
         by_phone[str(u.get("phone") or "")] = str(u["id"])
         by_name.setdefault(_norm(u.get("first_name")), []).append(str(u["id"]))
     owned = {(e.user_id, e.product_id) for e in await session.scalars(select(Entitlement))}
 
     for old in payments:
-        if old.get("payment_status") != "success" or old.get("payment_type") != "catalog":
-            continue
-        name = str(old.get("user_name") or "")
-        if name in by_phone:
-            old_uid = by_phone[name]
-        elif len(by_name.get(_norm(name), [])) == 1:
-            old_uid = by_name[_norm(name)][0]
+        title = old.get("loyiha_nomi") or old.get("project_name") or ""
+        raw_pid = str(old.get("product_id") or "").strip()
+        if raw_pid:
+            kind = "catalog"
+        elif "payment_type" in old:
+            kind = "catalog" if old.get("payment_type") == "catalog" else "other"
         else:
-            matches = len(by_name.get(_norm(name), []))
-            report.add("purchase", old["id"], "review", f"egasi aniq emas: user_name={name!r} ({matches} ta mos)")
+            # product_id siz eski yozuv: nomi katalogdagi bitta rejaga aynan mos bo'lsa ham, avtomatik berilmaydi
+            kind = "maybe" if len(products.get(_norm(title), [])) == 1 and "obuna" not in title.lower() else "other"
+        if kind == "other" or not _is_paid(old):
             continue
-        product_ids = products.get(_norm(old.get("loyiha_nomi")), [])
-        if len(product_ids) != 1:
-            report.add("purchase", old["id"], "review", f"reja topilmadi yoki bir nechta: {old.get('loyiha_nomi')!r}")
+
+        if raw_pid and raw_pid in product_ids:
+            product_id = raw_pid
+        elif len(products.get(_norm(title), [])) == 1:
+            product_id = products[_norm(title)][0]
+        else:
+            report.add("purchase", old["id"], "review", f"reja topilmadi: product_id={raw_pid!r}, nomi={title!r}")
+            continue
+
+        old_uid = str(old.get("user_id") or "")
+        if old_uid not in old_ids:
+            name = str(old.get("user_name") or "")
+            if name in by_phone:
+                old_uid = by_phone[name]
+            elif len(by_name.get(_norm(name), [])) == 1:
+                old_uid = by_name[_norm(name)][0]
+            else:
+                matches = len(by_name.get(_norm(name), []))
+                report.add("purchase", old["id"], "review", f"egasi aniq emas: user_name={name!r} ({matches} ta mos)")
+                continue
+        if kind == "maybe":
+            report.add("purchase", old["id"], "review", f"product_id yo'q, nomi bo'yicha mos: {product_id}")
             continue
         user_id = users.get(old_uid)
         if not user_id:
             report.add("purchase", old["id"], "skipped", "foydalanuvchi ko'chirilmagan")
             continue
-        if (user_id, product_ids[0]) in owned:
+        if (user_id, product_id) in owned:
             report.add("purchase", old["id"], "exists")
             continue
-        session.add(Entitlement(user_id=user_id, product_id=product_ids[0], payment_id=f"lgp:{old['id']}"[:40]))
-        owned.add((user_id, product_ids[0]))
-        report.add("purchase", old["id"], "created", product_ids[0])
+        session.add(Entitlement(user_id=user_id, product_id=product_id, payment_id=f"lgp:{old['id']}"[:40]))
+        owned.add((user_id, product_id))
+        report.add("purchase", old["id"], "created", product_id)
 
 
 async def run_import(session: AsyncSession, source: dict[str, list[dict]], apply: bool,

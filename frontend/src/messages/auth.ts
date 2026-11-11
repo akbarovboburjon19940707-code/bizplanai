@@ -83,8 +83,9 @@ export const accountMessages = {
   },
   password: {
     title: "Parolni almashtirish",
+    titleSet: "Parol o‘rnatish",
+    setFirst: "Siz Telegram orqali ro‘yxatdan o‘tgansiz. Parol o‘rnatsangiz, telefon raqam va parol bilan ham kira olasiz.",
     current: "Joriy parol",
-    currentHint: "Telegram orqali ro‘yxatdan o‘tgan bo‘lsangiz, bo‘sh qoldiring",
     next: "Yangi parol",
     confirm: "Yangi parolni takrorlang",
     submit: "Parolni almashtirish",

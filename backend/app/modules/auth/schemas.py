@@ -54,6 +54,7 @@ class UserOut(BaseModel):
     telegram_username: str | None
     role: str
     plan_credits: int
+    has_password: bool = False  # false: parol almashtirishda joriy parol so'ralmaydi
 
     model_config = {"from_attributes": True}
 

@@ -482,6 +482,27 @@
         }
       }
     },
+    "/v1/pricing": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Pricing",
+        "operationId": "pricing_v1_pricing_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PricingOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/plans/preview": {
       "post": {
         "tags": [
@@ -1066,6 +1087,56 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/catalog/owned": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Owned",
+        "description": "Foydalanuvchi sotib olgan katalog rejalari (sahifada darhol \"Yuklab olish\" ko'rsatish uchun).",
+        "operationId": "owned_v1_catalog_owned_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnedOut"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -2568,6 +2639,22 @@
         "type": "object",
         "title": "NoteIn"
       },
+      "OwnedOut": {
+        "properties": {
+          "product_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Product Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "product_ids"
+        ],
+        "title": "OwnedOut"
+      },
       "PasswordIn": {
         "properties": {
           "current_password": {
@@ -3487,6 +3574,19 @@
         ],
         "title": "PreviewOut"
       },
+      "PricingOut": {
+        "properties": {
+          "plan_credit_price_som": {
+            "type": "integer",
+            "title": "Plan Credit Price Som"
+          }
+        },
+        "type": "object",
+        "required": [
+          "plan_credit_price_som"
+        ],
+        "title": "PricingOut"
+      },
       "ProductOut": {
         "properties": {
           "id": {
@@ -3694,6 +3794,10 @@
               {
                 "type": "string",
                 "format": "email"
+              },
+              {
+                "type": "string",
+                "const": ""
               },
               {
                 "type": "null"
@@ -3993,6 +4097,11 @@
           "plan_credits": {
             "type": "integer",
             "title": "Plan Credits"
+          },
+          "has_password": {
+            "type": "boolean",
+            "title": "Has Password",
+            "default": false
           }
         },
         "type": "object",

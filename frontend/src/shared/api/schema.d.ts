@@ -175,6 +175,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/pricing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pricing */
+        get: operations["pricing_v1_pricing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/plans/preview": {
         parameters: {
             query?: never;
@@ -346,6 +363,26 @@ export interface paths {
         put?: never;
         /** View */
         post: operations["view_v1_catalog_products__product_id__view_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/catalog/owned": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Owned
+         * @description Foydalanuvchi sotib olgan katalog rejalari (sahifada darhol "Yuklab olish" ko'rsatish uchun).
+         */
+        get: operations["owned_v1_catalog_owned_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -799,6 +836,11 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /** OwnedOut */
+        OwnedOut: {
+            /** Product Ids */
+            product_ids: string[];
+        };
         /** PasswordIn */
         PasswordIn: {
             /** Current Password */
@@ -1027,6 +1069,11 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** PricingOut */
+        PricingOut: {
+            /** Plan Credit Price Som */
+            plan_credit_price_som: number;
+        };
         /** ProductOut */
         ProductOut: {
             /** Id */
@@ -1085,7 +1132,7 @@ export interface components {
             /** Last Name */
             last_name?: string | null;
             /** Email */
-            email?: string | null;
+            email?: string | "" | null;
         };
         /** RefreshIn */
         RefreshIn: {
@@ -1193,6 +1240,11 @@ export interface components {
             role: string;
             /** Plan Credits */
             plan_credits: number;
+            /**
+             * Has Password
+             * @default false
+             */
+            has_password: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -1595,6 +1647,26 @@ export interface operations {
             };
         };
     };
+    pricing_v1_pricing_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricingOut"];
+                };
+            };
+        };
+    };
     preview_v1_plans_preview_post: {
         parameters: {
             query?: never;
@@ -1933,6 +2005,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    owned_v1_catalog_owned_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnedOut"];
+                };
             };
             /** @description Validation Error */
             422: {

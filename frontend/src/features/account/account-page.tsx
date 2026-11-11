@@ -64,7 +64,7 @@ function AccountView() {
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <ProfileForm user={user} onSaved={(u) => me.replace({ ...me.data!, user: u })} />
-          <PasswordForm />
+          <PasswordForm hasPassword={user.has_password ?? true} onChanged={me.reload} />
         </div>
       </div>
     </div>

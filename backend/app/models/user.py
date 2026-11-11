@@ -23,6 +23,11 @@ class User(TimestampMixin, Base):
     plan_credits: Mapped[int] = mapped_column(Integer, default=0)  # bir martalik pullik generatsiyalar
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime)
 
+    @property
+    def has_password(self) -> bool:
+        """Telegram orqali ro'yxatdan o'tganda parol yo'q (UserOut.has_password)."""
+        return bool(self.password_hash)
+
 
 class RefreshToken(TimestampMixin, Base):
     __tablename__ = "refresh_tokens"

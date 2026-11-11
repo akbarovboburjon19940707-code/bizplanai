@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, EmailStr, Field
 
@@ -32,7 +34,7 @@ class MeOut(BaseModel):
 class ProfileIn(BaseModel):
     first_name: str | None = Field(default=None, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
-    email: EmailStr | None = None
+    email: EmailStr | Literal[""] | None = None  # "" = emailni o'chirish, None = o'zgartirmaslik
 
 
 class PasswordIn(BaseModel):
@@ -59,6 +61,8 @@ async def update_profile(data: ProfileIn, user: CurrentUser, session: SessionDep
         value = getattr(data, field)
         if value is not None:
             setattr(user, field, value.strip() if isinstance(value, str) else value)
+    if data.email == "":
+        user.email = None
     await session.commit()
     return UserOut.model_validate(user)
 

@@ -56,7 +56,9 @@ Frontend `message` ni foydalanuvchiga ko'rsatadi, mantiqni `code` bo'yicha qurad
 | `POST /v1/auth/telegram/login-init` | bo'sh | `{token, bot_url, expires_in}` |
 | `GET /v1/auth/telegram/login-poll?token=` | | `{status: pending/expired/authenticated, session?}` |
 
-`TokenOut = {access_token, token_type, expires_in, user: {id, phone, email, first_name, last_name, telegram_username, role, plan_credits}}`
+`TokenOut = {access_token, token_type, expires_in, user: {id, phone, email, first_name, last_name, telegram_username, role, plan_credits, has_password}}`
+
+`has_password: false` (Telegram orqali ro'yxatdan o'tgan): parol almashtirishda `current_password` so'ralmaydi.
 
 Telefon istalgan ko'rinishda yuborilishi mumkin (`90 123 45 67`, `+998...`); server `+998XXXXXXXXX` ga keltiradi.
 
@@ -68,9 +70,10 @@ Telefon istalgan ko'rinishda yuborilishi mumkin (`90 123 45 67`, `+998...`); ser
 | Metod va yo'l | Tavsif |
 | --- | --- |
 | `GET /v1/me` | `{user, subscription: {tariff_code, tariff_name, status: free/active, ends_at, daily_limit, monthly_limit, daily_used, monthly_used, ai_enabled}}` |
-| `PATCH /v1/me` | `{first_name?, last_name?, email?}` |
+| `PATCH /v1/me` | `{first_name?, last_name?, email?}`: `null` yoki yo'q = o'zgartirmaslik, `""` = emailni o'chirish |
 | `POST /v1/me/password` | `{current_password?, new_password}` -> 204 (Telegram orqali kirganda joriy parol yo'q) |
 | `GET /v1/tariffs` | Tariflar (`price_som`, limitlar, `ai_enabled`) |
+| `GET /v1/pricing` | `{plan_credit_price_som}`: bitta reja narxi (`kind: plan_credit`) |
 
 ## 4. Biznes-reja
 
@@ -111,6 +114,7 @@ R2 bucket yopiq (2026-11-10): `preview_image` endi `r2.dev` havolasi emas, backe
 | `GET /v1/catalog/categories` | `{key, label, icon, count}[]` |
 | `GET /v1/catalog/products?category&q&limit&offset` | `{items, total, limit, offset}` |
 | `GET /v1/catalog/products/{id yoki slug}` | Bitta mahsulot |
+| `GET /v1/catalog/owned` | Kirgan foydalanuvchi sotib olgan rejalar: `{product_ids: string[]}` |
 | `POST /v1/catalog/products/{id}/view` | Sahifa ochilganda bir marta, javobni kutmasdan |
 | `GET /v1/catalog/products/{id}/download` | Sotib olgan bo'lsa `{url, expires_in}`, aks holda 403 `not_purchased` |
 

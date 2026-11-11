@@ -1,4 +1,4 @@
-"""tariffs: paid-only documents (free 0), Standart 3/10, Premium 10/100 (business decision 2026-11-12)
+"""tariffs: paid-only documents (free 0), Standart 200 000 so'm 3/10, Premium 10/100 (business decision 2026-11-12)
 
 Revision ID: 0006
 Revises: 0005
@@ -26,9 +26,14 @@ def _apply(values: dict[str, tuple[int, int]]) -> None:
         op.execute(tariffs.update().where(tariffs.c.code == code).values(daily_limit=daily, monthly_limit=monthly))
 
 
+prices = sa.table("tariffs", sa.column("code", sa.String), sa.column("price_tiyin", sa.Integer))
+
+
 def upgrade() -> None:
     _apply(NEW)
+    op.execute(prices.update().where(prices.c.code == "pro").values(price_tiyin=200_000_00))
 
 
 def downgrade() -> None:
     _apply(OLD)
+    op.execute(prices.update().where(prices.c.code == "pro").values(price_tiyin=50_000_00))

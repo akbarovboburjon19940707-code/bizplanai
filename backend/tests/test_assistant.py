@@ -50,7 +50,7 @@ async def test_reply_uses_live_facts_catalog_and_fallback_provider(client, provi
     assert body["products"] and all("asal" in p["title"].lower() for p in body["products"])
     assert len(down.calls) == 1 and len(ok.calls) == 1  # birinchisi yiqildi, keyingisi javob berdi
     system = ok.calls[0]["system"]
-    assert "Standart: 50 000 so'm / 30 kun" in system and "Bepul: bepul" in system  # tariflar bazadan
+    assert "Standart: 200 000 so'm / 30 kun" in system and "Bepul: bepul" in system  # tariflar bazadan
     assert "Obunasiz bitta reja" in system and "Katalogda 269 ta" in system and "Click" in system
     assert [m["role"] for m in ok.calls[0]["messages"]] == ["user", "assistant", "user"]
 

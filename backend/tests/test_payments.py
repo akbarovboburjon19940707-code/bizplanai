@@ -27,7 +27,7 @@ async def test_methods_and_server_side_price(client):
     r = await client.post("/v1/payments", json={"kind": "subscription", "target_id": "pro", "provider": "click"},
                           headers=auth(token))
     assert r.status_code == 201
-    assert r.json()["payment"]["amount_som"] == 50000
+    assert r.json()["payment"]["amount_som"] == 200000
     assert r.json()["checkout"]["url"].startswith("https://my.click.uz/services/pay?")
     bad = await client.post("/v1/payments", json={"kind": "subscription", "target_id": "basic", "provider": "click"},
                             headers=auth(token))
@@ -39,21 +39,21 @@ async def test_click_subscription_flow(client):
     pid = (await client.post("/v1/payments", json={"kind": "subscription", "target_id": "pro", "provider": "click"},
                              headers=auth(token))).json()["payment"]["id"]
 
-    wrong_sign = click_form(pid, 50000, 0, secret="xato")
+    wrong_sign = click_form(pid, 200000, 0, secret="xato")
     assert (await client.post("/v1/payments/click/prepare", data=wrong_sign)).json()["error"] == -1
     wrong_amount = click_form(pid, 100, 0)
     assert (await client.post("/v1/payments/click/prepare", data=wrong_amount)).json()["error"] == -2
 
-    prep = (await client.post("/v1/payments/click/prepare", data=click_form(pid, 50000, 0))).json()
+    prep = (await client.post("/v1/payments/click/prepare", data=click_form(pid, 200000, 0))).json()
     assert prep["error"] == 0
-    bad_prep = click_form(pid, 50000, 1, prepare_id=999)
+    bad_prep = click_form(pid, 200000, 1, prepare_id=999)
     assert (await client.post("/v1/payments/click/complete", data=bad_prep)).json()["error"] == -6
 
     done = (await client.post("/v1/payments/click/complete",
-                              data=click_form(pid, 50000, 1, prepare_id=prep["merchant_prepare_id"]))).json()
+                              data=click_form(pid, 200000, 1, prepare_id=prep["merchant_prepare_id"]))).json()
     assert done["error"] == 0
     again = (await client.post("/v1/payments/click/complete",
-                               data=click_form(pid, 50000, 1, prepare_id=prep["merchant_prepare_id"]))).json()
+                               data=click_form(pid, 200000, 1, prepare_id=prep["merchant_prepare_id"]))).json()
     assert again["error"] == -4  # takroriy callback huquqni ikki marta bermaydi
 
     me = (await client.get("/v1/me", headers=auth(token))).json()["subscription"]
@@ -181,13 +181,13 @@ async def test_click_failed_second_tx_does_not_revoke_paid(client):
     token = await register(client)
     pid = (await client.post("/v1/payments", json={"kind": "subscription", "target_id": "pro", "provider": "click"},
                              headers=auth(token))).json()["payment"]["id"]
-    p1 = (await client.post("/v1/payments/click/prepare", data=click_form(pid, 50000, 0, click_trans_id="1"))).json()
-    p2 = (await client.post("/v1/payments/click/prepare", data=click_form(pid, 50000, 0, click_trans_id="2"))).json()
+    p1 = (await client.post("/v1/payments/click/prepare", data=click_form(pid, 200000, 0, click_trans_id="1"))).json()
+    p2 = (await client.post("/v1/payments/click/prepare", data=click_form(pid, 200000, 0, click_trans_id="2"))).json()
     ok = (await client.post("/v1/payments/click/complete", data=click_form(
-        pid, 50000, 1, click_trans_id="1", prepare_id=p1["merchant_prepare_id"]))).json()
+        pid, 200000, 1, click_trans_id="1", prepare_id=p1["merchant_prepare_id"]))).json()
     assert ok["error"] == 0
     failed = (await client.post("/v1/payments/click/complete", data=click_form(
-        pid, 50000, 1, click_trans_id="2", prepare_id=p2["merchant_prepare_id"], error="-5017"))).json()
+        pid, 200000, 1, click_trans_id="2", prepare_id=p2["merchant_prepare_id"], error="-5017"))).json()
     assert failed["error"] == -9
     sub = (await client.get("/v1/me", headers=auth(token))).json()["subscription"]
     assert sub["tariff_code"] == "pro" and sub["status"] == "active"
@@ -306,5 +306,5 @@ async def test_click_checkout_matches_old_site_params(client, monkeypatch):
     q = {k: v[0] for k, v in parse_qs(url.query).items()}
     assert url.netloc == "my.click.uz" and url.path == "/services/pay"
     assert set(q) == {"service_id", "merchant_id", "amount", "transaction_param", "return_url", "merchant_user_id"}
-    assert q["amount"] == "50000.00" and q["transaction_param"] == r.json()["payment"]["id"]
+    assert q["amount"] == "200000.00" and q["transaction_param"] == r.json()["payment"]["id"]
     assert q["merchant_user_id"] == "77777"

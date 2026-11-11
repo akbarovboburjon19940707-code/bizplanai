@@ -82,7 +82,7 @@ test("tariffs from the API: subscription and single plan by card", async ({ page
   await page.getByRole("article", { name: "Standart" }).getByRole("button", { name: "Tanlash" }).click();
   await page.getByRole("dialog").getByRole("button", { name: /Karta orqali/ }).click();
   await expect(page).toHaveURL(/\/tolov\/sub_/);
-  await expect(page.locator("p.text-2xl")).toHaveText("50 000 so‘m");
+  await expect(page.locator("p.text-2xl")).toHaveText("200 000 so‘m"); // Standart (2026-11-12)
 
   await page.goto("/tariflar/");
   await expect(page.getByRole("heading", { name: "Bitta reja" })).toBeVisible();

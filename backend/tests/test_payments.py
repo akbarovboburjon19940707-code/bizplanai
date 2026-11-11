@@ -290,3 +290,21 @@ async def test_admin_cli_qr_and_unlock(client, capsys):
     await unlock_login("+998901112233")
     assert "olib tashlandi" in capsys.readouterr().out
     assert await get_redis().get("login_fail:+998901112233") is None
+
+
+async def test_click_checkout_matches_old_site_params(client, monkeypatch):
+    """Yangi sayt Click'ga eski sayt bilan aynan bir xil parametrlarni yuboradi (o'tish kuni kod o'zgarmaydi)."""
+    from urllib.parse import parse_qs, urlparse
+
+    from app.core.config import get_settings
+
+    token = await register(client)
+    monkeypatch.setattr(get_settings(), "click_merchant_user_id", "77777")
+    r = await client.post("/v1/payments", json={"kind": "subscription", "target_id": "pro", "provider": "click"},
+                          headers=auth(token))
+    url = urlparse(r.json()["checkout"]["url"])
+    q = {k: v[0] for k, v in parse_qs(url.query).items()}
+    assert url.netloc == "my.click.uz" and url.path == "/services/pay"
+    assert set(q) == {"service_id", "merchant_id", "amount", "transaction_param", "return_url", "merchant_user_id"}
+    assert q["amount"] == "50000.00" and q["transaction_param"] == r.json()["payment"]["id"]
+    assert q["merchant_user_id"] == "77777"

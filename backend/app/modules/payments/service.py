@@ -67,9 +67,12 @@ def checkout(payment: Payment) -> dict:
     s = get_settings()
     return_url = f"{s.frontend_url.rstrip('/')}/tolov/{payment.id}"
     if payment.provider == "click":
-        q = urlencode({"service_id": s.click_service_id, "merchant_id": s.click_merchant_id,
-                       "amount": f"{payment.amount_tiyin / 100:.2f}", "transaction_param": payment.id,
-                       "return_url": return_url})
+        params = {"service_id": s.click_service_id, "merchant_id": s.click_merchant_id,
+                  "amount": f"{payment.amount_tiyin / 100:.2f}", "transaction_param": payment.id,
+                  "return_url": return_url}
+        if s.click_merchant_user_id:  # eski saytdagidek (jonli servis shu parametrlar bilan ishlaydi)
+            params["merchant_user_id"] = s.click_merchant_user_id
+        q = urlencode(params)
         return {"type": "redirect", "url": f"https://my.click.uz/services/pay?{q}"}
     if payment.provider == "payme":
         raw = f"m={s.payme_merchant_id};ac.order_id={payment.id};ac.product_id=1;a={payment.amount_tiyin};c={return_url};l=uz"

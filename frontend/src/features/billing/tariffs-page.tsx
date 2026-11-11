@@ -50,9 +50,18 @@ function TariffCard({ tariff, current, featured, onChoose }: {
         <span className="text-sm text-muted">so‘m {free ? t.forever : t.perPeriod(tariff.duration_days)}</span>
       </p>
       <ul className="mt-5 flex flex-1 flex-col gap-2.5">
-        <Feature ok>{t.daily(tariff.daily_limit)}</Feature>
-        <Feature ok>{t.monthly(tariff.monthly_limit)}</Feature>
-        <Feature ok>{t.word}</Feature>
+        {tariff.monthly_limit > 0 ? (
+          <>
+            <Feature ok>{t.daily(tariff.daily_limit)}</Feature>
+            <Feature ok>{t.monthly(tariff.monthly_limit)}</Feature>
+            <Feature ok>{t.word}</Feature>
+          </>
+        ) : (
+          <>
+            <Feature ok>{t.freePreview}</Feature>
+            <Feature ok={false}>{t.freeNoDocs}</Feature>
+          </>
+        )}
         <Feature ok={tariff.ai_enabled}>{tariff.ai_enabled ? t.ai : t.noAi}</Feature>
       </ul>
       <div className="mt-6">

@@ -45,9 +45,19 @@ async def client():
         yield c
 
 
-async def register(client, phone="+998901112233", password="parol12345"):
+async def register(client, phone="+998901112233", password="parol12345", credits=0):
+    """credits: bir martalik reja kreditlari (2026-11-12 dan bepul tarifda hujjat yo'q, reja yaratish uchun kerak)."""
     r = await client.post("/v1/auth/register", json={"phone": phone, "password": password, "first_name": "Test"})
     assert r.status_code == 201, r.text
+    if credits:
+        from sqlalchemy import update
+
+        from app.db.session import sessionmaker
+        from app.models import User
+
+        async with sessionmaker()() as s:
+            await s.execute(update(User).where(User.phone == phone).values(plan_credits=credits))
+            await s.commit()
     return r.json()["access_token"]
 
 

@@ -3,7 +3,7 @@
 Biznes qoidasi (tariflar jadvalidan sozlanadi):
 1. Faol obuna bo'lsa: obuna tarifining kunlik/oylik limiti, AI tarifga bog'liq.
 2. Obuna limiti tugasa yoki obuna bo'lmasa: bir martalik kredit (plan_credits) bo'lsa, u sarflanadi va AI beriladi.
-3. Kredit ham bo'lmasa: bepul 'basic' tarif limiti (AI yo'q).
+3. Kredit ham bo'lmasa: bepul 'basic' tarif limiti (2026-11-12 dan 0: bepul hujjat yo'q, to'lov kerak).
 4. Hammasi tugasa: 429 quota_exceeded.
 """
 from dataclasses import dataclass
@@ -97,8 +97,11 @@ async def consume_quota(session: AsyncSession, user: User) -> QuotaGrant:
             if keys:
                 return QuotaGrant("free", free.ai_enabled, keys)
 
-    raise AppError(429, "quota_exceeded", "Limit tugadi. Tarifni yangilang yoki bitta reja sotib oling.",
-                   {"upgrade_url": "/tariflar"})
+    if sub:
+        raise AppError(429, "quota_exceeded", "Tarifingiz limiti tugadi. Bitta reja sotib oling yoki tarifni yangilang.",
+                       {"upgrade_url": "/tariflar", "reason": "limit"})
+    raise AppError(429, "quota_exceeded", "Word va Excel hujjatlarini olish uchun bitta reja sotib oling yoki tarif tanlang. "
+                   "Hisob-kitoblar ekranda bepul.", {"upgrade_url": "/tariflar", "reason": "payment_required"})
 
 
 async def refund_quota(session: AsyncSession, user_id: str, source: str, keys: tuple[str, ...]) -> None:

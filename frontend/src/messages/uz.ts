@@ -54,7 +54,7 @@ export const uz = {
     tariffsTitle: "Tariflar",
     allTariffs: "Batafsil →",
     ctaTitle: "Birinchi rejangizni bugun yarating",
-    ctaText: "Bepul tarifda kuniga 3 ta reja.",
+    ctaText: "Hisob-kitoblarni bepul ko‘ring, Word va Excel hujjatni bitta reja yoki tarif bilan oling.",
   },
 
   footer: "Biznes rejalash uchun yagona ish maydoni.",

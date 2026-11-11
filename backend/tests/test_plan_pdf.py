@@ -16,7 +16,7 @@ def pdf_on(monkeypatch):
 
 
 async def _create_plan(client) -> tuple[dict, dict]:
-    h = auth(await register(client))
+    h = auth(await register(client, credits=1))
     r = await client.post("/v1/plans", json={"input": PLAN_INPUT, "use_ai": False}, headers=h)
     assert r.status_code == 202, r.text
     plan = (await client.get(f"/v1/plans/{r.json()['id']}", headers=h)).json()

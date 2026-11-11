@@ -57,7 +57,7 @@ async def test_click_subscription_flow(client):
     assert again["error"] == -4  # takroriy callback huquqni ikki marta bermaydi
 
     me = (await client.get("/v1/me", headers=auth(token))).json()["subscription"]
-    assert me["tariff_code"] == "pro" and me["status"] == "active" and me["daily_limit"] == 15
+    assert me["tariff_code"] == "pro" and me["status"] == "active" and me["daily_limit"] == 3
 
     plan = (await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))).json()
     assert plan["quota_source"] == "subscription" and plan["ai_requested"] is True
@@ -173,8 +173,8 @@ async def test_credit_used_after_free_limit(client):
     # kredit bepul limitdan oldin sarflanadi va AI beradi
     plan = (await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))).json()
     assert plan["quota_source"] == "credit" and plan["ai_requested"] is True
-    plan2 = (await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))).json()
-    assert plan2["quota_source"] == "free"
+    plan2 = await client.post("/v1/plans", json={"input": PLAN_INPUT}, headers=auth(token))
+    assert plan2.status_code == 429  # kredit tugadi, bepul tarifda hujjat yo'q
 
 
 async def test_click_failed_second_tx_does_not_revoke_paid(client):

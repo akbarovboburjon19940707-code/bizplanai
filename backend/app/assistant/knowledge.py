@@ -43,6 +43,10 @@ async def facts(session: AsyncSession, providers: dict[str, bool]) -> str:
     lines = ["FAKTLAR (joriy, bazadan):", "Tariflar:"]
     for t in await session.scalars(select(Tariff).where(Tariff.is_active.is_(True)).order_by(Tariff.sort)):
         price = "bepul" if t.price_tiyin == 0 else f"{t.price_tiyin // 100:,} so'm / {t.duration_days} kun".replace(",", " ")
+        if t.monthly_limit <= 0:
+            lines.append(f"- {t.name}: {price}; faqat ekranda hisob-kitob (NPV, jadvallar). Word/Excel hujjat yo'q: "
+                         "buning uchun bitta reja sotib olish yoki pullik tarif kerak")
+            continue
         ai = "AI matn bilan" if t.ai_enabled else "AI matnsiz (shablon matn)"
         lines.append(f"- {t.name}: {price}; kuniga {t.daily_limit} ta, oyiga {t.monthly_limit} ta reja; {ai}")
     lines.append(f"- Obunasiz bitta reja (AI bilan): {s.plan_credit_price_som:,} so'm".replace(",", " "))

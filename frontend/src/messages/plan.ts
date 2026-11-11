@@ -124,6 +124,11 @@ export const planMessages = {
     loginRequired: "Rejani yaratish uchun tizimga kiring. Kiritgan ma’lumotlaringiz saqlanadi.",
     login: "Kirish",
     quota: "Limit tugadi.",
+    paywallTitle: "Hisob-kitob tayyor",
+    paywallText: "Word va Excel hujjatlarini (bank uchun to‘liq biznes-reja) olish uchun to‘lov qiling. Kiritgan ma’lumotlaringiz saqlanadi.",
+    buySingle: (price: string) => `Bitta reja: ${price}`,
+    singleTitle: "Bitta biznes-reja (Word va Excel, AI matn bilan)",
+    paidHint: "To‘lovdan keyin shu sahifaga qaytib, «Rejani yaratish» tugmasini bosing.",
     tariffs: "Tariflarni ko‘rish",
   },
   plan: {

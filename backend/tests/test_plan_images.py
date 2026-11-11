@@ -32,7 +32,7 @@ async def plan_docx(client, token, **extra):
 
 async def test_upload_validation(client):
     assert (await client.post("/v1/plans/images", files={"file": ("a.png", png(), "image/png")})).status_code == 401
-    token = await register(client)
+    token = await register(client, credits=5)
     r = await upload(client, token, png())
     assert r.status_code == 201 and r.json()["image_id"].endswith(".png") and len(r.json()["image_id"]) == 36
     assert (await upload(client, token, b"%PDF-1.4 ...", "a.pdf")).json()["error"]["code"] == "bad_file"
@@ -42,13 +42,13 @@ async def test_upload_validation(client):
 
 
 async def test_uploaded_image_on_cover_only_for_owner(client):
-    owner = await register(client)
+    owner = await register(client, credits=5)
     image_id = (await upload(client, owner, png())).json()["image_id"]
     doc = await plan_docx(client, owner, rasm_id=image_id, rasm_avto=False)
     assert len(doc.inline_shapes) == 1
     assert not any(p.text.startswith("Foto:") for p in doc.paragraphs)  # o'z rasmi: muallif yozuvi yo'q
 
-    other = await register(client, phone="+998907778899")
+    other = await register(client, phone="+998907778899", credits=5)
     doc = await plan_docx(client, other, rasm_id=image_id, rasm_avto=False)  # boshqa foydalanuvchi rasmi ishlamaydi
     assert len(doc.inline_shapes) == 0
 
@@ -62,7 +62,7 @@ async def test_auto_image_used_when_no_upload(client, monkeypatch):
         calls.append(ctx["faoliyat_turi"])
         return CoverImage(png(), "Foto: Ali Valiyev / Pexels")
     monkeypatch.setattr(svc, "fetch_cover_image", fake_fetch)
-    token = await register(client)
+    token = await register(client, credits=5)
     doc = await plan_docx(client, token)
     assert len(doc.inline_shapes) == 1
     assert "Foto: Ali Valiyev / Pexels" in [p.text for p in doc.paragraphs]  # Pexels qoidasi: muallif ko'rsatiladi
@@ -99,7 +99,7 @@ async def test_fetch_cover_image_pexels(monkeypatch):
 
 
 async def test_jshshir_manual_field(client):
-    token = await register(client)
+    token = await register(client, credits=5)
     assert (await client.post("/v1/plans/preview", json={**PLAN_INPUT, "jshshir": "123"})).status_code == 422
     doc = await plan_docx(client, token, jshshir="30101900000012", rasm_avto=False)
     rows = {r.cells[1].text.strip(): r.cells[2].text.strip() for t in doc.tables for r in t.rows

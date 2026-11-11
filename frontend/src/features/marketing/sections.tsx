@@ -78,7 +78,9 @@ export function TariffStrip({ tariffs }: { tariffs: Tariff[] }) {
               <span className="text-2xl font-bold tabular-nums text-ink">{formatNumber(x.price_som)}</span>
               <span className="text-sm text-muted">so‘m {x.price_som > 0 ? tt.perPeriod(x.duration_days) : tt.forever}</span>
             </p>
-            <p className="mt-3 text-sm text-muted">{tt.daily(x.daily_limit)} · {tt.monthly(x.monthly_limit)}</p>
+            <p className="mt-3 text-sm text-muted">
+              {x.monthly_limit > 0 ? `${tt.daily(x.daily_limit)} · ${tt.monthly(x.monthly_limit)}` : `${tt.freePreview}. ${tt.freeNoDocs}`}
+            </p>
             <p className="mt-1 text-sm text-muted">{x.ai_enabled ? tt.ai : tt.noAi}</p>
           </div>
         ))}

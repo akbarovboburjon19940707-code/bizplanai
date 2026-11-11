@@ -9,7 +9,10 @@ import { useAuth } from "@/features/auth/auth-context";
 import { uz } from "@/messages/uz";
 import { apiRequest } from "@/shared/api/client";
 import { ApiError } from "@/shared/api/errors";
+import type { components } from "@/shared/api/schema";
+import { useApi } from "@/shared/api/use-api";
 import { Button } from "@/shared/ui/button";
+import { Paywall } from "./paywall";
 import { IndicatorCards } from "./preview-panel";
 import { defaultValues, planFormSchema, toPlanInput, type PlanFormValues, type PlanOut } from "./schema";
 import { StepProducts } from "./step-products";
@@ -44,6 +47,13 @@ function loadDraft(): PlanFormValues {
 export function PlanWizard() {
   const router = useRouter();
   const { status } = useAuth();
+  // Hujjat yaratish imkoni: kredit yoki tarif limiti. Bo'lmasa (bepul tarif) "Yaratish" o'rnida to'lov taklifi.
+  const me = useApi<components["schemas"]["MeOut"]>(status === "authenticated" ? "/v1/me" : null);
+  const [paymentRequired, setPaymentRequired] = useState(false);
+  const sub = me.data?.subscription;
+  const canCreate = !me.data || me.data.user.plan_credits > 0
+    || (!!sub && sub.daily_used < sub.daily_limit && sub.monthly_used < sub.monthly_limit);
+  const showPaywall = status === "authenticated" && (paymentRequired || !canCreate);
   const [step, setStep] = useState(0);
   const [submitError, setSubmitError] = useState<{ message: string; quota?: boolean } | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null); // faqat xotirada
@@ -89,7 +99,11 @@ export function PlanWizard() {
       router.push(`/reja/?id=${encodeURIComponent(plan.id)}`);
     } catch (error) {
       if (!(error instanceof ApiError)) return setSubmitError({ message: "So‘rovni bajarib bo‘lmadi" });
-      if (error.code === "quota_exceeded") return setSubmitError({ message: error.message, quota: true });
+      if (error.code === "quota_exceeded") {
+        const reason = (error.details as { reason?: string } | undefined)?.reason;
+        if (reason === "payment_required") return setPaymentRequired(true);
+        return setSubmitError({ message: error.message, quota: true });
+      }
       if (error.code === "validation_error" && Array.isArray(error.details)) {
         for (const d of error.details as { field?: string; message?: string }[]) {
           if (d.field) form.setError(d.field.replace(/^input\./, "") as FieldPath<PlanFormValues>, { message: d.message });
@@ -156,6 +170,8 @@ export function PlanWizard() {
             </p>
           ) : null}
 
+          {step === 4 && showPaywall ? <Paywall /> : null}
+
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
             <Button type="button" variant="outline" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
               {t.back}
@@ -164,7 +180,7 @@ export function PlanWizard() {
               <Button key="next" type="button" onClick={goNext}>
                 {t.next}
               </Button>
-            ) : status === "authenticated" ? (
+            ) : status === "authenticated" && showPaywall ? null : status === "authenticated" ? (
               // key: React yangi DOM tugma yaratadi, "Keyingi" bosilishi "Yaratish" bo'lib yuborilmaydi
               <Button key="create" type="submit" size="lg" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? t.result.creating : t.result.create}

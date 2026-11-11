@@ -72,7 +72,7 @@ def checkout(payment: Payment) -> dict:
                        "return_url": return_url})
         return {"type": "redirect", "url": f"https://my.click.uz/services/pay?{q}"}
     if payment.provider == "payme":
-        raw = f"m={s.payme_merchant_id};ac.order_id={payment.id};a={payment.amount_tiyin};c={return_url}"
+        raw = f"m={s.payme_merchant_id};ac.order_id={payment.id};ac.product_id=1;a={payment.amount_tiyin};c={return_url};l=uz"
         return {"type": "redirect", "url": f"{s.payme_checkout_url}/{base64.b64encode(raw.encode()).decode()}"}
     return {"type": "manual", "card_number": s.manual_card_number, "card_holder": s.manual_card_holder,
             "amount_som": payment.amount_tiyin // 100,

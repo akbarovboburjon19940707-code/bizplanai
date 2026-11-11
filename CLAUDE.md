@@ -63,7 +63,7 @@ python -m app.cli create-admin --phone +998... --password '...'   # 2FA (TOTP) a
 
 ## DARHOL qilinadigan ishlar (foydalanuvchi bajaradi, sen eslat)
 Eski loyiha ZIP'larida haqiqiy maxfiy ma'lumotlar bo'lgan va ular boshqa joylarga yuborilgan bo'lishi mumkin:
-1. Click va Payme maxfiy kalitlarini kabinetlardan **qayta yaratish** (eski `providers/*/.env.local` da edi).
+1. Click va Payme maxfiy kalitlarini kabinetlardan **qayta yaratish** (eski `providers/*/.env.local` da edi). **Qaror (2026-11-11):** o'tish kuni eski kalitlar aynan ko'chiriladi, almashtirish o'tishdan 1-3 kun keyin (`docs/DEPLOY.md` 7.1, 6-band). Eslatib tur.
 2. Barcha JWT/SECRET_KEY, admin parolini yangilash; Mongo/DB parollari.
 3. Telegram bot tokenini @BotFather orqali qayta yaratish (agar ZIP'larda bo'lgan bo'lsa).
 4. ~~R2 bucket ochiq~~ **Bajarildi 2026-11-10**: `bizplanai-files` da Public Development URL o'chirildi, custom domen yo'q; `r2.dev` havolalari 401 qaytaradi (tekshirildi). Eski jonli saytda katalog rasmlari endi ko'rinmaydi (PDF yuklab olish S3 API orqali). Bucket'da `generated/` papkasi yo'q ekan.

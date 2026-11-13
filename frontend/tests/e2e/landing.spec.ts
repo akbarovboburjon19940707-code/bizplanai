@@ -55,3 +55,15 @@ test("a guest visit does not hit /v1/auth/refresh (no 401 noise); the font is ap
   expect(font).not.toMatch(/^"?Times/);
   expect(font.toLowerCase()).toContain("inter");
 });
+
+test("footer: share links point to the current public page, socials have labels", async ({ page }) => {
+  await page.goto("/tariflar/");
+  const footer = page.locator("footer");
+  const tg = await footer.getByRole("link", { name: "Telegram", exact: true }).getAttribute("href");
+  expect(tg).toMatch(/^https:\/\/t\.me\/share\/url\?url=.*%2Ftariflar%2F/);
+  const fb = await footer.getByRole("link", { name: "Facebook" }).getAttribute("href");
+  expect(fb).toMatch(/^https:\/\/www\.facebook\.com\/sharer\/sharer\.php\?u=.*%2Ftariflar%2F/);
+  for (const name of ["Telegram kanal", "Instagram", "YouTube"]) await expect(footer.getByRole("link", { name })).toBeVisible();
+  await expect(footer.getByText("Du–Sh, 9:00–19:00")).toBeVisible();
+  await expect(footer.getByRole("button", { name: "Ulashish" })).toBeVisible();
+});

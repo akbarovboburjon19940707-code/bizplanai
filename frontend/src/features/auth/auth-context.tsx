@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { components } from "@/shared/api/schema";
-import { clearAuth, refreshAccessToken, signOut, subscribeAuth } from "@/shared/api/client";
+import { clearAuth, hasSessionHint, refreshAccessToken, signOut, subscribeAuth } from "@/shared/api/client";
 
 type UserOut = components["schemas"]["UserOut"];
 type AuthContextValue = {
@@ -36,6 +36,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStatus(snapshot.accessToken ? "authenticated" : "guest");
       if (snapshot.accessToken) setSignedOutByUser(false);
     });
+
+    if (!hasSessionHint()) {
+      setStatus("guest");
+      return () => {
+        mounted = false;
+        unsubscribe();
+      };
+    }
 
     void refreshAccessToken().then((token) => {
       if (!mounted) return;

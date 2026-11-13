@@ -6,9 +6,12 @@ import { ApiError } from "./errors";
 
 type State<T> = { data: T | null; error: ApiError | null; loading: boolean };
 
-/** Oddiy GET so'rovi: yuklash, xato va qayta yuklash. `path` null bo'lsa so'rov yuborilmaydi. */
-export function useApi<T>(path: string | null) {
-  const [state, setState] = useState<State<T>>({ data: null, error: null, loading: path !== null });
+/**
+ * Oddiy GET so'rovi: yuklash, xato va qayta yuklash. `path` null bo'lsa so'rov yuborilmaydi.
+ * `initial`: build vaqtida olingan ma'lumot (HTML'da darhol ko'rinadi, SEO uchun); baribir yangisi so'raladi.
+ */
+export function useApi<T>(path: string | null, initial: T | null = null) {
+  const [state, setState] = useState<State<T>>({ data: initial, error: null, loading: path !== null });
   const [version, setVersion] = useState(0);
 
   useEffect(() => {

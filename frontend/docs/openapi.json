@@ -1192,6 +1192,48 @@
         }
       }
     },
+    "/v1/catalog/products/{id_or_slug}/thumb": {
+      "get": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Product Thumb",
+        "description": "Kartochka rasmi: 600 px WebP. Birinchi so'rovda asl rasmdan yasaladi va saqlanadi, keyin tayyori beriladi.\nURL ?v= bilan versiyalangan, shuning uchun brauzer/CDN uni bir yil keshlaydi (asl rasm 10 barobar og'irroq edi).",
+        "operationId": "product_thumb_v1_catalog_products__id_or_slug__thumb_get",
+        "parameters": [
+          {
+            "name": "id_or_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id Or Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "image/webp": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/catalog/products/{product_id}/view": {
       "post": {
         "tags": [
@@ -2940,6 +2982,54 @@
                 "schema": {
                   "$ref": "#/components/schemas/UserBillingOut"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/debug/request": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Debug Request",
+        "description": "IP sarlavhalarini ko'rish (faqat admin): production'da qaysi sarlavhaga ishonish mumkinligini aniqlash uchun.\nSarlavhani 2 xil qiymat bilan tekshiring: brauzer o'zi qo'sha olmaydigan va har doim sizning IP ingiz bo'lgani ishonchli.",
+        "operationId": "debug_request_v1_admin_debug_request_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },

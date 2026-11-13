@@ -1,7 +1,11 @@
+import asyncio
+import hashlib
+import io
+import logging
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, Query
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 
@@ -46,6 +50,31 @@ class ProductPage(BaseModel):
 
 IMAGE_PREFIX = "catalog/images/"  # faqat shu papkadagi rasmlar imzolanadi (PDF yoki mijoz fayllari emas)
 IMAGE_TTL = 3600
+THUMB_WIDTH = 600  # katalog kartochkasi ~290 px: retina uchun 2x yetarli
+THUMB_PREFIX = "catalog/thumbs/"
+MAX_SOURCE_IMAGE_BYTES = 25 * 1024 * 1024
+log = logging.getLogger(__name__)
+
+
+def thumb_version(preview_image: str) -> str:
+    """Manba rasm kaliti o'zgarsa (admin yangi rasm yuklasa) URL ham o'zgaradi: brauzer keshi eskisini bermaydi."""
+    return hashlib.sha1(preview_image.encode()).hexdigest()[:10]
+
+
+def thumb_key(p: CatalogProduct) -> str:
+    return f"{THUMB_PREFIX}{p.id}-{thumb_version(p.preview_image)}.webp"
+
+
+def make_thumbnail(data: bytes) -> bytes:
+    from PIL import Image
+
+    with Image.open(io.BytesIO(data)) as im:
+        im = im.convert("RGB")
+        if im.width > THUMB_WIDTH:
+            im = im.resize((THUMB_WIDTH, round(im.height * THUMB_WIDTH / im.width)), Image.LANCZOS)
+        out = io.BytesIO()
+        im.save(out, "WEBP", quality=80, method=4)
+        return out.getvalue()
 
 
 def image_key(preview_image: str) -> str | None:
@@ -58,8 +87,9 @@ def image_key(preview_image: str) -> str | None:
 
 
 def product_out(p: CatalogProduct) -> ProductOut:
-    # Bucket yopiq: rasm r2.dev dan emas, backend orqali (imzolangan havolaga yo'naltirish) beriladi
-    image = (f"{get_settings().public_api_url.rstrip('/')}/v1/catalog/products/{p.id}/image"
+    # Bucket yopiq: ro'yxat va kartochkalar uchun yengil WebP nusxa (600 px) backend orqali, uzoq keshlanadigan URL bilan.
+    # To'liq o'lchamli asl rasm: /v1/catalog/products/{id}/image (imzolangan havolaga yo'naltirish).
+    image = (f"{get_settings().public_api_url.rstrip('/')}/v1/catalog/products/{p.id}/thumb?v={thumb_version(p.preview_image)}"
              if image_key(p.preview_image) else "")
     return ProductOut(id=p.id, slug=p.slug, category_key=p.category_key, title=p.title, description=p.description,
                       price_som=p.price_tiyin // 100, file_size=p.file_size, preview_image=image,
@@ -113,6 +143,32 @@ async def product_image(id_or_slug: str, session: SessionDep):
         raise not_found("Rasm topilmadi")
     url = await get_storage().signed_url(key, key.rsplit("/", 1)[-1], IMAGE_TTL, inline=True)
     return RedirectResponse(url, status_code=302, headers={"Cache-Control": "public, max-age=1800"})
+
+
+@router.get("/products/{id_or_slug}/thumb", dependencies=[Depends(rate_limit("catalog_image", 300, 60))],
+            responses={200: {"content": {"image/webp": {}}}})
+async def product_thumb(id_or_slug: str, session: SessionDep):
+    """Kartochka rasmi: 600 px WebP. Birinchi so'rovda asl rasmdan yasaladi va saqlanadi, keyin tayyori beriladi.
+    URL ?v= bilan versiyalangan, shuning uchun brauzer/CDN uni bir yil keshlaydi (asl rasm 10 barobar og'irroq edi)."""
+    p = await get_product(session, id_or_slug)
+    src = image_key(p.preview_image)
+    if not src:
+        raise not_found("Rasm topilmadi")
+    storage, key = get_storage(), thumb_key(p)
+    data = await storage.get_bytes(key, 2 * 1024 * 1024)
+    if data is None:
+        original = await storage.get_bytes(src, MAX_SOURCE_IMAGE_BYTES)
+        if original is None:
+            raise not_found("Rasm topilmadi")
+        try:
+            data = await asyncio.to_thread(make_thumbnail, original)
+        except Exception:  # buzuq rasm: asl rasmga yo'naltiramiz (sahifa rasmsiz qolmasin)
+            log.warning("thumbnail yasab bo'lmadi: product=%s key=%s", p.id, src)
+            url = await storage.signed_url(src, src.rsplit("/", 1)[-1], IMAGE_TTL, inline=True)
+            return RedirectResponse(url, status_code=302, headers={"Cache-Control": "public, max-age=1800"})
+        await storage.put_bytes(key, data, "image/webp")
+    return Response(data, media_type="image/webp",
+                    headers={"Cache-Control": "public, max-age=31536000, immutable"})
 
 
 @router.post("/products/{product_id}/view", status_code=204, dependencies=[Depends(rate_limit("view", 120, 60))])

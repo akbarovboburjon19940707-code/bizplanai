@@ -35,7 +35,7 @@ async def test_add_product_upload_files_activate_and_delete(client):
     ok = await client.post(f"{url}/file", files={"file": ("reja.pdf", PDF, "application/pdf")}, headers=h)
     assert ok.status_code == 200 and ok.json()["file_size"] == "2 KB"
     img = await client.post(f"{url}/image", files={"file": ("m.png", PNG, "image/png")}, headers=h)
-    assert img.status_code == 200 and img.json()["preview_image"].endswith(f"/v1/catalog/products/{p['id']}/image")
+    assert img.status_code == 200 and f"/v1/catalog/products/{p['id']}/thumb?v=" in img.json()["preview_image"]
     assert (await client.post(f"{url}/image", files={"file": ("m.gif", b"GIF89a", "image/gif")}, headers=h)).status_code == 400
     active = await client.patch(url, json={"is_active": True}, headers=h)
     assert active.json()["is_active"] is True

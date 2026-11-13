@@ -5,7 +5,8 @@ import { SITE_URL } from "@/shared/lib/site";
 export const dynamic = "force-static"; // static export: build vaqtida sitemap.xml yoziladi
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const pages = ["/", "/katalog/", "/tariflar/", "/dashboard/", "/aloqa/"].map((path) => ({
+  // /dashboard/ kirish talab qiladigan ish sahifasi: indeksga kerak emas
+  const pages = ["/", "/katalog/", "/tariflar/", "/aloqa/"].map((path) => ({
     url: `${SITE_URL}${path}`,
     changeFrequency: "weekly" as const,
     priority: path === "/" ? 1 : 0.8,

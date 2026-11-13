@@ -86,6 +86,9 @@ test("tariffs from the API: subscription and single plan by card", async ({ page
 
   await page.goto("/tariflar/");
   await expect(page.getByRole("heading", { name: "Bitta reja" })).toBeVisible();
+  // Narxlar statik HTML'da (SEO): tugma React ulanishidan oldin ko'rinadi. "Joriy tarif" belgisi /v1/me dan keladi,
+  // ya'ni sahifa jonlangan: shundan keyin bosamiz (aks holda bosish yo'qolishi mumkin)
+  await expect(page.getByRole("article", { name: "Bepul" }).getByText("Joriy tarif")).toBeVisible();
   await page.getByRole("button", { name: "Sotib olish" }).click();
   await page.getByRole("dialog").getByRole("button", { name: /Karta orqali/ }).click();
   await expect(page).toHaveURL(/\/tolov\/crd_/);

@@ -50,6 +50,7 @@ export function SiteHeader() {
         <nav aria-label={nav.menu} className="flex items-center gap-1 sm:gap-2">
           <NavLink href="/katalog/" label={nav.catalog} className="hidden md:inline-flex" />
           <NavLink href="/tariflar/" label={nav.tariffs} className="hidden md:inline-flex" />
+          <NavLink href="/#savollar" label={nav.faq} className="hidden lg:inline-flex" />
           <NavLink href="/aloqa/" label={nav.contact} className="hidden lg:inline-flex" />
           <NavLink href="/dashboard/" label={nav.createPlan} className="hidden sm:inline-flex" />
           {status === "loading" ? (

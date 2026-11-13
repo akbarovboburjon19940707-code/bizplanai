@@ -3,11 +3,15 @@ import { noHorizontalScroll } from "./helpers";
 
 test("landing shows API data in static HTML, with SEO tags", async ({ page, request, baseURL }) => {
   await page.goto("/");
-  await expect(page.locator("article")).toHaveCount(6);
-  await expect(page.getByText("3 bosqichda tayyor")).toBeVisible();
-  await expect(page.getByText("Hisob-kitoblarni bepul ko‘ring").first()).toBeVisible(); // bepul: faqat hisob-kitob
+  await expect(page.locator("section[aria-labelledby=popular] article")).toHaveCount(4);
+  await expect(page.getByRole("heading", { name: /3 qadam/ })).toBeVisible();
+  await expect(page.getByText("Hisob-kitob har doim bepul").first()).toBeVisible(); // bepul: faqat hisob-kitob
+  await expect(page.getByRole("heading", { name: /3 daqiqada/ })).toBeVisible();
   const html = await (await request.get(baseURL!)).text();
-  expect(html).toContain("Mashhur tayyor rejalar");
+  expect(html).toContain("Sohangiz bo‘yicha tayyor biznes-reja");
+  expect(html).toContain("269 ta tayyor reja"); // rejalar soni build vaqtida API'dan
+  expect(html).toContain('"@type":"FAQPage"');
+  expect(html).not.toContain("formulali"); // Excel'da formula yo'q: bunday va'da bo'lmasin
   expect(html).toMatch(/property="og:title"/);
   expect(html).toMatch(/rel="canonical"/);
   await page.setViewportSize({ width: 360, height: 780 });
@@ -66,4 +70,17 @@ test("footer: share links point to the current public page, socials have labels"
   for (const name of ["Telegram kanal", "Instagram", "YouTube"]) await expect(footer.getByRole("link", { name })).toBeVisible();
   await expect(footer.getByText("Du–Sh, 9:00–19:00")).toBeVisible();
   await expect(footer.getByRole("button", { name: "Ulashish" })).toBeVisible();
+});
+
+test("home: FAQ opens, header link jumps to it, prices come from the API", async ({ page }) => {
+  await page.goto("/");
+  const pricing = page.locator("section[aria-labelledby=pricing]");
+  await expect(pricing.getByText("200 000")).toBeVisible();
+  await expect(pricing.getByText("Eng ommabop")).toBeVisible();
+  const q = page.getByText("Ro‘yxatdan o‘tish shartmi?");
+  await q.click();
+  await expect(page.getByText(/Rejani saqlash va Word\/Excel hujjatni olish uchun/)).toBeVisible();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.getByRole("link", { name: "Savollar" }).click();
+  await expect(page).toHaveURL(/#savollar$/);
 });

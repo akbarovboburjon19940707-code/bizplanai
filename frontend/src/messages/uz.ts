@@ -109,6 +109,38 @@ export const uz = {
         q: "Excel faylda nima bo‘ladi?",
         a: "Excel faylda barcha jadvallar tayyor hisoblangan raqamlar bilan beriladi (formulalar ichida emas). Ma’lumotni o‘zgartirmoqchi bo‘lsangiz, saytda kiritasiz: barcha ko‘rsatkichlar darhol qayta hisoblanadi.",
       },
+      {
+        q: "Tayyor reja bilan o‘zim yaratgan reja o‘rtasida qanday farq bor?",
+        a: "Tayyor reja: katalogdagi aniq soha bo‘yicha tuzilgan PDF biznes-reja, to‘lovdan keyin darhol yuklab olinadi va namuna sifatida qulay. O‘zingiz yaratgan reja esa aynan sizning raqamlaringiz (loyiha qiymati, kredit, mahsulotlar) asosida hisoblanadi va Word hamda Excel shaklida beriladi.",
+      },
+      {
+        q: "Qanday to‘lash mumkin?",
+        a: "Click yoki Payme orqali: to‘lov bir zumda tasdiqlanadi. Kartaga o‘tkazma ham mumkin: chek rasmini yuklaysiz, administrator tekshirib tasdiqlaydi.",
+      },
+      {
+        q: "Kredit muddati hisob-kitobga qanday ta’sir qiladi?",
+        a: "Kredit muddatini oyda kiritasiz, masalan 36 oy. Loyiha davri shu muddatga moslanadi: jadvallar, amortizatsiya, NPV va IRR aynan 3 yil uchun hisoblanadi. Muddat 10 yilgacha bo‘lishi mumkin.",
+      },
+      {
+        q: "Hujjatni keyinroq qayta yuklab olsam bo‘ladimi?",
+        a: "Ha. Yaratgan rejalaringiz kabinetdagi «Rejalarim» bo‘limida saqlanadi, Word va Excel’ni istalgan vaqtda qayta yuklab olasiz. Sotib olgan tayyor rejani esa uning sahifasidan qayta yuklab olish mumkin.",
+      },
+      {
+        q: "Tarifdagi limitlar nima degani?",
+        a: "Har tarifda kuniga va oyiga nechta reja yaratish mumkinligi belgilangan (yuqoridagi «Narxlar» bo‘limida). Obuna 30 kun amal qiladi. Limit tugasa, obunani kutmasdan bitta rejani alohida sotib olishingiz mumkin.",
+      },
+      {
+        q: "Telefondan foydalansa bo‘ladimi?",
+        a: "Ha. Sayt telefonga moslashgan, shuningdek Telegram bot va Mini App orqali ham reja yaratib, hujjatni olishingiz mumkin.",
+      },
+      {
+        q: "Ma’lumotlarim xavfsizmi?",
+        a: "Sayt bilan aloqa shifrlangan (HTTPS). Hujjatlaringiz yopiq omborda saqlanadi va faqat sizga, qisqa muddatli shaxsiy havola orqali beriladi. Ma’lumotlaringiz faqat xizmat ko‘rsatish uchun ishlatiladi va hech kimga sotilmaydi.",
+      },
+      {
+        q: "Savolim bo‘lsa, kimga murojaat qilaman?",
+        a: "Saytdagi «Savol berish» tugmasi orqali darhol yozing yoki Telegram va telefon orqali bog‘laning: dushanbadan shanbagacha, 9:00–19:00. Barcha aloqa ma’lumotlari sahifa pastida.",
+      },
     ],
     ctaTitle: "Rejangiz raqamlarini hozir bepul ko‘ring",
     ctaText: "Hisob-kitob uchun ro‘yxatdan o‘tish shart emas. Natija darhol ekranda.",

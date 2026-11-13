@@ -3,9 +3,10 @@ export const CONTACTS = {
   phone: { display: "+998 94 721 42 42", href: "tel:+998947214242" },
   telegram: { display: "@BoBuRo7o7", href: "https://t.me/BoBuRo7o7" },
   email: { display: "boburjon994@mail.ru", href: "mailto:boburjon994@mail.ru" },
+  hours: "Du–Sh, 9:00–19:00",
   socials: [
-    { name: "Telegram kanal", href: "https://t.me/uzbiznesss" },
-    { name: "Instagram", href: "https://instagram.com/bizplanai.uz" },
-    { name: "YouTube", href: "https://www.youtube.com/@uzbiznesss" },
+    { name: "Telegram kanal", href: "https://t.me/uzbiznesss", icon: "telegram" },
+    { name: "Instagram", href: "https://instagram.com/bizplanai.uz", icon: "instagram" },
+    { name: "YouTube", href: "https://www.youtube.com/@uzbiznesss", icon: "youtube" },
   ],
 } as const;

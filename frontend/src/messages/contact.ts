@@ -33,6 +33,12 @@ export const contactMessages = {
     about: "Bank talablariga mos biznes-reja: Word va Excel, moliyaviy model va tayyor rejalar katalogi.",
     platform: "Platforma",
     contact: "Aloqa",
+    shareTitle: "Do‘stlaringizga ulashing",
+    shareText: "Kredit olmoqchi bo‘lgan tanishingizga foydali bo‘lishi mumkin",
+    share: "Ulashish",
+    shareCopied: "Havola nusxalandi",
+    shareMessage: "Bank talablariga mos biznes-reja: Word va Excel, moliyaviy model",
+    payments: "To‘lov:",
     rights: (year: number) => `© ${year} BizplanAI. Barcha huquqlar himoyalangan.`,
   },
 } as const;

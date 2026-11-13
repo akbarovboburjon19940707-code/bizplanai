@@ -24,8 +24,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="uz">
-      <body className={`${inter.variable} ${outfit.variable} min-h-screen antialiased`}>
+    <html lang="uz" className={`${inter.variable} ${outfit.variable}`}>
+      <body className="min-h-screen antialiased">
         <AuthProvider>
           <TelegramContextMarker />
           <div className="flex min-h-screen flex-col">

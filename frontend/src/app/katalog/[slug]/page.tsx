@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BuyBox } from "@/features/catalog/buy-box";
 import { CATALOG_SKIPPED, getAllProducts, getCategories, getProductBySlug } from "@/features/catalog/build-data";
-import { ProductCover } from "@/features/catalog/product-card";
+import { MIN_VISIBLE_COUNT, ProductCover } from "@/features/catalog/product-card";
 import { uz } from "@/messages/uz";
 import { formatNumber } from "@/shared/lib/format";
+import { SITE_URL } from "@/shared/lib/site";
 
 const t = uz.catalog;
 type Params = { params: Promise<{ slug: string }> };
@@ -25,7 +26,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title,
     description: product.description,
     alternates: { canonical: `/katalog/${product.slug}/` },
-    openGraph: { title, description: product.description, type: "article" },
+    openGraph: {
+      title,
+      description: product.description,
+      type: "article",
+      ...(product.preview_image ? { images: [{ url: product.preview_image, width: 600, alt: product.title }] } : {}),
+    },
+    twitter: { card: product.preview_image ? "summary_large_image" : "summary", title, description: product.description },
   };
 }
 
@@ -33,9 +40,33 @@ export default async function ProductPage({ params }: Params) {
   const product = await getProductBySlug((await params).slug);
   if (!product) notFound();
   const category = (await getCategories()).find((c) => c.key === product.category_key);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: product.description,
+    sku: product.id,
+    url: `${SITE_URL}/katalog/${product.slug}/`,
+    ...(product.preview_image ? { image: product.preview_image } : {}),
+    ...(category ? { category: category.label } : {}),
+    brand: { "@type": "Brand", name: uz.appName },
+    offers: {
+      "@type": "Offer",
+      price: product.price_som,
+      priceCurrency: "UZS",
+      availability: "https://schema.org/InStock",
+      url: `${SITE_URL}/katalog/${product.slug}/`,
+    },
+  };
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* JSON-LD (Google mahsulot kartasi). Ma'lumot bajarilmaydi; "<" qochirilgan, matndagi "</script>" blokni yopa olmaydi */}
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger -- JSON-LD faqat shu yo'l bilan; tarkib JSON.stringify + "<" qochirilgan
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <Link href="/katalog/" className="text-sm font-semibold text-brand hover:underline">{t.back}</Link>
       <div className="mt-5 grid items-start gap-8 lg:grid-cols-[1fr_22rem]">
         <article className="min-w-0">
@@ -59,8 +90,8 @@ export default async function ProductPage({ params }: Params) {
           <dl className="grid grid-cols-2 gap-3 rounded-card border border-border bg-white p-5 text-sm">
             <dt className="text-muted">{t.format}</dt><dd className="text-right font-semibold">PDF</dd>
             {product.file_size ? (<><dt className="text-muted">{t.fileSize}</dt><dd className="text-right font-semibold">{product.file_size}</dd></>) : null}
-            <dt className="text-muted">{t.viewsLabel}</dt><dd className="text-right font-semibold tabular-nums">{formatNumber(product.views)}</dd>
-            <dt className="text-muted">{t.downloadsLabel}</dt><dd className="text-right font-semibold tabular-nums">{formatNumber(product.downloads)}</dd>
+            {product.views >= MIN_VISIBLE_COUNT ? (<><dt className="text-muted">{t.viewsLabel}</dt><dd className="text-right font-semibold tabular-nums">{formatNumber(product.views)}</dd></>) : null}
+            {product.downloads >= MIN_VISIBLE_COUNT ? (<><dt className="text-muted">{t.downloadsLabel}</dt><dd className="text-right font-semibold tabular-nums">{formatNumber(product.downloads)}</dd></>) : null}
           </dl>
         </aside>
       </div>

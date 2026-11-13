@@ -407,6 +407,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/catalog/products/{id_or_slug}/thumb": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Product Thumb
+         * @description Kartochka rasmi: 600 px WebP. Birinchi so'rovda asl rasmdan yasaladi va saqlanadi, keyin tayyori beriladi.
+         *     URL ?v= bilan versiyalangan, shuning uchun brauzer/CDN uni bir yil keshlaydi (asl rasm 10 barobar og'irroq edi).
+         */
+        get: operations["product_thumb_v1_catalog_products__id_or_slug__thumb_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/products/{product_id}/view": {
         parameters: {
             query?: never;
@@ -855,6 +876,27 @@ export interface paths {
         put?: never;
         /** Revoke Subscription */
         post: operations["revoke_subscription_v1_admin_subscriptions__subscription_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/debug/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Debug Request
+         * @description IP sarlavhalarini ko'rish (faqat admin): production'da qaysi sarlavhaga ishonish mumkinligini aniqlash uchun.
+         *     Sarlavhani 2 xil qiymat bilan tekshiring: brauzer o'zi qo'sha olmaydigan va har doim sizning IP ingiz bo'lgani ishonchli.
+         */
+        get: operations["debug_request_v1_admin_debug_request_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2546,6 +2588,38 @@ export interface operations {
             };
         };
     };
+    product_thumb_v1_catalog_products__id_or_slug__thumb_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id_or_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "image/webp": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     view_v1_catalog_products__product_id__view_post: {
         parameters: {
             query?: never;
@@ -3477,6 +3551,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserBillingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    debug_request_v1_admin_debug_request_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

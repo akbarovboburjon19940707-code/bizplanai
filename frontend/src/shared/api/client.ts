@@ -24,13 +24,57 @@ export function subscribeAuth(listener: (snapshot: AuthSnapshot) => void) {
   return () => listeners.delete(listener);
 }
 
+/*
+ * Sessiya belgisi: refresh cookie httpOnly (JS ko'rmaydi), shuning uchun "bu brauzerda kirilganmi" ni
+ * alohida, maxfiy bo'lmagan belgi bilan eslaymiz. Mehmon sahifani ochganda /v1/auth/refresh chaqirilmaydi
+ * (konsolda 401 va ortiqcha so'rov yo'q). Belgi o'zida hech qanday huquq bermaydi.
+ */
+const SESSION_HINT_KEY = "bp_session";
+const HINT_MIGRATED_KEY = "bp_session_hint_v1";
+
+function storage(): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function setSessionHint(on: boolean) {
+  try {
+    if (on) storage()?.setItem(SESSION_HINT_KEY, "1");
+    else storage()?.removeItem(SESSION_HINT_KEY);
+  } catch {
+    /* xususiy rejim: belgisiz ishlaymiz */
+  }
+}
+
+/** Sahifa ochilganda sessiyani tiklashga urinish kerakmi. */
+export function hasSessionHint(): boolean {
+  const store = storage();
+  if (!store) return true; // localStorage yo'q: eski xatti-harakat (har doim tekshirish)
+  try {
+    if (store.getItem(SESSION_HINT_KEY) === "1") return true;
+    // Belgi joriy qilinishidan oldin kirgan foydalanuvchilar uchun bir martalik tekshiruv
+    if (store.getItem(HINT_MIGRATED_KEY) !== "1") {
+      store.setItem(HINT_MIGRATED_KEY, "1");
+      return true;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 export function clearAuth() {
   accessToken = null;
+  setSessionHint(false);
   publish(null);
 }
 
 function setAuth(token: TokenOut) {
   accessToken = token.access_token;
+  setSessionHint(true);
   publish(token.user);
 }
 
@@ -65,7 +109,9 @@ export function refreshAccessToken(): Promise<TokenOut | null> {
         setAuth(token);
         return token;
       } catch {
-        clearAuth();
+        // Tarmoq xatosi: cookie hali yaroqli bo'lishi mumkin, belgini o'chirmaymiz
+        accessToken = null;
+        publish(null);
         return null;
       } finally {
         refreshPromise = null;

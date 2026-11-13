@@ -4,6 +4,9 @@ import { formatNumber, formatSom } from "@/shared/lib/format";
 import { CoverImage } from "./cover-image";
 import type { Product } from "./types";
 
+/** Shundan kam bo'lsa hisoblagich ko'rsatilmaydi ("0 yuklab olindi" ishonch emas, aksincha ta'sir qiladi). */
+export const MIN_VISIBLE_COUNT = 10;
+
 /** Muqova: API'dagi imzolangan rasm (302); rasm yo'q yoki yuklanmasa gradient. */
 export function ProductCover({ product, className, eager }: { product: Product; className?: string; eager?: boolean }) {
   return <CoverImage src={product.preview_image} title={product.title} className={className} eager={eager} />;
@@ -19,9 +22,11 @@ export function ProductCard({ product }: { product: Product }) {
           <p className="mt-1.5 line-clamp-2 text-xs text-muted">{product.description}</p>
           <div className="mt-auto flex items-end justify-between gap-2 pt-4">
             <span className="text-base font-bold tabular-nums text-ink">{formatSom(product.price_som)}</span>
-            <span className="text-xs text-muted">
-              {formatNumber(product.downloads)} {uz.catalog.downloads}
-            </span>
+            {product.downloads >= MIN_VISIBLE_COUNT ? (
+              <span className="text-xs text-muted">
+                {formatNumber(product.downloads)} {uz.catalog.downloads}
+              </span>
+            ) : null}
           </div>
         </div>
       </Link>

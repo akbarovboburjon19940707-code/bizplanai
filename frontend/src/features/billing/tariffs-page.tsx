@@ -77,12 +77,15 @@ function TariffCard({ tariff, current, featured, onChoose }: {
   );
 }
 
-export function TariffsPage() {
-  const tariffs = useApi<Tariff[]>("/v1/tariffs");
+export function TariffsPage({ initialTariffs = null, initialPricing = null }: {
+  initialTariffs?: Tariff[] | null;
+  initialPricing?: Pricing | null;
+}) {
+  const tariffs = useApi<Tariff[]>("/v1/tariffs", initialTariffs);
   const { status } = useAuth();
   const me = useApi<MeOut>(status === "authenticated" ? "/v1/me" : null);
   const buy = useBuy();
-  const pricing = useApi<Pricing>("/v1/pricing");
+  const pricing = useApi<Pricing>("/v1/pricing", initialPricing);
   // Tanlangan mahsulot: tarif obunasi yoki bitta reja (plan_credit)
   const [chosen, setChosen] = useState<{ kind: "subscription" | "plan_credit"; targetId?: string; title: string } | null>(null);
   const list = [...(tariffs.data ?? [])].sort((a, b) => a.price_som - b.price_som);
@@ -98,7 +101,7 @@ export function TariffsPage() {
         <div className="mt-10 grid gap-6 md:grid-cols-3" aria-busy="true">
           {[0, 1, 2].map((i) => <div key={i} className="h-80 animate-pulse rounded-card bg-white" />)}
         </div>
-      ) : tariffs.error ? (
+      ) : tariffs.error && !tariffs.data ? (
         <p className="mt-10 text-center text-sm text-red-600">
           {tariffs.error.message || t.loadError}{" "}
           <button type="button" className="font-semibold text-brand hover:underline" onClick={tariffs.reload}>{uz.account.retry}</button>

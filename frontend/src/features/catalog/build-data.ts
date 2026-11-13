@@ -60,3 +60,15 @@ export type Tariff = { code: string; name: string; price_som: number; duration_d
 export function getTariffs(): Promise<Tariff[]> {
   return CATALOG_SKIPPED ? Promise.resolve([]) : getJson<Tariff[]>("/v1/tariffs");
 }
+
+export type Pricing = { plan_credit_price_som: number };
+
+/** Bitta reja narxi (tariflar sahifasi HTML'ida ko'rinsin). Xato bo'lsa null: sahifa uni brauzerda oladi. */
+export async function getPricing(): Promise<Pricing | null> {
+  if (CATALOG_SKIPPED) return null;
+  try {
+    return await getJson<Pricing>("/v1/pricing");
+  } catch {
+    return null;
+  }
+}

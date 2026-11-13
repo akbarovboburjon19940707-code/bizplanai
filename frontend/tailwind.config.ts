@@ -13,7 +13,7 @@ const config: Config = {
         border: "#e2e8f0",
       },
       borderRadius: { card: "16px", control: "10px" },
-      boxShadow: { soft: "0 12px 36px rgba(15, 23, 42, 0.08)" },
+      boxShadow: { soft: "0 12px 36px rgba(15, 23, 42, 0.08)", lift: "0 24px 60px rgba(15, 23, 42, 0.18)" },
     },
   },
   plugins: [],

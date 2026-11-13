@@ -15,3 +15,10 @@ body { margin: 0; min-height: 100vh; }
 button, input, textarea, select { font: inherit; }
 button:focus-visible, a:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
 ::selection { background: #dbeafe; color: #1e3a8a; }
+
+/* Bosh sahifa hero foni: yengil katak (dekorativ) */
+.hero-grid {
+  background-image: linear-gradient(#e2e8f0 1px, transparent 1px), linear-gradient(90deg, #e2e8f0 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at 70% 40%, #000 20%, transparent 70%);
+}
